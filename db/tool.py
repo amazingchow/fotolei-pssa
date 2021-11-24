@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import pathlib
-from client import MySQLConnector
+
+from mysqlcli import MySQLConnector
 from pprint import pprint
 
 
@@ -14,18 +15,18 @@ if __name__ == "__main__":
     inst.init_conn("ggfilm")
     inst.load_data_infile(
         """LOAD DATA LOCAL INFILE "{}/{}" """.format(pathlib.Path().cwd(), "history_data/产品目录.csv") +
-        "INTO TABLE ggfilm.product_repository " +
+        "INTO TABLE ggfilm.product_inventory " +
         "FIELDS TERMINATED BY ',' " +
         """ENCLOSED BY '"' """ +
         "LINES TERMINATED BY '\n' " +
         "IGNORE 1 LINES " +
-        "(product_code, product_name, specification_name, " +
+        "(product_code, product_name, specification_code, " +
         "brand, classification_1, classification_2, " +
         "product_series, stop_status, product_weight, " +
         "product_length, product_width, product_hight, " +
         "is_combined, be_aggregated, is_import, " +
         "supplier_code, purchase_name, extra_info);"
     )
-    ret = inst.query_sql("SELECT COUNT(*) FROM ggfilm.product_repository;")
-    pprint(ret)
+    ret = inst.query_sql("SELECT COUNT(*) FROM ggfilm.product_inventory;")
+    pprint(ret[0][0])
     inst.release_conn()
