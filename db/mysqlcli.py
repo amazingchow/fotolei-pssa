@@ -4,6 +4,7 @@ logging.basicConfig(level=logging.DEBUG, format="[%(asctime)s][%(levelname)s] %(
 logger = logging.getLogger(__name__)
 import mysql.connector
 import os
+
 from mysql.connector import errorcode
 from singleton import Singleton
 

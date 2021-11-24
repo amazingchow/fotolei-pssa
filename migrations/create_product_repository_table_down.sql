@@ -1,1 +1,1 @@
-DROP TABLE IF EXISTS ggfilm.product_repository;
+DROP TABLE IF EXISTS ggfilm.product_inventory;
