@@ -58,7 +58,7 @@
     <b-modal ref="loadCSVFileModal" id="csv-file-modal" title="导入进销存报表" hide-footer>
       <b-form @submit="onSubmit" @reset="onReset" class="w-100 d-block">
         <b-form-group id="form-csv-file-group" label-for="form-csv-file-input">
-            <b-form-input id="form-csv-file-input" type="text" v-model="loadCSVFileForm.title" required placeholder="请选择UTF-8编码的CSV文件"></b-form-input>
+            <b-form-input id="form-csv-file-input" type="text" v-model="loadCSVFileForm.file" required placeholder="请选择UTF-8编码的CSV文件"></b-form-input>
         </b-form-group>
         <br/>
         <b-button-group id="inventory-table-operate-btn" class="w-100 d-block">
