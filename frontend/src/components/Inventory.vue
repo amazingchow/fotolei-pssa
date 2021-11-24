@@ -5,7 +5,9 @@
         <h1>商品明细库</h1>
         <hr>
         <alert :message=message v-if="showMessage"></alert>
-        <button type="button" class="btn btn-success btn-sm" v-b-modal.csv-file-modal>导入进销存报表</button>
+        <div id="input-btn-area">
+          <button type="button" class="btn btn-success btn-sm" v-b-modal.csv-file-modal>导入库存数据报表</button>
+        </div>
         <br/><br/>
         <table id="inventory-table" class="table table-sm w-100">
           <thead>
@@ -53,9 +55,14 @@
             </tr>
           </tbody>
         </table>
+
+        <div id="pagination-btn-area">
+          <button class="btn btn-success btn-sm" :disabled="pageOffset==0" v-on:click="onPrevPage">前一页</button>
+          <button class="btn btn-success btn-sm" v-on:click="onNextPage">后一页</button>
+        </div>
       </div>
     </div>
-    <b-modal ref="loadCSVFileModal" id="csv-file-modal" title="导入进销存报表" hide-footer>
+    <b-modal ref="loadCSVFileModal" id="csv-file-modal" title="导入库存数据报表" hide-footer>
       <b-form @submit="onSubmit" @reset="onReset" class="w-100 d-block">
         <b-form-group id="form-csv-file-group" label-for="form-csv-file-input">
             <b-form-input id="form-csv-file-input" type="text" v-model="loadCSVFileForm.file" required placeholder="请选择UTF-8编码的CSV文件"></b-form-input>
@@ -67,6 +74,7 @@
         </b-button-group>
       </b-form>
     </b-modal>
+
   </div>
 </template>
 
@@ -80,6 +88,14 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+#input-btn-area {
+  text-align: right;
+}
+
+#pagination-btn-area {
+  text-align: center;
 }
 
 #inventory-table-operate-btn {
@@ -98,6 +114,7 @@ export default {
       loadCSVFileForm: {
         file: ''
       },
+      pageOffset: 0,
       message: '',
       showMessage: false
     }
@@ -107,7 +124,7 @@ export default {
   },
   methods: {
     listInventories () {
-      axios.get('http://localhost:5000/api/v1/inventories?page.offset=0&page.limit=20')
+      axios.get(`http://localhost:5000/api/v1/inventories?page.offset=${this.pageOffset}&page.limit=20`)
         .then((res) => {
           this.inventories = res.data.inventories
         })
@@ -149,6 +166,16 @@ export default {
       evt.preventDefault()
       this.$refs.loadCSVFileModal.hide()
       this.initForm()
+    },
+    onPrevPage (evt) {
+      evt.preventDefault()
+      this.pageOffset -= 20
+      this.listInventories()
+    },
+    onNextPage (evt) {
+      evt.preventDefault()
+      this.pageOffset += 20
+      this.listInventories()
     }
   },
   created () {
