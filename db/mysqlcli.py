@@ -13,16 +13,16 @@ from singleton import Singleton
 class MySQLConnector():
     def __init__(self):
         self.host = os.environ.get("MYSQL_HOST")
-        if len(self.host) == 0:
+        if self.host == None or len(self.host) == 0:
             raise Exception("MYSQL_HOST must be set!!!")
         self.port = os.environ.get("MYSQL_PORT")
-        if len(self.port) == 0:
+        if self.port == None or len(self.port) == 0:
             raise Exception("MYSQL_PORT must be set!!!")
         self.username = os.environ.get("MYSQL_USERNAME")
-        if len(self.username) == 0:
+        if self.username == None or len(self.username) == 0:
             raise Exception("MYSQL_USERNAME must be set!!!")
         self.password = os.environ.get("MYSQL_PASSWORD")
-        if len(self.password) == 0:
+        if self.password == None or len(self.password) == 0:
             raise Exception("MYSQL_PASSWORD must be set!!!")
 
     def init_conn(self, db:str):
@@ -34,11 +34,11 @@ class MySQLConnector():
             )
         except mysql.connector.Error as err:
             if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-                logger.error("Invalid MYSQL_USERNAME or MYSQL_PASSWORD")
+                raise Exception("Invalid MYSQL_USERNAME or MYSQL_PASSWORD")
             elif err.errno == errorcode.ER_BAD_DB_ERROR:
-                logger.error("Database {} does not exist".format(db))
+                raise Exception("Database {} does not exist".format(db))
             else:
-                logger.error("Unknown err: {}".format(err))
+                raise Exception("Unknown err: {}".format(err))
         
         if not self.cnx.is_connected():
             raise Exception("MySQL Server can not be connected ({}:{}@{}:{})".format(
