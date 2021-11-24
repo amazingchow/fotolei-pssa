@@ -32,6 +32,7 @@
           </thead>
           <tbody>
             <tr v-for="(inventory, index) in inventories" :key="index">
+              <td>{{ inventory[0] }}</td>
               <td>{{ inventory[1] }}</td>
               <td>{{ inventory[2] }}</td>
               <td>{{ inventory[3] }}</td>
@@ -39,29 +40,16 @@
               <td>{{ inventory[5] }}</td>
               <td>{{ inventory[6] }}</td>
               <td>{{ inventory[7] }}</td>
-              <td>
-                <span v-if="inventory[8] == 0">停用</span>
-                <span v-else>在用</span>
-              </td>
+              <td>{{ inventory[8] }}</td>
               <td>{{ inventory[9] }}</td>
               <td>{{ inventory[10] }}</td>
               <td>{{ inventory[11] }}</td>
-              <td>
-                <span v-if="inventory[12] == 0">否</span>
-                <span v-else>是</span>
-              </td>
-              <td>
-                <span v-if="inventory[13] == 0">不参与</span>
-                <span v-else>参与</span>
-              </td>
-              <td>
-                <span v-if="inventory[14] == 0">非进口品</span>
-                <span v-else>进口品</span>
-              </td>
+              <td>{{ inventory[12] }}</td>
+              <td>{{ inventory[13] }}</td>
+              <td>{{ inventory[14] }}</td>
               <td>{{ inventory[15] }}</td>
               <td>{{ inventory[16] }}</td>
               <td>{{ inventory[17] }}</td>
-              <td>{{ inventory[19] }}</td>
             </tr>
           </tbody>
         </table>

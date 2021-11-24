@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import pathlib
 
-from client import MySQLConnector
+from mysqlcli import MySQLConnector
 from pprint import pprint
 
 
@@ -20,7 +20,7 @@ if __name__ == "__main__":
         """ENCLOSED BY '"' """ +
         "LINES TERMINATED BY '\n' " +
         "IGNORE 1 LINES " +
-        "(product_code, product_name, specification_name, " +
+        "(product_code, product_name, specification_code, " +
         "brand, classification_1, classification_2, " +
         "product_series, stop_status, product_weight, " +
         "product_length, product_width, product_hight, " +

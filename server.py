@@ -31,7 +31,14 @@ def inventories():
     response_object = {"status": "success"}
     page_offset = request.args.get("page.offset")
     page_limit = request.args.get("page.limit")
-    sql = "SELECT * FROM ggfilm.product_inventory ORDER BY 'id' DESC LIMIT {}, {};".format(
+    sql = "SELECT product_code, product_name, specification_code, \
+        brand, classification_1, classification_2, \
+        product_series, stop_status, product_weight, \
+        product_length, product_width, product_hight, \
+        is_combined, be_aggregated, is_import, \
+        supplier_code, purchase_name, \
+        DATE_FORMAT(create_time, '%Y-%m-%d %H:%i:%s') \
+        FROM ggfilm.product_inventory ORDER BY 'id' DESC LIMIT {}, {};".format(
         page_offset, page_limit)
     inventories = DBConnector.query_sql(sql)
     if (inventories) == 0:
