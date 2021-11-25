@@ -34,7 +34,7 @@ def import_csv_file():
 
     DBConnector.load_data_infile(
         """LOAD DATA LOCAL INFILE "{}" """.format(csv_file) +
-        "INTO TABLE ggfilm.product_inventory " +
+        "INTO TABLE ggfilm.products " +
         "FIELDS TERMINATED BY ',' " +
         """ENCLOSED BY '"' """ +
         "LINES TERMINATED BY '\n' " +
@@ -51,7 +51,7 @@ def import_csv_file():
         csv_reader = csv.reader(fd)
         for _ in csv_reader:
             pass
-        stmt = "INSERT INTO ggfilm.product_inventory_summary (total) VALUES (%s);"
+        stmt = "INSERT INTO ggfilm.product_summary (total) VALUES (%s);"
         DBConnector.insert(stmt, (csv_reader.line_num - 1,))
         logger.info("There {} records have been inserted!!!".format(csv_reader.line_num - 1))
 
@@ -63,7 +63,7 @@ def import_csv_file():
 # curl -X GET -L http://127.0.0.1:5000/api/v1/inventories/total
 @app.route("/api/v1/inventories/total", methods=["GET"])
 def inventories_total():
-    stmt = "SELECT SUM(total) FROM ggfilm.product_inventory_summary;"
+    stmt = "SELECT SUM(total) FROM ggfilm.product_summary;"
     ret = DBConnector.query(stmt)
     response_object = {"status": "success"}
     if len(ret) == 0:
@@ -87,7 +87,7 @@ def inventories():
         is_combined, be_aggregated, is_import, \
         supplier_code, purchase_name, \
         DATE_FORMAT(create_time, '%Y-%m-%d %H:%i:%s') \
-        FROM ggfilm.product_inventory ORDER BY 'id' DESC LIMIT {}, {};".format(
+        FROM ggfilm.products ORDER BY 'id' DESC LIMIT {}, {};".format(
         page_offset, page_limit)
     inventories = DBConnector.query(stmt)
 

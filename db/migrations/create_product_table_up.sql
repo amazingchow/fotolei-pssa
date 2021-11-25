@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS ggfilm.product_inventory (
+CREATE TABLE IF NOT EXISTS ggfilm.products (
     id                 INT        NOT NULL AUTO_INCREMENT,
     product_code       CHAR(64)   NOT NULL, /* 商品编号 */
     product_name       CHAR(128),           /* 商品名称 */
