@@ -58,31 +58,36 @@ class MySQLConnector():
             self.host, self.port
         ))
 
-    def insert_sql(self, sql:str, records:list):
-        for record in records:
-            if type(record) != dict:
-                raise Exception("Input record must be dict type")
-            try:
-                self.cur.execute(sql, record)
-                self.cnx.commit()
-            except mysql.connector.Error as err:
-                self.cnx.rollback()
-                logger.error("INSERT err: {}".format(err))
-
-    def load_data_infile(self, sql:str):
+    def insert(self, stmt:str, record:tuple):
         try:
-            self.cur.execute(sql)
+            self.cur.execute(stmt, record)
+            self.cnx.commit()
+        except mysql.connector.Error as err:
+            self.cnx.rollback()
+            logger.error("INSERT err: {}".format(err))
+
+    def batch_insert(self, stmt:str, records:list):
+        try:
+            self.cur.executemany(stmt, records)
+            self.cnx.commit()
+        except mysql.connector.Error as err:
+            self.cnx.rollback()
+            logger.error("INSERT err: {}".format(err))
+
+    def load_data_infile(self, stmt:str):
+        try:
+            self.cur.execute(stmt)
             self.cnx.commit()
         except mysql.connector.Error as err:
             self.cnx.rollback()
             logger.error("LOAD DATA INFILE err: {}".format(err))
 
-    def query_sql(self, sql:str):
-        self.cur.execute(sql)
+    def query(self, stmt:str):
+        self.cur.execute(stmt)
         return self.cur.fetchall()
     
-    def update_sql(self, sql:str):
+    def update(self, stmt:str):
         pass
 
-    def delete_sql(self, sql:str):
+    def delete(self, stmt:str):
         pass
