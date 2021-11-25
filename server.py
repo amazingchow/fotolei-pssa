@@ -25,9 +25,9 @@ def keepalive():
 
 
 # 载入库存数据报表的接口
-# curl -X POST -H 'Content-Type: application/json' -d '{"file": "~/inventories/产品目录.csv"}' http://127.0.0.1:5000/api/v1/input
-@app.route("/api/v1/input", methods=["POST"])
-def load_data_infile():
+# curl -X POST -H 'Content-Type: application/json' -d '{"file": "~/inventories/产品目录.csv"}' http://127.0.0.1:5000/api/v1/import
+@app.route("/api/v1/import", methods=["POST"])
+def import_csv_file():
     payload = request.get_json()
     csv_file = payload.get("file")
     logger.info("Load data from {}".format(csv_file))
@@ -98,6 +98,42 @@ def inventories():
     else:
         response_object["inventories"] = inventories
     return jsonify(response_object)
+
+
+# 导出销售报表（按分类汇总）的接口
+@app.route("/api/v1/export/case1", methods=["POST"])
+def export_report_file_case1():
+    return jsonify("导出销售报表（按分类汇总）")
+
+
+# 导出销售报表（按系列汇总）的接口
+@app.route("/api/v1/export/case2", methods=["POST"])
+def export_report_file_case2():
+    return jsonify("导出销售报表（按系列汇总）")
+
+
+# 导出销售报表（按单个SKU汇总）的接口
+@app.route("/api/v1/export/case3", methods=["POST"])
+def export_report_file_case3():
+    return jsonify("导出销售报表（按单个SKU汇总）")
+
+
+# 导出滞销品报表的接口
+@app.route("/api/v1/export/case4", methods=["POST"])
+def export_report_file_case4():
+    return jsonify("导出滞销品报表")
+
+
+# 导出进口产品采购单的接口
+@app.route("/api/v1/export/case5", methods=["POST"])
+def export_report_file_case5():
+    return jsonify("导出进口产品采购单")
+
+
+# 导出体积、重量计算汇总单的接口
+@app.route("/api/v1/export/case6", methods=["POST"])
+def export_report_file_case6():
+    return jsonify("导出体积、重量计算汇总单")
 
 
 if __name__ == "__main__":

@@ -59,7 +59,7 @@ class MySQLConnector():
         cnx.close()
 
     def release_conn(self):
-        self.cnxpool.close()
+        # TODO: How to release the pooling resources?
         logger.debug("Disconnect from MySQL Server ({}:{})".format(
             self.host, self.port
         ))
