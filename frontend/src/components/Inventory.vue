@@ -56,7 +56,7 @@
           </b-tbody>
           <b-tfoot id="inventory-table-footer">
             <b-tr>
-              <b-td colspan="18" variant="secondary">当前展示<b>20</b>条记录</b-td>
+              <b-td colspan="18" variant="secondary">总共录入<b>{{ inventories_total }}</b>条记录, 当前展示<b>20</b>条记录</b-td>
             </b-tr>
           </b-tfoot>
         </b-table-simple>
@@ -118,6 +118,7 @@ export default {
   data () {
     return {
       inventories: [],
+      inventories_total: '0',
       loadCSVFileForm: {
         file: ''
       },
@@ -142,17 +143,29 @@ export default {
           this.showMessage = true
         })
     },
+    getInventoriesTotal () {
+      axios.get('http://localhost:5000/api/v1/inventories/total')
+        .then((res) => {
+          this.inventories_total = res.data.inventories_total
+        })
+        .catch((error) => {
+          // eslint-disable-next-line
+          console.log(error)
+          this.message = '内部服务错误!'
+          this.showMessage = true
+        })
+    },
     loadCSVFile (payload) {
       axios.post('http://localhost:5000/api/v1/input', payload)
         .then(() => {
           this.listInventories()
+          this.getInventoriesTotal()
           this.message = '导入成功!'
           this.showMessage = true
         })
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.listInventories()
           this.message = '导入失败!'
           this.showMessage = true
         })
@@ -187,6 +200,7 @@ export default {
   },
   created () {
     this.listInventories()
+    this.getInventoriesTotal()
   }
 }
 </script>
