@@ -24,10 +24,10 @@ def keepalive():
     return jsonify("alive")
 
 
-# 载入库存数据报表的接口
-# curl -X POST -H 'Content-Type: application/json' -d '{"file": "~/inventories/产品目录.csv"}' http://127.0.0.1:5000/api/v1/import
-@app.route("/api/v1/import", methods=["POST"])
-def import_csv_file():
+# 载入商品数据报表的接口
+# curl -X POST -H 'Content-Type: application/json' -d '{"file": "~/products/产品目录.csv"}' http://127.0.0.1:5000/api/v1/products/import
+@app.route("/api/v1/products/import", methods=["POST"])
+def import_products_csv_file():
     payload = request.get_json()
     csv_file = payload.get("file")
     logger.info("Load data from {}".format(csv_file))
@@ -56,20 +56,73 @@ def import_csv_file():
         logger.info("There {} records have been inserted!!!".format(csv_reader.line_num - 1))
 
     response_object = {"status": "success"}
-    return jsonify("alive")
+    return jsonify(response_object)
 
 
-# 获取总库存量的接口
-# curl -X GET -L http://127.0.0.1:5000/api/v1/inventories/total
-@app.route("/api/v1/inventories/total", methods=["GET"])
-def inventories_total():
+# 载入库存数据报表的接口
+# curl -X POST -H 'Content-Type: application/json' -d '{"file": "~/inventories/产品目录.csv"}' http://127.0.0.1:5000/api/v1/inventories/import
+@app.route("/api/v1/inventories/import", methods=["POST"])
+def import_inventories_csv_file():
+    payload = request.get_json()
+    csv_file = payload.get("file")
+    logger.info("Load data from {}".format(csv_file))
+
+    DBConnector.load_data_infile(
+        """LOAD DATA LOCAL INFILE "{}" """.format(csv_file) +
+        "INTO TABLE ggfilm.inventories " +
+        "FIELDS TERMINATED BY ',' " +
+        """ENCLOSED BY '"' """ +
+        "LINES TERMINATED BY '\n' " +
+        "IGNORE 1 LINES " +
+        "(product_code, product_name, specification_code, " +
+        "specification_name, st_inventory_qty, st_inventory_total, " +
+        "purchase_qty, purchase_total, purchase_then_return_qty, " +
+        "purchase_then_return_total, sale_qty, sale_total, " +
+        "sale_then_return_qty, sale_then_return_total, others_qty, " +
+        "others_total, ed_inventory_qty, ed_inventory_total);"
+    )
+
+    response_object = {"status": "success"}
+    return jsonify(response_object)
+
+
+# 获取总商品量的接口
+# curl -X GET -L http://127.0.0.1:5000/api/v1/products/total
+@app.route("/api/v1/products/total", methods=["GET"])
+def products_total():
     stmt = "SELECT SUM(total) FROM ggfilm.product_summary;"
     ret = DBConnector.query(stmt)
     response_object = {"status": "success"}
     if len(ret) == 0:
-        response_object["inventories_total"] = "0"
+        response_object["products_total"] = "0"
     else:
-        response_object["inventories_total"] = ret[0][0]
+        response_object["products_total"] = ret[0][0]
+    return jsonify(response_object)
+
+
+# 获取所有商品的接口, 带有翻页功能
+# curl -X GET -L http://127.0.0.1:5000/api/v1/products?page.offset=0&page.limit=20
+@app.route("/api/v1/products", methods=["GET"])
+def products():
+    page_offset = request.args.get("page.offset")
+    page_limit = request.args.get("page.limit")
+
+    stmt = "SELECT product_code, product_name, specification_code, \
+        brand, classification_1, classification_2, \
+        product_series, stop_status, product_weight, \
+        product_length, product_width, product_hight, \
+        is_combined, be_aggregated, is_import, \
+        supplier_code, purchase_name \
+        FROM ggfilm.products ORDER BY 'id' DESC LIMIT {}, {};".format(
+        page_offset, page_limit)
+    products = DBConnector.query(stmt)
+
+    response_object = {"status": "success"}
+    if (products) == 0:
+        response_object = {"status": "not found"}
+        response_object["products"] = None
+    else:
+        response_object["products"] = products
     return jsonify(response_object)
 
 
@@ -81,13 +134,12 @@ def inventories():
     page_limit = request.args.get("page.limit")
 
     stmt = "SELECT product_code, product_name, specification_code, \
-        brand, classification_1, classification_2, \
-        product_series, stop_status, product_weight, \
-        product_length, product_width, product_hight, \
-        is_combined, be_aggregated, is_import, \
-        supplier_code, purchase_name, \
-        DATE_FORMAT(create_time, '%Y-%m-%d %H:%i:%s') \
-        FROM ggfilm.products ORDER BY 'id' DESC LIMIT {}, {};".format(
+        specification_name, st_inventory_qty, st_inventory_total, \
+        purchase_qty, purchase_total, purchase_then_return_qty, \
+        purchase_then_return_total, sale_qty, sale_total, \
+        sale_then_return_qty, sale_then_return_total, others_qty, \
+        others_total, ed_inventory_qty, ed_inventory_total \
+        FROM ggfilm.inventories ORDER BY 'id' DESC LIMIT {}, {};".format(
         page_offset, page_limit)
     inventories = DBConnector.query(stmt)
 

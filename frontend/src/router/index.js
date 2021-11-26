@@ -1,15 +1,28 @@
 import Vue from 'vue'
-import Router from 'vue-router'
+import VueRouter from 'vue-router'
+
 import Inventory from '@/components/Inventory'
+import Product from '@/components/Product'
 
-Vue.use(Router)
+Vue.use(VueRouter)
 
-export default new Router({
-  routes: [
-    {
-      path: '/',
-      name: 'Inventory',
-      component: Inventory
-    }
-  ]
+const routes = [
+  {
+    path: '/inventory',
+    name: 'Inventory',
+    component: Inventory
+  },
+  {
+    path: '/product',
+    name: 'Product',
+    component: Product
+  }
+]
+
+const router = new VueRouter({
+  mode: 'history',
+  base: process.env.BASE_URL,
+  routes
 })
+
+export default router

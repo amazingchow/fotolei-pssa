@@ -2,10 +2,10 @@
   <div class="container-fluid">
     <div class="row">
       <div class="col-sm-12">
-        <h1>商品明细库</h1>
+        <h1>库存明细库</h1>
         <hr>
         <alert :message=message v-if="showMessage"></alert>
-        <div id="inport-and-export-btn-area">
+        <div id="import-and-export-btn-area">
           <button type="button" class="btn btn-success btn-sm" v-b-modal.csv-file-modal>导入库存数据</button>
           <b-dropdown text="导出定制报表" variant="success" size="sm">
             <b-dropdown-header id="dropdown-header-1"><strong>销售报表</strong></b-dropdown-header>
@@ -42,21 +42,21 @@
               <b-th scope="col">商品编号</b-th>
               <b-th scope="col">商品名称</b-th>
               <b-th scope="col">规格编号</b-th>
-              <b-th scope="col">品牌</b-th>
-              <b-th scope="col">分类一</b-th>
-              <b-th scope="col">分类二</b-th>
-              <b-th scope="col">商品系列</b-th>
-              <b-th scope="col">STOP状态?</b-th>
-              <b-th scope="col">商品重量/g</b-th>
-              <b-th scope="col">商品长度/cm</b-th>
-              <b-th scope="col">商品宽度/cm</b-th>
-              <b-th scope="col">商品高度/cm</b-th>
-              <b-th scope="col">组合商品?</b-th>
-              <b-th scope="col">参与统计?</b-th>
-              <b-th scope="col">进口商品?</b-th>
-              <b-th scope="col">供应商编号</b-th>
-              <b-th scope="col">采购名称</b-th>
-              <b-th scope="col">录入时间</b-th>
+              <b-th scope="col">规格名称</b-th>
+              <b-th scope="col">起始库存数量</b-th>
+              <b-th scope="col">起始库存总额</b-th>
+              <b-th scope="col">采购数量</b-th>
+              <b-th scope="col">采购总额</b-th>
+              <b-th scope="col">采购退货数量</b-th>
+              <b-th scope="col">采购退货总额</b-th>
+              <b-th scope="col">销售数量</b-th>
+              <b-th scope="col">销售总额</b-th>
+              <b-th scope="col">销售退货数量</b-th>
+              <b-th scope="col">销售退货总额</b-th>
+              <b-th scope="col">其他变更数量</b-th>
+              <b-th scope="col">其他变更总额</b-th>
+              <b-th scope="col">截止库存数量</b-th>
+              <b-th scope="col">截止库存总额</b-th>
             </b-tr>
           </b-thead>
           <b-tbody>
@@ -81,11 +81,6 @@
               <b-td>{{ inventory[17] }}</b-td>
             </b-tr>
           </b-tbody>
-          <b-tfoot id="inventory-table-footer">
-            <b-tr>
-              <b-td colspan="18" variant="secondary">总共录入<b>{{ inventories_total }}</b>条记录, 当前展示<b>20</b>条记录</b-td>
-            </b-tr>
-          </b-tfoot>
         </b-table-simple>
         <div id="pagination-btn-area">
           <button class="btn btn-success btn-sm" :disabled="pageOffset==0" v-on:click="onPrevPage">前一页</button>
@@ -93,7 +88,7 @@
         </div>
       </div>
     </div>
-    <b-modal ref="inportCSVFileModal" id="csv-file-modal" title="导入库存数据" hide-footer>
+    <b-modal ref="importCSVFileModal" id="csv-file-modal" title="导入库存数据" hide-footer>
       <b-form @submit="onImport" @reset="onCancel">
         <b-form-group id="form-csv-file-group" label-for="form-csv-file-input">
             <b-form-input id="form-csv-file-input" type="text" v-model="importCSVFileForm.file" required placeholder="请选择UTF-8编码的CSV文件"></b-form-input>
@@ -189,7 +184,6 @@ export default {
   data () {
     return {
       inventories: [],
-      inventories_total: '0',
       importCSVFileForm: {
         file: ''
       },
@@ -226,23 +220,10 @@ export default {
           this.showMessage = true
         })
     },
-    getInventoriesTotal () {
-      axios.get('http://localhost:5000/api/v1/inventories/total')
-        .then((res) => {
-          this.inventories_total = res.data.inventories_total
-        })
-        .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          this.message = '内部服务错误!'
-          this.showMessage = true
-        })
-    },
     importCSVFile (payload) {
-      axios.post('http://localhost:5000/api/v1/import', payload)
+      axios.post('http://localhost:5000/api/v1/inventories/import', payload)
         .then(() => {
           this.listInventories()
-          this.getInventoriesTotal()
           this.message = '导入成功!'
           this.showMessage = true
         })
@@ -258,7 +239,7 @@ export default {
     },
     onImport (evt) {
       evt.preventDefault()
-      this.$refs.inportCSVFileModal.hide()
+      this.$refs.importCSVFileModal.hide()
       const payload = {
         file: this.importCSVFileForm.file
       }
@@ -267,12 +248,13 @@ export default {
     },
     onCancel (evt) {
       evt.preventDefault()
-      this.$refs.inportCSVFileModal.hide()
+      this.$refs.importCSVFileModal.hide()
       this.initInportForm()
     },
     exportReportFileCase1 (payload) {
       axios.post('http://localhost:5000/api/v1/export/case1', payload)
-        .then(() => {
+        .then((res) => {
+          console.log(res.data)
           this.message = '导出成功!'
           this.showMessage = true
         })
@@ -303,7 +285,8 @@ export default {
     },
     exportReportFileCase2 (payload) {
       axios.post('http://localhost:5000/api/v1/export/case2', payload)
-        .then(() => {
+        .then((res) => {
+          console.log(res.data)
           this.message = '导出成功!'
           this.showMessage = true
         })
@@ -334,7 +317,8 @@ export default {
     },
     exportReportFileCase3 (payload) {
       axios.post('http://localhost:5000/api/v1/export/case3', payload)
-        .then(() => {
+        .then((res) => {
+          console.log(res.data)
           this.message = '导出成功!'
           this.showMessage = true
         })
@@ -365,7 +349,8 @@ export default {
     },
     exportReportFileCase4 (payload) {
       axios.post('http://localhost:5000/api/v1/export/case4', payload)
-        .then(() => {
+        .then((res) => {
+          console.log(res.data)
           this.message = '导出成功!'
           this.showMessage = true
         })
@@ -396,7 +381,8 @@ export default {
     },
     exportReportFileCase5 (payload) {
       axios.post('http://localhost:5000/api/v1/export/case5', payload)
-        .then(() => {
+        .then((res) => {
+          console.log(res.data)
           this.message = '导出成功!'
           this.showMessage = true
         })
@@ -427,7 +413,8 @@ export default {
     },
     exportReportFileCase6 (payload) {
       axios.post('http://localhost:5000/api/v1/export/case6', payload)
-        .then(() => {
+        .then((res) => {
+          console.log(res.data)
           this.message = '导出成功!'
           this.showMessage = true
         })
@@ -469,7 +456,6 @@ export default {
   },
   created () {
     this.listInventories()
-    this.getInventoriesTotal()
   }
 }
 </script>
