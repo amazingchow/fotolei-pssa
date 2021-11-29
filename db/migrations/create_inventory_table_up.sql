@@ -1,8 +1,8 @@
 CREATE TABLE IF NOT EXISTS ggfilm.inventories (
     id                         INT        NOT NULL AUTO_INCREMENT,
-    product_code               CHAR(64)   NOT NULL, /* 商品编号 */
+    product_code               CHAR(64)   NOT NULL, /* 商品编码 */
     product_name               CHAR(128),           /* 商品名称 */
-    specification_code         CHAR(64)   NOT NULL, /* 规格编号 */
+    specification_code         CHAR(64)   NOT NULL, /* 规格编码 */
     specification_name         CHAR(128),           /* 规格名称 */
     st_inventory_qty           INT,                 /* 起始库存数量 */
     st_inventory_total         INT,                 /* 起始库存总额 */
@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS ggfilm.inventories (
     others_total               INT,                 /* 其他变更总额 */
     ed_inventory_qty           INT,                 /* 截止库存数量 */
     ed_inventory_total         INT,                 /* 截止库存总额 */
-    create_time                DATETIME   DEFAULT CURRENT_TIMESTAMP(),
+    create_time                DATETIME   DEFAULT CURRENT_TIMESTAMP(), /* 导出时使用年月的格式 */
     PRIMARY KEY (id),
     KEY (product_code, specification_code)
 ) ENGINE=InnoDB;
