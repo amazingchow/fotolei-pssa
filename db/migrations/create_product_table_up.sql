@@ -1,8 +1,9 @@
 CREATE TABLE IF NOT EXISTS ggfilm.products (
     id                 INT        NOT NULL AUTO_INCREMENT,
-    product_code       CHAR(64)   NOT NULL, /* 商品编号 */
+    product_code       CHAR(64)   NOT NULL, /* 商品编码 */
     product_name       CHAR(128),           /* 商品名称 */
-    specification_code CHAR(64),            /* 规格编号 */
+    specification_code CHAR(64)   NOT NULL, /* 规格编码 */
+    specification_name CHAR(128),           /* 规格名称 */
     brand              CHAR(64),            /* 品牌 */
     classification_1   CHAR(64),            /* 分类一 */
     classification_2   CHAR(64),            /* 分类二 */
@@ -15,11 +16,9 @@ CREATE TABLE IF NOT EXISTS ggfilm.products (
     is_combined        CHAR(32) ,           /* 是否是组合商品 */
     be_aggregated      CHAR(32) ,           /* 是否参与统计 */
     is_import          CHAR(32) ,           /* 是否是进口商品 */
-    supplier_code      CHAR(64),            /* 供应商编号 */
+    supplier_name      CHAR(128),           /* 供应商名称 */
     purchase_name      CHAR(128),           /* 采购名称 */
-    extra_info         TEXT,                /* 拓展字段 */
-    create_time        DATETIME   DEFAULT CURRENT_TIMESTAMP(),
-    update_time        DATETIME   DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP(),
+    jit_inventory      INT,                 /* 即时库存 */
     PRIMARY KEY (id),
-    KEY (product_code)
+    KEY (product_code, specification_code)
 ) ENGINE=InnoDB;
