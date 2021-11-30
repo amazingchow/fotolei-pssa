@@ -6,6 +6,7 @@ logger = logging.getLogger(__name__)
 import os
 import sys
 sys.path.append(os.path.abspath("./db"))
+import time
 
 from collections import defaultdict
 SKU_LOOKUP_TABLE = defaultdict(bool)
@@ -88,9 +89,12 @@ def import_jit_inventory_csv_file():
                 if not SKU_LOOKUP_TABLE.get(row[0], False):
                     not_inserted_sku_list.append(row[0])
                 else:
-                    sku_inventory_tuple_list.append((row[0], row[1]))
+                    sku_inventory_tuple_list.append((row[1], row[0]))
     logger.info("Update for {} SKUs".format(len(sku_inventory_tuple_list)))
     logger.info("There are {} SKUs not inserted".format(len(not_inserted_sku_list)))
+
+    stmt = "UPDATE ggfilm.products SET jit_inventory = %s WHERE specification_code = %s;"
+    DBConnector.batch_update(stmt, sku_inventory_tuple_list)
 
     response_object = {"status": "success"}
     if len(not_inserted_sku_list) > 0:
@@ -108,7 +112,16 @@ def export_added_skus_csv_file():
     payload = request.get_json()
     added_skus = payload.get("added_skus")
     logger.info("Added SKUs {}".format(len(added_skus)))
+
+    csv_file = "{}/ggfilm/added_skus/新增SKU_{}.csv".format(os.path.expanduser("~"), int(time.time()))
+    with open(csv_file, "w") as fd:
+        csv_writer = csv.writer(fd, delimiter=",")
+        csv_writer.writerow(["新增SKU"])
+        for sku in added_skus:
+            csv_writer.writerow([sku])
+
     response_object = {"status": "success"}
+    response_object["output_file"] = csv_file
     return jsonify(response_object)
 
 
