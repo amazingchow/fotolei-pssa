@@ -59,20 +59,25 @@
           </b-tbody>
           <b-tfoot id="product-table-footer">
             <b-tr>
-              <b-td colspan="19" variant="secondary">总共录入<b>{{ products_total }}</b>条记录, 当前展示<b>20</b>条记录</b-td>
+              <b-td colspan="19" variant="secondary">总共录入<b>{{ productsTotal }}</b>条记录, 当前展示<b>20</b>条记录</b-td>
             </b-tr>
           </b-tfoot>
         </b-table-simple>
         <div id="pagination-btn-area">
           <button class="btn btn-success btn-sm" :disabled="pageOffset==0" v-on:click="onPrevPage">前一页</button>
-          <button class="btn btn-success btn-sm" v-on:click="onNextPage">后一页</button>
+          <button class="btn btn-success btn-sm" :disabled="pageOffset==pageOffsetMax" v-on:click="onNextPage">后一页</button>
         </div>
       </div>
     </div>
     <b-modal ref="importProductCSVFileModal" id="product-csv-file-modal" title="导入商品数据" hide-footer>
       <b-form @submit="onImportProduct" @reset="onCancelImportProduct">
-        <b-form-group id="form-product-csv-file-group" label-for="form-product-csv-file-input">
-            <b-form-input id="form-product-csv-file-input" type="text" v-model="importProductCSVFileForm.file" required placeholder="请选择UTF-8编码的CSV文件"></b-form-input>
+        <b-form-group>
+          <b-form-file
+            accept=".csv"
+            v-model="importProductCSVFileForm.file"
+            :state="Boolean(importProductCSVFileForm.file)"
+            placeholder="请选择UTF-8编码的CSV文件">
+          </b-form-file>
         </b-form-group>
         <br/>
         <b-button-group id="product-table-operate-btn" class="w-100 d-block">
@@ -83,8 +88,13 @@
     </b-modal>
     <b-modal ref="importJITInventoryCSVFileModal" id="jit-inventory-csv-file-modal" title="导入即时库存" hide-footer>
       <b-form @submit="onImportJITInventory" @reset="onCancelImportJITInventory">
-        <b-form-group id="form-jit-inventory-csv-file-group" label-for="form-jit-inventory-csv-file-input">
-            <b-form-input id="form-jit-inventory-csv-file-input" type="text" v-model="importJITInventoryCSVFileForm.file" required placeholder="请选择UTF-8编码的CSV文件"></b-form-input>
+        <b-form-group>
+          <b-form-file
+            accept=".csv"
+            v-model="importJITInventoryCSVFileForm.file"
+            :state="Boolean(importJITInventoryCSVFileForm.file)"
+            placeholder="请选择UTF-8编码的CSV文件">
+          </b-form-file>
         </b-form-group>
         <br/>
         <b-button-group id="product-table-operate-btn" class="w-100 d-block">
@@ -97,7 +107,7 @@
       <div class="px-3 py-2">
         <b-table-simple striped hover small id="added-skus-table">
           <b-tbody>
-            <b-tr v-for="(sku, index) in added_skus" :key="index">
+            <b-tr v-for="(sku, index) in addedSkus" :key="index">
               <b-td>{{ sku }}</b-td>
             </b-tr>
           </b-tbody>
@@ -160,15 +170,16 @@ export default {
   data () {
     return {
       products: [],
-      products_total: '0',
+      productsTotal: 0,
       shouldOpenSidebar: false,
-      added_skus: [],
+      addedSkus: [],
       pageOffset: 0,
+      pageOffsetMax: 0,
       importProductCSVFileForm: {
-        file: ''
+        file: null
       },
       importJITInventoryCSVFileForm: {
-        file: ''
+        file: null
       },
       message: '',
       showMessage: false
@@ -193,7 +204,9 @@ export default {
     getProductsTotal () {
       axios.get('http://localhost:5000/api/v1/products/total')
         .then((res) => {
-          this.products_total = res.data.products_total
+          this.productsTotal = parseInt(res.data.products_total)
+          this.pageOffsetMax = this.productsTotal - this.productsTotal % 20
+          console.log(this.pageOffsetMax)
         })
         .catch((error) => {
           // eslint-disable-next-line
@@ -223,7 +236,7 @@ export default {
           if (res.data.added_skus.length > 0) {
             this.message = '导入成功，同时有新增SKU'
             this.showMessage = true
-            this.added_skus = res.data.added_skus
+            this.addedSkus = res.data.added_skus
             this.shouldOpenSidebar = true
           } else {
             this.listProducts()
@@ -240,8 +253,8 @@ export default {
     },
     downloadAddedSKUs (payload) {
       axios.post('http://localhost:5000/api/v1/addedskus/download', payload)
-        .then(() => {
-          this.message = '下载成功!'
+        .then((res) => {
+          this.message = '下载成功! 保存在' + res.data.output_file + '.'
           this.showMessage = true
         })
         .catch((error) => {
@@ -252,14 +265,14 @@ export default {
         })
     },
     initImportForm () {
-      this.importProductCSVFileForm.file = ''
-      this.importJITInventoryCSVFileForm.file = ''
+      this.importProductCSVFileForm.file = null
+      this.importJITInventoryCSVFileForm.file = null
     },
     onImportProduct (evt) {
       evt.preventDefault()
       this.$refs.importProductCSVFileModal.hide()
       const payload = {
-        file: this.importProductCSVFileForm.file
+        file: this.importProductCSVFileForm.file.name
       }
       this.importProductCSVFile(payload)
       this.initImportForm()
@@ -273,7 +286,7 @@ export default {
       evt.preventDefault()
       this.$refs.importJITInventoryCSVFileModal.hide()
       const payload = {
-        file: this.importJITInventoryCSVFileForm.file
+        file: this.importJITInventoryCSVFileForm.file.name
       }
       this.importJITInventoryCSVFile(payload)
       this.initImportForm()
@@ -286,16 +299,16 @@ export default {
     onDownloadAddedSKUs (evt) {
       evt.preventDefault()
       const payload = {
-        added_skus: this.added_skus
+        added_skus: this.addedSkus
       }
       this.downloadAddedSKUs(payload)
       this.shouldOpenSidebar = false
-      this.added_skus = []
+      this.addedSkus = []
     },
     onCancelDownloadAddedSKUs (evt) {
       evt.preventDefault()
       this.shouldOpenSidebar = false
-      this.added_skus = []
+      this.addedSkus = []
     },
     onPrevPage (evt) {
       evt.preventDefault()
