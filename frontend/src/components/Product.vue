@@ -93,6 +93,21 @@
         </b-button-group>
       </b-form>
     </b-modal>
+    <b-sidebar id="added-skus-sidebar" title="新增SKU清单" v-model="shouldOpenSidebar" right shadow>
+      <div class="px-3 py-2">
+        <b-table-simple striped hover small id="added-skus-table">
+          <b-tbody>
+            <b-tr v-for="(sku, index) in added_skus" :key="index">
+              <b-td>{{ sku }}</b-td>
+            </b-tr>
+          </b-tbody>
+        </b-table-simple>
+        <b-button-group id="added-skus-table-operate-btn" class="w-100 d-block">
+          <b-button variant="dark" @click="onDownloadAddedSKUs">下载</b-button>
+          <b-button variant="dark" @click="onCancelDownloadAddedSKUs">取消</b-button>
+        </b-button-group>
+      </div>
+    </b-sidebar>
   </div>
 </template>
 
@@ -112,11 +127,27 @@
   text-align: right;
 }
 
+#added-skus-table {
+  border: 2px solid black !important;
+  font-size: small;
+  table-layout: fixed !important;
+}
+
+#added-skus-table tbody tr td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 #pagination-btn-area {
   text-align: center;
 }
 
 #product-table-operate-btn {
+  text-align: right;
+}
+
+#added-skus-table-operate-btn {
   text-align: right;
 }
 </style>
@@ -130,6 +161,8 @@ export default {
     return {
       products: [],
       products_total: '0',
+      shouldOpenSidebar: false,
+      added_skus: [],
       pageOffset: 0,
       importProductCSVFileForm: {
         file: ''
@@ -186,15 +219,35 @@ export default {
     },
     importJITInventoryCSVFile (payload) {
       axios.post('http://localhost:5000/api/v1/jitinventory/import', payload)
-        .then(() => {
-          this.listProducts()
-          this.message = '导入成功!'
-          this.showMessage = true
+        .then((res) => {
+          if (res.data.added_skus.length > 0) {
+            this.message = '导入成功，同时有新增SKU'
+            this.showMessage = true
+            this.added_skus = res.data.added_skus
+            this.shouldOpenSidebar = true
+          } else {
+            this.listProducts()
+            this.message = '导入成功!'
+            this.showMessage = true
+          }
         })
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
           this.message = '导入失败!'
+          this.showMessage = true
+        })
+    },
+    downloadAddedSKUs (payload) {
+      axios.post('http://localhost:5000/api/v1/addedskus/download', payload)
+        .then(() => {
+          this.message = '下载成功!'
+          this.showMessage = true
+        })
+        .catch((error) => {
+          // eslint-disable-next-line
+          console.log(error)
+          this.message = '下载失败!'
           this.showMessage = true
         })
     },
@@ -229,6 +282,20 @@ export default {
       evt.preventDefault()
       this.$refs.importJITInventoryCSVFileModal.hide()
       this.initImportForm()
+    },
+    onDownloadAddedSKUs (evt) {
+      evt.preventDefault()
+      const payload = {
+        added_skus: this.added_skus
+      }
+      this.downloadAddedSKUs(payload)
+      this.shouldOpenSidebar = false
+      this.added_skus = []
+    },
+    onCancelDownloadAddedSKUs (evt) {
+      evt.preventDefault()
+      this.shouldOpenSidebar = false
+      this.added_skus = []
     },
     onPrevPage (evt) {
       evt.preventDefault()
