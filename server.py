@@ -7,6 +7,8 @@ import os
 import sys
 sys.path.append(os.path.abspath("./db"))
 
+from collections import defaultdict
+SKU_LOOKUP_TABLE = defaultdict(bool)
 from db.mysqlcli import MySQLConnector
 DBConnector = object()
 from flask import Flask, jsonify, request
@@ -39,22 +41,73 @@ def import_products_csv_file():
         """ENCLOSED BY '"' """ +
         "LINES TERMINATED BY '\n' " +
         "IGNORE 1 LINES " +
-        "(product_code, product_name, specification_code, " +
-        "brand, classification_1, classification_2, " +
-        "product_series, stop_status, product_weight, " +
-        "product_length, product_width, product_hight, " +
+        "(product_code, specification_code, product_name, specification_name, " +
+        "brand, classification_1, classification_2, product_series, stop_status, " +
+        "product_weight, product_length, product_width, product_hight, " +
         "is_combined, be_aggregated, is_import, " +
-        "supplier_code, purchase_name, extra_info);"
+        "supplier_name, purchase_name, jit_inventory);"
     )
 
+    stmt = "SELECT specification_code FROM ggfilm.products;"
+    rets = DBConnector.query(stmt)
+    SKU_LOOKUP_TABLE.clear()
+    for ret in rets:
+        SKU_LOOKUP_TABLE[ret[0]] = True
+    logger.info("Insert {} SKUs into SKU_LOOKUP_TABLE!!!".format(len(SKU_LOOKUP_TABLE)))
+
     with open(csv_file, "r") as fd:
-        csv_reader = csv.reader(fd)
+        csv_reader = csv.reader(fd, delimiter=",")
         for _ in csv_reader:
             pass
         stmt = "INSERT INTO ggfilm.product_summary (total) VALUES (%s);"
         DBConnector.insert(stmt, (csv_reader.line_num - 1,))
         logger.info("There {} records have been inserted!!!".format(csv_reader.line_num - 1))
 
+    response_object = {"status": "success"}
+    return jsonify(response_object)
+
+
+# 载入即时库存报表的接口
+# curl -X POST -H 'Content-Type: application/json' -d '{"file": "~/jit-inventory/实时库存.csv"}' http://127.0.0.1:5000/api/v1/jitinventory/import
+@app.route("/api/v1/jitinventory/import", methods=["POST"])
+def import_jit_inventory_csv_file():
+    payload = request.get_json()
+    csv_file = payload.get("file")
+    logger.info("Load data from {}".format(csv_file))
+
+    sku_inventory_tuple_list = []
+    not_inserted_sku_list = []
+    with open(csv_file, "r") as fd:
+        csv_reader = csv.reader(fd, delimiter=",")
+        line = 0
+        for row in csv_reader:
+            if line == 0:
+                line += 1
+            else:
+                line += 1
+                if not SKU_LOOKUP_TABLE.get(row[0], False):
+                    not_inserted_sku_list.append(row[0])
+                else:
+                    sku_inventory_tuple_list.append((row[0], row[1]))
+    logger.info("Update for {} SKUs".format(len(sku_inventory_tuple_list)))
+    logger.info("There are {} SKUs not inserted".format(len(not_inserted_sku_list)))
+
+    response_object = {"status": "success"}
+    if len(not_inserted_sku_list) > 0:
+        # 新增sku，需要向用户展示
+        response_object["added_skus"] = not_inserted_sku_list
+    else:
+        response_object["added_skus"] = []
+    return jsonify(response_object)
+
+
+# 下载新增SKU数据表的接口
+# curl -X POST -H 'Content-Type: application/json' -d '{"added_skus": ["xxx", "yyy", "zzz"]}' http://127.0.0.1:5000/api/v1/addedskus/download
+@app.route("/api/v1/addedskus/download", methods=["POST"])
+def export_added_skus_csv_file():
+    payload = request.get_json()
+    added_skus = payload.get("added_skus")
+    logger.info("Added SKUs {}".format(len(added_skus)))
     response_object = {"status": "success"}
     return jsonify(response_object)
 
@@ -93,10 +146,10 @@ def products_total():
     stmt = "SELECT SUM(total) FROM ggfilm.product_summary;"
     ret = DBConnector.query(stmt)
     response_object = {"status": "success"}
-    if len(ret) == 0:
-        response_object["products_total"] = "0"
-    else:
+    if type(ret) is list and len(ret) > 0:
         response_object["products_total"] = ret[0][0]
+    else:
+        response_object["products_total"] = "0"
     return jsonify(response_object)
 
 
@@ -107,12 +160,11 @@ def products():
     page_offset = request.args.get("page.offset")
     page_limit = request.args.get("page.limit")
 
-    stmt = "SELECT product_code, product_name, specification_code, \
-        brand, classification_1, classification_2, \
-        product_series, stop_status, product_weight, \
-        product_length, product_width, product_hight, \
+    stmt = "SELECT product_code, specification_code, product_name, specification_name, \
+        brand, classification_1, classification_2, product_series, stop_status, \
+        product_weight, product_length, product_width, product_hight, \
         is_combined, be_aggregated, is_import, \
-        supplier_code, purchase_name \
+        supplier_name, purchase_name, jit_inventory \
         FROM ggfilm.products ORDER BY 'id' DESC LIMIT {}, {};".format(
         page_offset, page_limit)
     products = DBConnector.query(stmt)
@@ -191,6 +243,14 @@ def export_report_file_case6():
 if __name__ == "__main__":
     DBConnector = MySQLConnector.instance()
     DBConnector.init_conn("ggfilm")
+
+    stmt = "SELECT specification_code FROM ggfilm.products;"
+    rets = DBConnector.query(stmt)
+    if type(rets) is list and len(rets) > 0:
+        for ret in rets:
+            SKU_LOOKUP_TABLE[ret[0]] = True
+        logger.info("Insert {} SKUs into SKU_LOOKUP_TABLE!!!".format(len(SKU_LOOKUP_TABLE)))
+
     app.run(debug=True)
     DBConnector.release_conn()
     

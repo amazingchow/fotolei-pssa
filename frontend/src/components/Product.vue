@@ -6,55 +6,60 @@
         <hr>
         <alert :message=message v-if="showMessage"></alert>
         <div id="import-and-export-btn-area">
-          <button type="button" class="btn btn-success btn-sm" v-b-modal.csv-file-modal>导入商品数据</button>
+          <button type="button" class="btn btn-success btn-sm" v-b-modal.product-csv-file-modal>导入商品数据</button>
+          <button type="button" class="btn btn-success btn-sm" v-b-modal.jit-inventory-csv-file-modal>导入即时库存</button>
         </div>
         <br/>
         <b-table-simple striped hover small id="product-table">
           <b-thead>
             <b-tr>
               <b-th scope="col">商品编号</b-th>
-              <b-th scope="col">商品名称</b-th>
               <b-th scope="col">规格编号</b-th>
+              <b-th scope="col">商品名称</b-th>
+              <b-th scope="col">规格名称</b-th>
               <b-th scope="col">品牌</b-th>
-              <b-th scope="col">分类一</b-th>
-              <b-th scope="col">分类二</b-th>
-              <b-th scope="col">商品系列</b-th>
+              <b-th scope="col">分类1</b-th>
+              <b-th scope="col">分类2</b-th>
+              <b-th scope="col">产品系列</b-th>
               <b-th scope="col">STOP状态?</b-th>
-              <b-th scope="col">商品重量/g</b-th>
-              <b-th scope="col">商品长度/cm</b-th>
-              <b-th scope="col">商品宽度/cm</b-th>
-              <b-th scope="col">商品高度/cm</b-th>
+              <b-th scope="col">重量/g</b-th>
+              <b-th scope="col">长度/cm</b-th>
+              <b-th scope="col">宽度/cm</b-th>
+              <b-th scope="col">高度/cm</b-th>
               <b-th scope="col">组合商品?</b-th>
               <b-th scope="col">参与统计?</b-th>
               <b-th scope="col">进口商品?</b-th>
-              <b-th scope="col">供应商编号</b-th>
+              <b-th scope="col">供应商名称</b-th>
               <b-th scope="col">采购名称</b-th>
+              <b-th scope="col">即时库存</b-th>
             </b-tr>
           </b-thead>
           <b-tbody>
-            <b-tr v-for="(products, index) in products" :key="index">
-              <b-td>{{ products[0] }}</b-td>
-              <b-td>{{ products[1] }}</b-td>
-              <b-td>{{ products[2] }}</b-td>
-              <b-td>{{ products[3] }}</b-td>
-              <b-td>{{ products[4] }}</b-td>
-              <b-td>{{ products[5] }}</b-td>
-              <b-td>{{ products[6] }}</b-td>
-              <b-td>{{ products[7] }}</b-td>
-              <b-td>{{ products[8] }}</b-td>
-              <b-td>{{ products[9] }}</b-td>
-              <b-td>{{ products[10] }}</b-td>
-              <b-td>{{ products[11] }}</b-td>
-              <b-td>{{ products[12] }}</b-td>
-              <b-td>{{ products[13] }}</b-td>
-              <b-td>{{ products[14] }}</b-td>
-              <b-td>{{ products[15] }}</b-td>
-              <b-td>{{ products[16] }}</b-td>
+            <b-tr v-for="(product, index) in products" :key="index">
+              <b-td>{{ product[0] }}</b-td>
+              <b-td>{{ product[1] }}</b-td>
+              <b-td>{{ product[2] }}</b-td>
+              <b-td>{{ product[3] }}</b-td>
+              <b-td>{{ product[4] }}</b-td>
+              <b-td>{{ product[5] }}</b-td>
+              <b-td>{{ product[6] }}</b-td>
+              <b-td>{{ product[7] }}</b-td>
+              <b-td>{{ product[8] }}</b-td>
+              <b-td>{{ product[9] }}</b-td>
+              <b-td>{{ product[10] }}</b-td>
+              <b-td>{{ product[11] }}</b-td>
+              <b-td>{{ product[12] }}</b-td>
+              <b-td>{{ product[13] }}</b-td>
+              <b-td>{{ product[14] }}</b-td>
+              <b-td>{{ product[15] }}</b-td>
+              <b-td>{{ product[16] }}</b-td>
+              <b-td>{{ product[17] }}</b-td>
+              <b-td>{{ product[18] }}</b-td>
             </b-tr>
           </b-tbody>
           <b-tfoot id="product-table-footer">
             <b-tr>
-              <b-td colspan="17" variant="secondary">总共录入<b>{{ products_total }}</b>条记录, 当前展示<b>20</b>条记录</b-td>
+              <b-td colspan="19" variant="secondary">总共录入<b>{{ products_total }}</b>条记录, 当前展示<b>20</b>条记录</b-td>
             </b-tr>
           </b-tfoot>
         </b-table-simple>
@@ -64,10 +69,10 @@
         </div>
       </div>
     </div>
-    <b-modal ref="importCSVFileModal" id="csv-file-modal" title="导入商品数据" hide-footer>
-      <b-form @submit="onImport" @reset="onCancel">
-        <b-form-group id="form-csv-file-group" label-for="form-csv-file-input">
-            <b-form-input id="form-csv-file-input" type="text" v-model="importCSVFileForm.file" required placeholder="请选择UTF-8编码的CSV文件"></b-form-input>
+    <b-modal ref="importProductCSVFileModal" id="product-csv-file-modal" title="导入商品数据" hide-footer>
+      <b-form @submit="onImportProduct" @reset="onCancelImportProduct">
+        <b-form-group id="form-product-csv-file-group" label-for="form-product-csv-file-input">
+            <b-form-input id="form-product-csv-file-input" type="text" v-model="importProductCSVFileForm.file" required placeholder="请选择UTF-8编码的CSV文件"></b-form-input>
         </b-form-group>
         <br/>
         <b-button-group id="product-table-operate-btn" class="w-100 d-block">
@@ -76,6 +81,33 @@
         </b-button-group>
       </b-form>
     </b-modal>
+    <b-modal ref="importJITInventoryCSVFileModal" id="jit-inventory-csv-file-modal" title="导入即时库存" hide-footer>
+      <b-form @submit="onImportJITInventory" @reset="onCancelImportJITInventory">
+        <b-form-group id="form-jit-inventory-csv-file-group" label-for="form-jit-inventory-csv-file-input">
+            <b-form-input id="form-jit-inventory-csv-file-input" type="text" v-model="importJITInventoryCSVFileForm.file" required placeholder="请选择UTF-8编码的CSV文件"></b-form-input>
+        </b-form-group>
+        <br/>
+        <b-button-group id="product-table-operate-btn" class="w-100 d-block">
+          <b-button type="submit" variant="dark">导入</b-button>
+          <b-button type="reset" variant="dark">取消</b-button>
+        </b-button-group>
+      </b-form>
+    </b-modal>
+    <b-sidebar id="added-skus-sidebar" title="新增SKU清单" v-model="shouldOpenSidebar" right shadow>
+      <div class="px-3 py-2">
+        <b-table-simple striped hover small id="added-skus-table">
+          <b-tbody>
+            <b-tr v-for="(sku, index) in added_skus" :key="index">
+              <b-td>{{ sku }}</b-td>
+            </b-tr>
+          </b-tbody>
+        </b-table-simple>
+        <b-button-group id="added-skus-table-operate-btn" class="w-100 d-block">
+          <b-button variant="dark" @click="onDownloadAddedSKUs">下载</b-button>
+          <b-button variant="dark" @click="onCancelDownloadAddedSKUs">取消</b-button>
+        </b-button-group>
+      </div>
+    </b-sidebar>
   </div>
 </template>
 
@@ -95,11 +127,27 @@
   text-align: right;
 }
 
+#added-skus-table {
+  border: 2px solid black !important;
+  font-size: small;
+  table-layout: fixed !important;
+}
+
+#added-skus-table tbody tr td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 #pagination-btn-area {
   text-align: center;
 }
 
 #product-table-operate-btn {
+  text-align: right;
+}
+
+#added-skus-table-operate-btn {
   text-align: right;
 }
 </style>
@@ -113,10 +161,15 @@ export default {
     return {
       products: [],
       products_total: '0',
-      importCSVFileForm: {
+      shouldOpenSidebar: false,
+      added_skus: [],
+      pageOffset: 0,
+      importProductCSVFileForm: {
         file: ''
       },
-      pageOffset: 0,
+      importJITInventoryCSVFileForm: {
+        file: ''
+      },
       message: '',
       showMessage: false
     }
@@ -149,7 +202,7 @@ export default {
           this.showMessage = true
         })
     },
-    importCSVFile (payload) {
+    importProductCSVFile (payload) {
       axios.post('http://localhost:5000/api/v1/products/import', payload)
         .then(() => {
           this.listProducts()
@@ -164,22 +217,85 @@ export default {
           this.showMessage = true
         })
     },
-    initInportForm () {
-      this.importCSVFileForm.file = ''
+    importJITInventoryCSVFile (payload) {
+      axios.post('http://localhost:5000/api/v1/jitinventory/import', payload)
+        .then((res) => {
+          if (res.data.added_skus.length > 0) {
+            this.message = '导入成功，同时有新增SKU'
+            this.showMessage = true
+            this.added_skus = res.data.added_skus
+            this.shouldOpenSidebar = true
+          } else {
+            this.listProducts()
+            this.message = '导入成功!'
+            this.showMessage = true
+          }
+        })
+        .catch((error) => {
+          // eslint-disable-next-line
+          console.log(error)
+          this.message = '导入失败!'
+          this.showMessage = true
+        })
     },
-    onImport (evt) {
+    downloadAddedSKUs (payload) {
+      axios.post('http://localhost:5000/api/v1/addedskus/download', payload)
+        .then(() => {
+          this.message = '下载成功!'
+          this.showMessage = true
+        })
+        .catch((error) => {
+          // eslint-disable-next-line
+          console.log(error)
+          this.message = '下载失败!'
+          this.showMessage = true
+        })
+    },
+    initImportForm () {
+      this.importProductCSVFileForm.file = ''
+      this.importJITInventoryCSVFileForm.file = ''
+    },
+    onImportProduct (evt) {
       evt.preventDefault()
-      this.$refs.importCSVFileModal.hide()
+      this.$refs.importProductCSVFileModal.hide()
       const payload = {
-        file: this.importCSVFileForm.file
+        file: this.importProductCSVFileForm.file
       }
-      this.importCSVFile(payload)
-      this.initInportForm()
+      this.importProductCSVFile(payload)
+      this.initImportForm()
     },
-    onCancel (evt) {
+    onCancelImportProduct (evt) {
       evt.preventDefault()
-      this.$refs.importCSVFileModal.hide()
-      this.initInportForm()
+      this.$refs.importProductCSVFileModal.hide()
+      this.initImportForm()
+    },
+    onImportJITInventory (evt) {
+      evt.preventDefault()
+      this.$refs.importJITInventoryCSVFileModal.hide()
+      const payload = {
+        file: this.importJITInventoryCSVFileForm.file
+      }
+      this.importJITInventoryCSVFile(payload)
+      this.initImportForm()
+    },
+    onCancelImportJITInventory (evt) {
+      evt.preventDefault()
+      this.$refs.importJITInventoryCSVFileModal.hide()
+      this.initImportForm()
+    },
+    onDownloadAddedSKUs (evt) {
+      evt.preventDefault()
+      const payload = {
+        added_skus: this.added_skus
+      }
+      this.downloadAddedSKUs(payload)
+      this.shouldOpenSidebar = false
+      this.added_skus = []
+    },
+    onCancelDownloadAddedSKUs (evt) {
+      evt.preventDefault()
+      this.shouldOpenSidebar = false
+      this.added_skus = []
     },
     onPrevPage (evt) {
       evt.preventDefault()
