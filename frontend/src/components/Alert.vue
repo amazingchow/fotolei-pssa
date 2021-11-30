@@ -1,11 +1,24 @@
 <template>
   <div>
-    <b-alert variant="success" show>{{ message }}</b-alert>
+    <b-alert
+      :show="dismissCountDown"
+      variant="success"
+      @dismissed="dismissCountDown=0"
+      @dismiss-count-down="countDownChanged"
+      px-2 py-1
+    >
+      {{ message }}
+    </b-alert>
   </div>
 </template>
 
 <script>
 export default {
-  props: ['message']
+  props: ['message', 'dismissCountDown'],
+  methods: {
+    countDownChanged (dismissCountDown) {
+      this.dismissCountDown = dismissCountDown
+    }
+  }
 }
 </script>

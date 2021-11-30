@@ -4,7 +4,7 @@
       <div class="col-sm-12">
         <h1>商品明细库</h1>
         <hr>
-        <alert :message=message v-if="showMessage"></alert>
+        <alert :message=message :dismissCountDown=3 v-if="showMessage"></alert>
         <div id="import-and-export-btn-area">
           <button type="button" class="btn btn-success btn-sm" v-b-modal.product-csv-file-modal>导入商品数据</button>
           <button type="button" class="btn btn-success btn-sm" v-b-modal.jit-inventory-csv-file-modal>导入即时库存</button>
