@@ -39,12 +39,11 @@ def import_products_csv_file():
         """ENCLOSED BY '"' """ +
         "LINES TERMINATED BY '\n' " +
         "IGNORE 1 LINES " +
-        "(product_code, product_name, specification_code, " +
-        "brand, classification_1, classification_2, " +
-        "product_series, stop_status, product_weight, " +
-        "product_length, product_width, product_hight, " +
+        "(product_code, specification_code, product_name, specification_name, " +
+        "brand, classification_1, classification_2, product_series, stop_status, " +
+        "product_weight, product_length, product_width, product_hight, " +
         "is_combined, be_aggregated, is_import, " +
-        "supplier_code, purchase_name, extra_info);"
+        "supplier_name, purchase_name, jit_inventory);"
     )
 
     with open(csv_file, "r") as fd:
@@ -93,10 +92,10 @@ def products_total():
     stmt = "SELECT SUM(total) FROM ggfilm.product_summary;"
     ret = DBConnector.query(stmt)
     response_object = {"status": "success"}
-    if len(ret) == 0:
-        response_object["products_total"] = "0"
-    else:
+    if type(ret) is list and len(ret) > 0:
         response_object["products_total"] = ret[0][0]
+    else:
+        response_object["products_total"] = "0"
     return jsonify(response_object)
 
 
@@ -107,12 +106,11 @@ def products():
     page_offset = request.args.get("page.offset")
     page_limit = request.args.get("page.limit")
 
-    stmt = "SELECT product_code, product_name, specification_code, \
-        brand, classification_1, classification_2, \
-        product_series, stop_status, product_weight, \
-        product_length, product_width, product_hight, \
+    stmt = "SELECT product_code, specification_code, product_name, specification_name, \
+        brand, classification_1, classification_2, product_series, stop_status, \
+        product_weight, product_length, product_width, product_hight, \
         is_combined, be_aggregated, is_import, \
-        supplier_code, purchase_name \
+        supplier_name, purchase_name, jit_inventory \
         FROM ggfilm.products ORDER BY 'id' DESC LIMIT {}, {};".format(
         page_offset, page_limit)
     products = DBConnector.query(stmt)

@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS ggfilm.inventories (
     id                         INT        NOT NULL AUTO_INCREMENT,
     product_code               CHAR(64)   NOT NULL,                    /* 商品编码 */
-    product_name               CHAR(128),                              /* 商品名称 */
+    product_name               CHAR(128)  NOT NULL,                    /* 商品名称 */
     specification_code         CHAR(64)   NOT NULL,                    /* 规格编码 */
     specification_name         CHAR(128),                              /* 规格名称 */
     st_inventory_qty           INT,                                    /* 起始库存数量 */

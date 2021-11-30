@@ -184,6 +184,7 @@ export default {
   data () {
     return {
       inventories: [],
+      pageOffset: 0,
       importCSVFileForm: {
         file: ''
       },
@@ -199,7 +200,6 @@ export default {
       exportReportFileCase5Form: {},
       // 导出体积、重量计算汇总单
       exportReportFileCase6Form: {},
-      pageOffset: 0,
       message: '',
       showMessage: false
     }
@@ -234,7 +234,7 @@ export default {
           this.showMessage = true
         })
     },
-    initInportForm () {
+    initImportForm () {
       this.importCSVFileForm.file = ''
     },
     onImport (evt) {
@@ -244,12 +244,12 @@ export default {
         file: this.importCSVFileForm.file
       }
       this.importCSVFile(payload)
-      this.initInportForm()
+      this.initImportForm()
     },
     onCancel (evt) {
       evt.preventDefault()
       this.$refs.importCSVFileModal.hide()
-      this.initInportForm()
+      this.initImportForm()
     },
     exportReportFileCase1 (payload) {
       axios.post('http://localhost:5000/api/v1/export/case1', payload)
