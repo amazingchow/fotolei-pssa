@@ -33,6 +33,7 @@ def keepalive():
 def import_products_csv_file():
     payload = request.get_json()
     csv_file = payload.get("file")
+    csv_file = "{}/ggfilm/products/{}".format(os.path.expanduser("~"), csv_file.strip())
     logger.info("Load data from {}".format(csv_file))
 
     DBConnector.load_data_infile(
@@ -74,6 +75,7 @@ def import_products_csv_file():
 def import_jit_inventory_csv_file():
     payload = request.get_json()
     csv_file = payload.get("file")
+    csv_file = "{}/ggfilm/jit_inventory/{}".format(os.path.expanduser("~"), csv_file.strip())
     logger.info("Load data from {}".format(csv_file))
 
     sku_inventory_tuple_list = []
@@ -131,6 +133,7 @@ def export_added_skus_csv_file():
 def import_inventories_csv_file():
     payload = request.get_json()
     csv_file = payload.get("file")
+    csv_file = "{}/ggfilm/inventories/{}".format(os.path.expanduser("~"), csv_file.strip())
     logger.info("Load data from {}".format(csv_file))
 
     DBConnector.load_data_infile(

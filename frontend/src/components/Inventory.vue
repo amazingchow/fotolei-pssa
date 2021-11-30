@@ -90,8 +90,13 @@
     </div>
     <b-modal ref="importCSVFileModal" id="csv-file-modal" title="导入库存数据" hide-footer>
       <b-form @submit="onImport" @reset="onCancel">
-        <b-form-group id="form-csv-file-group" label-for="form-csv-file-input">
-            <b-form-input id="form-csv-file-input" type="text" v-model="importCSVFileForm.file" required placeholder="请选择UTF-8编码的CSV文件"></b-form-input>
+        <b-form-group>
+          <b-form-file
+            accept=".csv"
+            v-model="importCSVFileForm.file"
+            :state="Boolean(importCSVFileForm.file)"
+            placeholder="请选择UTF-8编码的CSV文件">
+          </b-form-file>
         </b-form-group>
         <br/>
         <b-button-group id="inventory-table-operate-btn" class="w-100 d-block">
@@ -186,7 +191,7 @@ export default {
       inventories: [],
       pageOffset: 0,
       importCSVFileForm: {
-        file: ''
+        file: null
       },
       // 导出销售报表（按分类汇总）
       exportReportFileCase1Form: {},
@@ -235,13 +240,13 @@ export default {
         })
     },
     initImportForm () {
-      this.importCSVFileForm.file = ''
+      this.importCSVFileForm.file = null
     },
     onImport (evt) {
       evt.preventDefault()
       this.$refs.importCSVFileModal.hide()
       const payload = {
-        file: this.importCSVFileForm.file
+        file: this.importCSVFileForm.file.name
       }
       this.importCSVFile(payload)
       this.initImportForm()

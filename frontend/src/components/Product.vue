@@ -4,7 +4,7 @@
       <div class="col-sm-12">
         <h1>商品明细库</h1>
         <hr>
-        <alert :message=message :dismissCountDown=3 v-if="showMessage"></alert>
+        <alert :message=message v-if="showMessage"></alert>
         <div id="import-and-export-btn-area">
           <button type="button" class="btn btn-success btn-sm" v-b-modal.product-csv-file-modal>导入商品数据</button>
           <button type="button" class="btn btn-success btn-sm" v-b-modal.jit-inventory-csv-file-modal>导入即时库存</button>
@@ -71,8 +71,13 @@
     </div>
     <b-modal ref="importProductCSVFileModal" id="product-csv-file-modal" title="导入商品数据" hide-footer>
       <b-form @submit="onImportProduct" @reset="onCancelImportProduct">
-        <b-form-group id="form-product-csv-file-group" label-for="form-product-csv-file-input">
-            <b-form-input id="form-product-csv-file-input" type="text" v-model="importProductCSVFileForm.file" required placeholder="请选择UTF-8编码的CSV文件"></b-form-input>
+        <b-form-group>
+          <b-form-file
+            accept=".csv"
+            v-model="importProductCSVFileForm.file"
+            :state="Boolean(importProductCSVFileForm.file)"
+            placeholder="请选择UTF-8编码的CSV文件">
+          </b-form-file>
         </b-form-group>
         <br/>
         <b-button-group id="product-table-operate-btn" class="w-100 d-block">
@@ -83,8 +88,13 @@
     </b-modal>
     <b-modal ref="importJITInventoryCSVFileModal" id="jit-inventory-csv-file-modal" title="导入即时库存" hide-footer>
       <b-form @submit="onImportJITInventory" @reset="onCancelImportJITInventory">
-        <b-form-group id="form-jit-inventory-csv-file-group" label-for="form-jit-inventory-csv-file-input">
-            <b-form-input id="form-jit-inventory-csv-file-input" type="text" v-model="importJITInventoryCSVFileForm.file" required placeholder="请选择UTF-8编码的CSV文件"></b-form-input>
+        <b-form-group>
+          <b-form-file
+            accept=".csv"
+            v-model="importJITInventoryCSVFileForm.file"
+            :state="Boolean(importJITInventoryCSVFileForm.file)"
+            placeholder="请选择UTF-8编码的CSV文件">
+          </b-form-file>
         </b-form-group>
         <br/>
         <b-button-group id="product-table-operate-btn" class="w-100 d-block">
@@ -166,10 +176,10 @@ export default {
       pageOffset: 0,
       pageOffsetMax: 0,
       importProductCSVFileForm: {
-        file: ''
+        file: null
       },
       importJITInventoryCSVFileForm: {
-        file: ''
+        file: null
       },
       message: '',
       showMessage: false
@@ -255,14 +265,14 @@ export default {
         })
     },
     initImportForm () {
-      this.importProductCSVFileForm.file = ''
-      this.importJITInventoryCSVFileForm.file = ''
+      this.importProductCSVFileForm.file = null
+      this.importJITInventoryCSVFileForm.file = null
     },
     onImportProduct (evt) {
       evt.preventDefault()
       this.$refs.importProductCSVFileModal.hide()
       const payload = {
-        file: this.importProductCSVFileForm.file
+        file: this.importProductCSVFileForm.file.name
       }
       this.importProductCSVFile(payload)
       this.initImportForm()
@@ -276,7 +286,7 @@ export default {
       evt.preventDefault()
       this.$refs.importJITInventoryCSVFileModal.hide()
       const payload = {
-        file: this.importJITInventoryCSVFileForm.file
+        file: this.importJITInventoryCSVFileForm.file.name
       }
       this.importJITInventoryCSVFile(payload)
       this.initImportForm()
