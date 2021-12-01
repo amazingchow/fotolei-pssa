@@ -74,8 +74,8 @@
         <b-form-group>
           <b-form-file
             accept=".csv"
-            v-model="importProductCSVFileForm.file"
-            :state="Boolean(importProductCSVFileForm.file)"
+            v-model="uploadProductCSVFile"
+            :state="Boolean(uploadProductCSVFile)"
             placeholder="请选择UTF-8编码的CSV文件">
           </b-form-file>
         </b-form-group>
@@ -91,8 +91,8 @@
         <b-form-group>
           <b-form-file
             accept=".csv"
-            v-model="importJITInventoryCSVFileForm.file"
-            :state="Boolean(importJITInventoryCSVFileForm.file)"
+            v-model="uploadJITInventoryCSVFile"
+            :state="Boolean(uploadJITInventoryCSVFile)"
             placeholder="请选择UTF-8编码的CSV文件">
           </b-form-file>
         </b-form-group>
@@ -175,12 +175,8 @@ export default {
       addedSkus: [],
       pageOffset: 0,
       pageOffsetMax: 0,
-      importProductCSVFileForm: {
-        file: null
-      },
-      importJITInventoryCSVFileForm: {
-        file: null
-      },
+      uploadProductCSVFile: null,
+      uploadJITInventoryCSVFile: null,
       message: '',
       showMessage: false
     }
@@ -206,7 +202,6 @@ export default {
         .then((res) => {
           this.productsTotal = parseInt(res.data.products_total)
           this.pageOffsetMax = this.productsTotal - this.productsTotal % 20
-          console.log(this.pageOffsetMax)
         })
         .catch((error) => {
           // eslint-disable-next-line
@@ -215,8 +210,13 @@ export default {
           this.showMessage = true
         })
     },
-    importProductCSVFile (payload) {
-      axios.post('http://localhost:5000/api/v1/products/import', payload)
+    importProductCSVFile (formData) {
+      let config = {
+        header: {
+          'Content-Type': 'multipart/form-data'
+        }
+      }
+      axios.post('http://localhost:5000/api/v1/products/upload', formData, config)
         .then(() => {
           this.listProducts()
           this.getProductsTotal()
@@ -230,8 +230,13 @@ export default {
           this.showMessage = true
         })
     },
-    importJITInventoryCSVFile (payload) {
-      axios.post('http://localhost:5000/api/v1/jitinventory/import', payload)
+    importJITInventoryCSVFile (formData) {
+      let config = {
+        header: {
+          'Content-Type': 'multipart/form-data'
+        }
+      }
+      axios.post('http://localhost:5000/api/v1/jitinventory/upload', formData, config)
         .then((res) => {
           if (res.data.added_skus.length > 0) {
             this.message = '导入成功，同时有新增SKU'
@@ -264,37 +269,27 @@ export default {
           this.showMessage = true
         })
     },
-    initImportForm () {
-      this.importProductCSVFileForm.file = null
-      this.importJITInventoryCSVFileForm.file = null
-    },
     onImportProduct (evt) {
       evt.preventDefault()
       this.$refs.importProductCSVFileModal.hide()
-      const payload = {
-        file: this.importProductCSVFileForm.file.name
-      }
-      this.importProductCSVFile(payload)
-      this.initImportForm()
+      let formData = new FormData()
+      formData.append('file', this.uploadProductCSVFile, this.uploadProductCSVFile.name)
+      this.importProductCSVFile(formData)
     },
     onCancelImportProduct (evt) {
       evt.preventDefault()
       this.$refs.importProductCSVFileModal.hide()
-      this.initImportForm()
     },
     onImportJITInventory (evt) {
       evt.preventDefault()
       this.$refs.importJITInventoryCSVFileModal.hide()
-      const payload = {
-        file: this.importJITInventoryCSVFileForm.file.name
-      }
-      this.importJITInventoryCSVFile(payload)
-      this.initImportForm()
+      let formData = new FormData()
+      formData.append('file', this.uploadJITInventoryCSVFile, this.uploadJITInventoryCSVFile.name)
+      this.importJITInventoryCSVFile(formData)
     },
     onCancelImportJITInventory (evt) {
       evt.preventDefault()
       this.$refs.importJITInventoryCSVFileModal.hide()
-      this.initImportForm()
     },
     onDownloadAddedSKUs (evt) {
       evt.preventDefault()

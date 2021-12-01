@@ -28,12 +28,14 @@ def keepalive():
 
 
 # 载入商品数据报表的接口
-# curl -X POST -H 'Content-Type: application/json' -d '{"file": "~/products/产品目录.csv"}' http://127.0.0.1:5000/api/v1/products/import
-@app.route("/api/v1/products/import", methods=["POST"])
+# curl -X POST -H 'Content-Type: application/json' -d '{"file": "~/products/产品目录.csv"}' http://127.0.0.1:5000/api/v1/products/upload
+@app.route("/api/v1/products/upload", methods=["POST"])
 def import_products_csv_file():
-    payload = request.get_json()
-    csv_file = payload.get("file")
-    csv_file = "{}/ggfilm/products/{}".format(os.path.expanduser("~"), csv_file.strip())
+    csv_files = request.files.getlist("file")
+    csv_file = "{}/ggfilm-server/products/{}_{}".format(
+        os.path.expanduser("~"), int(time.time()), csv_files[0].filename
+    )
+    csv_files[0].save(csv_file)
     logger.info("Load data from {}".format(csv_file))
 
     DBConnector.load_data_infile(
@@ -70,12 +72,14 @@ def import_products_csv_file():
 
 
 # 载入即时库存报表的接口
-# curl -X POST -H 'Content-Type: application/json' -d '{"file": "~/jit-inventory/实时库存.csv"}' http://127.0.0.1:5000/api/v1/jitinventory/import
-@app.route("/api/v1/jitinventory/import", methods=["POST"])
+# curl -X POST -H 'Content-Type: application/json' -d '{"file": "~/jit-inventory/实时库存.csv"}' http://127.0.0.1:5000/api/v1/jitinventory/upload
+@app.route("/api/v1/jitinventory/upload", methods=["POST"])
 def import_jit_inventory_csv_file():
-    payload = request.get_json()
-    csv_file = payload.get("file")
-    csv_file = "{}/ggfilm/jit_inventory/{}".format(os.path.expanduser("~"), csv_file.strip())
+    csv_files = request.files.getlist("file")
+    csv_file = "{}/ggfilm-server/jit_inventory/{}_{}".format(
+        os.path.expanduser("~"), int(time.time()), csv_files[0].filename
+    )
+    csv_files[0].save(csv_file)
     logger.info("Load data from {}".format(csv_file))
 
     sku_inventory_tuple_list = []
@@ -115,7 +119,7 @@ def export_added_skus_csv_file():
     added_skus = payload.get("added_skus")
     logger.info("Added SKUs {}".format(len(added_skus)))
 
-    csv_file = "{}/ggfilm/added_skus/新增SKU_{}.csv".format(os.path.expanduser("~"), int(time.time()))
+    csv_file = "{}/ggfilm-server/added_skus/新增SKU_{}.csv".format(os.path.expanduser("~"), int(time.time()))
     with open(csv_file, "w") as fd:
         csv_writer = csv.writer(fd, delimiter=",")
         csv_writer.writerow(["新增SKU"])
@@ -128,12 +132,14 @@ def export_added_skus_csv_file():
 
 
 # 载入库存数据报表的接口
-# curl -X POST -H 'Content-Type: application/json' -d '{"file": "~/inventories/产品目录.csv"}' http://127.0.0.1:5000/api/v1/inventories/import
-@app.route("/api/v1/inventories/import", methods=["POST"])
+# curl -X POST -H 'Content-Type: application/json' -d '{"file": "~/inventories/产品目录.csv"}' http://127.0.0.1:5000/api/v1/inventories/upload
+@app.route("/api/v1/inventories/upload", methods=["POST"])
 def import_inventories_csv_file():
-    payload = request.get_json()
-    csv_file = payload.get("file")
-    csv_file = "{}/ggfilm/inventories/{}".format(os.path.expanduser("~"), csv_file.strip())
+    csv_files = request.files.getlist("file")
+    csv_file = "{}/ggfilm-server/inventories/{}_{}".format(
+        os.path.expanduser("~"), int(time.time()), csv_files[0].filename
+    )
+    csv_files[0].save(csv_file)
     logger.info("Load data from {}".format(csv_file))
 
     DBConnector.load_data_infile(

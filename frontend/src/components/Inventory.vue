@@ -93,8 +93,8 @@
         <b-form-group>
           <b-form-file
             accept=".csv"
-            v-model="importCSVFileForm.file"
-            :state="Boolean(importCSVFileForm.file)"
+            v-model="uploadCSVFile"
+            :state="Boolean(uploadCSVFile)"
             placeholder="请选择UTF-8编码的CSV文件">
           </b-form-file>
         </b-form-group>
@@ -190,9 +190,7 @@ export default {
     return {
       inventories: [],
       pageOffset: 0,
-      importCSVFileForm: {
-        file: null
-      },
+      uploadCSVFile: null,
       // 导出销售报表（按分类汇总）
       exportReportFileCase1Form: {},
       // 导出销售报表（按系列汇总）
@@ -225,8 +223,13 @@ export default {
           this.showMessage = true
         })
     },
-    importCSVFile (payload) {
-      axios.post('http://localhost:5000/api/v1/inventories/import', payload)
+    importCSVFile (formData) {
+      let config = {
+        header: {
+          'Content-Type': 'multipart/form-data'
+        }
+      }
+      axios.post('http://localhost:5000/api/v1/inventories/upload', formData, config)
         .then(() => {
           this.listInventories()
           this.message = '导入成功!'
@@ -239,22 +242,16 @@ export default {
           this.showMessage = true
         })
     },
-    initImportForm () {
-      this.importCSVFileForm.file = null
-    },
     onImport (evt) {
       evt.preventDefault()
       this.$refs.importCSVFileModal.hide()
-      const payload = {
-        file: this.importCSVFileForm.file.name
-      }
-      this.importCSVFile(payload)
-      this.initImportForm()
+      let formData = new FormData()
+      formData.append('file', this.uploadCSVFile, this.uploadCSVFile.name)
+      this.importCSVFile(formData)
     },
     onCancel (evt) {
       evt.preventDefault()
       this.$refs.importCSVFileModal.hide()
-      this.initImportForm()
     },
     exportReportFileCase1 (payload) {
       axios.post('http://localhost:5000/api/v1/export/case1', payload)
