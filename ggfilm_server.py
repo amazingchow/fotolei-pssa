@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import atexit
 import csv
 import logging
 logging.basicConfig(level=logging.DEBUG, format="[%(asctime)s][%(levelname)s] %(message)s")
@@ -11,29 +12,40 @@ import time
 from collections import defaultdict
 SKU_LOOKUP_TABLE = defaultdict(bool)
 from db.mysqlcli import MySQLConnector
-DBConnector = object()
+DBConnector = MySQLConnector.instance()
+DBConnector.init_conn("ggfilm")
+_stmt = "SELECT specification_code FROM ggfilm.products;"
+_rets = DBConnector.query(_stmt)
+if type(_rets) is list and len(_rets) > 0:
+    for ret in _rets:
+        SKU_LOOKUP_TABLE[ret[0]] = True
+    logger.info("Insert {} SKUs into SKU_LOOKUP_TABLE!!!".format(len(SKU_LOOKUP_TABLE)))
+atexit.register(lambda: DBConnector.release_conn())
+
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
-app = Flask(__name__)
-app.config.from_object(__name__)
-CORS(app, resources={r"/api/*": {"origins": "*"}})
+ggfilm_server = Flask(__name__)
+ggfilm_server.config.from_object(__name__)
+CORS(ggfilm_server, resources={r"/api/*": {"origins": "*"}})
 
 
 # 探活接口
 # curl -X GET -L http://127.0.0.1:5000/api/v1/keepalive
-@app.route("/api/v1/keepalive", methods=["GET"])
+@ggfilm_server.route("/api/v1/keepalive", methods=["GET"])
 def keepalive():
     return jsonify("alive")
 
 
 # 载入商品数据报表的接口
-# curl -X POST -H 'Content-Type: application/json' -d '{"file": "~/products/产品目录.csv"}' http://127.0.0.1:5000/api/v1/products/import
-@app.route("/api/v1/products/import", methods=["POST"])
+# curl -X POST -H 'Content-Type: application/json' -d '{"file": "~/products/产品目录.csv"}' http://127.0.0.1:5000/api/v1/products/upload
+@ggfilm_server.route("/api/v1/products/upload", methods=["POST"])
 def import_products_csv_file():
-    payload = request.get_json()
-    csv_file = payload.get("file")
-    csv_file = "{}/ggfilm/products/{}".format(os.path.expanduser("~"), csv_file.strip())
+    csv_files = request.files.getlist("file")
+    csv_file = "{}/ggfilm-server/products/{}_{}".format(
+        os.path.expanduser("~"), int(time.time()), csv_files[0].filename
+    )
+    csv_files[0].save(csv_file)
     logger.info("Load data from {}".format(csv_file))
 
     DBConnector.load_data_infile(
@@ -70,12 +82,14 @@ def import_products_csv_file():
 
 
 # 载入即时库存报表的接口
-# curl -X POST -H 'Content-Type: application/json' -d '{"file": "~/jit-inventory/实时库存.csv"}' http://127.0.0.1:5000/api/v1/jitinventory/import
-@app.route("/api/v1/jitinventory/import", methods=["POST"])
+# curl -X POST -H 'Content-Type: application/json' -d '{"file": "~/jit-inventory/实时库存.csv"}' http://127.0.0.1:5000/api/v1/jitinventory/upload
+@ggfilm_server.route("/api/v1/jitinventory/upload", methods=["POST"])
 def import_jit_inventory_csv_file():
-    payload = request.get_json()
-    csv_file = payload.get("file")
-    csv_file = "{}/ggfilm/jit_inventory/{}".format(os.path.expanduser("~"), csv_file.strip())
+    csv_files = request.files.getlist("file")
+    csv_file = "{}/ggfilm-server/jit_inventory/{}_{}".format(
+        os.path.expanduser("~"), int(time.time()), csv_files[0].filename
+    )
+    csv_files[0].save(csv_file)
     logger.info("Load data from {}".format(csv_file))
 
     sku_inventory_tuple_list = []
@@ -109,13 +123,13 @@ def import_jit_inventory_csv_file():
 
 # 下载新增SKU数据表的接口
 # curl -X POST -H 'Content-Type: application/json' -d '{"added_skus": ["xxx", "yyy", "zzz"]}' http://127.0.0.1:5000/api/v1/addedskus/download
-@app.route("/api/v1/addedskus/download", methods=["POST"])
+@ggfilm_server.route("/api/v1/addedskus/download", methods=["POST"])
 def export_added_skus_csv_file():
     payload = request.get_json()
     added_skus = payload.get("added_skus")
     logger.info("Added SKUs {}".format(len(added_skus)))
 
-    csv_file = "{}/ggfilm/added_skus/新增SKU_{}.csv".format(os.path.expanduser("~"), int(time.time()))
+    csv_file = "{}/ggfilm-server/added_skus/新增SKU_{}.csv".format(os.path.expanduser("~"), int(time.time()))
     with open(csv_file, "w") as fd:
         csv_writer = csv.writer(fd, delimiter=",")
         csv_writer.writerow(["新增SKU"])
@@ -128,12 +142,14 @@ def export_added_skus_csv_file():
 
 
 # 载入库存数据报表的接口
-# curl -X POST -H 'Content-Type: application/json' -d '{"file": "~/inventories/产品目录.csv"}' http://127.0.0.1:5000/api/v1/inventories/import
-@app.route("/api/v1/inventories/import", methods=["POST"])
+# curl -X POST -H 'Content-Type: application/json' -d '{"file": "~/inventories/产品目录.csv"}' http://127.0.0.1:5000/api/v1/inventories/upload
+@ggfilm_server.route("/api/v1/inventories/upload", methods=["POST"])
 def import_inventories_csv_file():
-    payload = request.get_json()
-    csv_file = payload.get("file")
-    csv_file = "{}/ggfilm/inventories/{}".format(os.path.expanduser("~"), csv_file.strip())
+    csv_files = request.files.getlist("file")
+    csv_file = "{}/ggfilm-server/inventories/{}_{}".format(
+        os.path.expanduser("~"), int(time.time()), csv_files[0].filename
+    )
+    csv_files[0].save(csv_file)
     logger.info("Load data from {}".format(csv_file))
 
     DBConnector.load_data_infile(
@@ -157,7 +173,7 @@ def import_inventories_csv_file():
 
 # 获取总商品量的接口
 # curl -X GET -L http://127.0.0.1:5000/api/v1/products/total
-@app.route("/api/v1/products/total", methods=["GET"])
+@ggfilm_server.route("/api/v1/products/total", methods=["GET"])
 def products_total():
     stmt = "SELECT SUM(total) FROM ggfilm.product_summary;"
     ret = DBConnector.query(stmt)
@@ -171,7 +187,7 @@ def products_total():
 
 # 获取所有商品的接口, 带有翻页功能
 # curl -X GET -L http://127.0.0.1:5000/api/v1/products?page.offset=0&page.limit=20
-@app.route("/api/v1/products", methods=["GET"])
+@ggfilm_server.route("/api/v1/products", methods=["GET"])
 def products():
     page_offset = request.args.get("page.offset")
     page_limit = request.args.get("page.limit")
@@ -196,7 +212,7 @@ def products():
 
 # 获取所有库存的接口, 带有翻页功能
 # curl -X GET -L http://127.0.0.1:5000/api/v1/inventories?page.offset=0&page.limit=20
-@app.route("/api/v1/inventories", methods=["GET"])
+@ggfilm_server.route("/api/v1/inventories", methods=["GET"])
 def inventories():
     page_offset = request.args.get("page.offset")
     page_limit = request.args.get("page.limit")
@@ -221,52 +237,36 @@ def inventories():
 
 
 # 导出销售报表（按分类汇总）的接口
-@app.route("/api/v1/export/case1", methods=["POST"])
+@ggfilm_server.route("/api/v1/export/case1", methods=["POST"])
 def export_report_file_case1():
     return jsonify("导出销售报表（按分类汇总）")
 
 
 # 导出销售报表（按系列汇总）的接口
-@app.route("/api/v1/export/case2", methods=["POST"])
+@ggfilm_server.route("/api/v1/export/case2", methods=["POST"])
 def export_report_file_case2():
     return jsonify("导出销售报表（按系列汇总）")
 
 
 # 导出销售报表（按单个SKU汇总）的接口
-@app.route("/api/v1/export/case3", methods=["POST"])
+@ggfilm_server.route("/api/v1/export/case3", methods=["POST"])
 def export_report_file_case3():
     return jsonify("导出销售报表（按单个SKU汇总）")
 
 
 # 导出滞销品报表的接口
-@app.route("/api/v1/export/case4", methods=["POST"])
+@ggfilm_server.route("/api/v1/export/case4", methods=["POST"])
 def export_report_file_case4():
     return jsonify("导出滞销品报表")
 
 
 # 导出进口产品采购单的接口
-@app.route("/api/v1/export/case5", methods=["POST"])
+@ggfilm_server.route("/api/v1/export/case5", methods=["POST"])
 def export_report_file_case5():
     return jsonify("导出进口产品采购单")
 
 
 # 导出体积、重量计算汇总单的接口
-@app.route("/api/v1/export/case6", methods=["POST"])
+@ggfilm_server.route("/api/v1/export/case6", methods=["POST"])
 def export_report_file_case6():
     return jsonify("导出体积、重量计算汇总单")
-
-
-if __name__ == "__main__":
-    DBConnector = MySQLConnector.instance()
-    DBConnector.init_conn("ggfilm")
-
-    stmt = "SELECT specification_code FROM ggfilm.products;"
-    rets = DBConnector.query(stmt)
-    if type(rets) is list and len(rets) > 0:
-        for ret in rets:
-            SKU_LOOKUP_TABLE[ret[0]] = True
-        logger.info("Insert {} SKUs into SKU_LOOKUP_TABLE!!!".format(len(SKU_LOOKUP_TABLE)))
-
-    app.run(debug=True)
-    DBConnector.release_conn()
-    

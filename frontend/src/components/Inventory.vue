@@ -93,8 +93,8 @@
         <b-form-group>
           <b-form-file
             accept=".csv"
-            v-model="importCSVFileForm.file"
-            :state="Boolean(importCSVFileForm.file)"
+            v-model="uploadCSVFile"
+            :state="Boolean(uploadCSVFile)"
             placeholder="请选择UTF-8编码的CSV文件">
           </b-form-file>
         </b-form-group>
@@ -188,11 +188,10 @@ import Alert from './Alert.vue'
 export default {
   data () {
     return {
+      serverBaseURL: process.env.SERVER_BASE_URL,
       inventories: [],
       pageOffset: 0,
-      importCSVFileForm: {
-        file: null
-      },
+      uploadCSVFile: null,
       // 导出销售报表（按分类汇总）
       exportReportFileCase1Form: {},
       // 导出销售报表（按系列汇总）
@@ -214,7 +213,7 @@ export default {
   },
   methods: {
     listInventories () {
-      axios.get(`http://localhost:5000/api/v1/inventories?page.offset=${this.pageOffset}&page.limit=20`)
+      axios.get(this.serverBaseURL + `/api/v1/inventories?page.offset=${this.pageOffset}&page.limit=20`)
         .then((res) => {
           this.inventories = res.data.inventories
         })
@@ -225,8 +224,13 @@ export default {
           this.showMessage = true
         })
     },
-    importCSVFile (payload) {
-      axios.post('http://localhost:5000/api/v1/inventories/import', payload)
+    importCSVFile (formData) {
+      let config = {
+        header: {
+          'Content-Type': 'multipart/form-data'
+        }
+      }
+      axios.post(this.serverBaseURL + '/api/v1/inventories/upload', formData, config)
         .then(() => {
           this.listInventories()
           this.message = '导入成功!'
@@ -239,25 +243,19 @@ export default {
           this.showMessage = true
         })
     },
-    initImportForm () {
-      this.importCSVFileForm.file = null
-    },
     onImport (evt) {
       evt.preventDefault()
       this.$refs.importCSVFileModal.hide()
-      const payload = {
-        file: this.importCSVFileForm.file.name
-      }
-      this.importCSVFile(payload)
-      this.initImportForm()
+      let formData = new FormData()
+      formData.append('file', this.uploadCSVFile, this.uploadCSVFile.name)
+      this.importCSVFile(formData)
     },
     onCancel (evt) {
       evt.preventDefault()
       this.$refs.importCSVFileModal.hide()
-      this.initImportForm()
     },
     exportReportFileCase1 (payload) {
-      axios.post('http://localhost:5000/api/v1/export/case1', payload)
+      axios.post(this.serverBaseURL + '/api/v1/export/case1', payload)
         .then((res) => {
           console.log(res.data)
           this.message = '导出成功!'
@@ -289,7 +287,7 @@ export default {
       this.initExportCase1Form()
     },
     exportReportFileCase2 (payload) {
-      axios.post('http://localhost:5000/api/v1/export/case2', payload)
+      axios.post(this.serverBaseURL + '/api/v1/export/case2', payload)
         .then((res) => {
           console.log(res.data)
           this.message = '导出成功!'
@@ -321,7 +319,7 @@ export default {
       this.initExportCase2Form()
     },
     exportReportFileCase3 (payload) {
-      axios.post('http://localhost:5000/api/v1/export/case3', payload)
+      axios.post(this.serverBaseURL + '/api/v1/export/case3', payload)
         .then((res) => {
           console.log(res.data)
           this.message = '导出成功!'
@@ -353,7 +351,7 @@ export default {
       this.initExportCase3Form()
     },
     exportReportFileCase4 (payload) {
-      axios.post('http://localhost:5000/api/v1/export/case4', payload)
+      axios.post(this.serverBaseURL + '/api/v1/export/case4', payload)
         .then((res) => {
           console.log(res.data)
           this.message = '导出成功!'
@@ -385,7 +383,7 @@ export default {
       this.initExportCase4Form()
     },
     exportReportFileCase5 (payload) {
-      axios.post('http://localhost:5000/api/v1/export/case5', payload)
+      axios.post(this.serverBaseURL + '/api/v1/export/case5', payload)
         .then((res) => {
           console.log(res.data)
           this.message = '导出成功!'
@@ -417,7 +415,7 @@ export default {
       this.initExportCase5Form()
     },
     exportReportFileCase6 (payload) {
-      axios.post('http://localhost:5000/api/v1/export/case6', payload)
+      axios.post(this.serverBaseURL + '/api/v1/export/case6', payload)
         .then((res) => {
           console.log(res.data)
           this.message = '导出成功!'
@@ -460,6 +458,8 @@ export default {
     }
   },
   created () {
+    console.log(process.env.NODE_ENV)
+    console.log(process.env.SERVER_BASE_URL)
     this.listInventories()
   }
 }
