@@ -188,6 +188,7 @@ import Alert from './Alert.vue'
 export default {
   data () {
     return {
+      serverBaseURL: process.env.SERVER_BASE_URL,
       inventories: [],
       pageOffset: 0,
       uploadCSVFile: null,
@@ -212,7 +213,7 @@ export default {
   },
   methods: {
     listInventories () {
-      axios.get(`http://localhost:5000/api/v1/inventories?page.offset=${this.pageOffset}&page.limit=20`)
+      axios.get(this.serverBaseURL + `/api/v1/inventories?page.offset=${this.pageOffset}&page.limit=20`)
         .then((res) => {
           this.inventories = res.data.inventories
         })
@@ -229,7 +230,7 @@ export default {
           'Content-Type': 'multipart/form-data'
         }
       }
-      axios.post('http://localhost:5000/api/v1/inventories/upload', formData, config)
+      axios.post(this.serverBaseURL + '/api/v1/inventories/upload', formData, config)
         .then(() => {
           this.listInventories()
           this.message = '导入成功!'
@@ -254,7 +255,7 @@ export default {
       this.$refs.importCSVFileModal.hide()
     },
     exportReportFileCase1 (payload) {
-      axios.post('http://localhost:5000/api/v1/export/case1', payload)
+      axios.post(this.serverBaseURL + '/api/v1/export/case1', payload)
         .then((res) => {
           console.log(res.data)
           this.message = '导出成功!'
@@ -286,7 +287,7 @@ export default {
       this.initExportCase1Form()
     },
     exportReportFileCase2 (payload) {
-      axios.post('http://localhost:5000/api/v1/export/case2', payload)
+      axios.post(this.serverBaseURL + '/api/v1/export/case2', payload)
         .then((res) => {
           console.log(res.data)
           this.message = '导出成功!'
@@ -318,7 +319,7 @@ export default {
       this.initExportCase2Form()
     },
     exportReportFileCase3 (payload) {
-      axios.post('http://localhost:5000/api/v1/export/case3', payload)
+      axios.post(this.serverBaseURL + '/api/v1/export/case3', payload)
         .then((res) => {
           console.log(res.data)
           this.message = '导出成功!'
@@ -350,7 +351,7 @@ export default {
       this.initExportCase3Form()
     },
     exportReportFileCase4 (payload) {
-      axios.post('http://localhost:5000/api/v1/export/case4', payload)
+      axios.post(this.serverBaseURL + '/api/v1/export/case4', payload)
         .then((res) => {
           console.log(res.data)
           this.message = '导出成功!'
@@ -382,7 +383,7 @@ export default {
       this.initExportCase4Form()
     },
     exportReportFileCase5 (payload) {
-      axios.post('http://localhost:5000/api/v1/export/case5', payload)
+      axios.post(this.serverBaseURL + '/api/v1/export/case5', payload)
         .then((res) => {
           console.log(res.data)
           this.message = '导出成功!'
@@ -414,7 +415,7 @@ export default {
       this.initExportCase5Form()
     },
     exportReportFileCase6 (payload) {
-      axios.post('http://localhost:5000/api/v1/export/case6', payload)
+      axios.post(this.serverBaseURL + '/api/v1/export/case6', payload)
         .then((res) => {
           console.log(res.data)
           this.message = '导出成功!'
@@ -457,6 +458,8 @@ export default {
     }
   },
   created () {
+    console.log(process.env.NODE_ENV)
+    console.log(process.env.SERVER_BASE_URL)
     this.listInventories()
   }
 }

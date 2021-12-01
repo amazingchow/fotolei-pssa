@@ -169,6 +169,7 @@ import Alert from './Alert.vue'
 export default {
   data () {
     return {
+      serverBaseURL: process.env.SERVER_BASE_URL,
       products: [],
       productsTotal: 0,
       shouldOpenSidebar: false,
@@ -186,7 +187,7 @@ export default {
   },
   methods: {
     listProducts () {
-      axios.get(`http://localhost:5000/api/v1/products?page.offset=${this.pageOffset}&page.limit=20`)
+      axios.get(this.serverBaseURL + `/api/v1/products?page.offset=${this.pageOffset}&page.limit=20`)
         .then((res) => {
           this.products = res.data.products
         })
@@ -198,7 +199,7 @@ export default {
         })
     },
     getProductsTotal () {
-      axios.get('http://localhost:5000/api/v1/products/total')
+      axios.get(this.serverBaseURL + '/api/v1/products/total')
         .then((res) => {
           this.productsTotal = parseInt(res.data.products_total)
           this.pageOffsetMax = this.productsTotal - this.productsTotal % 20
@@ -216,7 +217,7 @@ export default {
           'Content-Type': 'multipart/form-data'
         }
       }
-      axios.post('http://localhost:5000/api/v1/products/upload', formData, config)
+      axios.post(this.serverBaseURL + '/api/v1/products/upload', formData, config)
         .then(() => {
           this.listProducts()
           this.getProductsTotal()
@@ -236,7 +237,7 @@ export default {
           'Content-Type': 'multipart/form-data'
         }
       }
-      axios.post('http://localhost:5000/api/v1/jitinventory/upload', formData, config)
+      axios.post(this.serverBaseURL + '/api/v1/jitinventory/upload', formData, config)
         .then((res) => {
           if (res.data.added_skus.length > 0) {
             this.message = '导入成功，同时有新增SKU'
@@ -257,7 +258,7 @@ export default {
         })
     },
     downloadAddedSKUs (payload) {
-      axios.post('http://localhost:5000/api/v1/addedskus/download', payload)
+      axios.post(this.serverBaseURL + '/api/v1/addedskus/download', payload)
         .then((res) => {
           this.message = '下载成功! 保存在' + res.data.output_file + '.'
           this.showMessage = true
@@ -317,6 +318,8 @@ export default {
     }
   },
   created () {
+    console.log(process.env.NODE_ENV)
+    console.log(process.env.SERVER_BASE_URL)
     this.listProducts()
     this.getProductsTotal()
   }
