@@ -3,7 +3,7 @@ import VueRouter from 'vue-router'
 
 import Inventory from '@/components/Inventory'
 import Product from '@/components/Product'
-import Suggest from '@/components/Suggest'
+import SelectionList from '@/components/SelectionList'
 
 Vue.use(VueRouter)
 
@@ -19,9 +19,9 @@ const routes = [
     component: Product
   },
   {
-    path: '/suggest',
-    name: 'Suggest',
-    component: Suggest
+    path: '/slist',
+    name: 'SelectionList',
+    component: SelectionList
   }
 ]
 

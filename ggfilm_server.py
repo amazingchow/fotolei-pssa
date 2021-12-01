@@ -38,7 +38,6 @@ def keepalive():
 
 
 # 载入商品数据报表的接口
-# curl -X POST -H 'Content-Type: application/json' -d '{"file": "~/products/产品目录.csv"}' http://127.0.0.1:5000/api/v1/products/upload
 @ggfilm_server.route("/api/v1/products/upload", methods=["POST"])
 def import_products_csv_file():
     csv_files = request.files.getlist("file")
@@ -82,7 +81,6 @@ def import_products_csv_file():
 
 
 # 载入即时库存报表的接口
-# curl -X POST -H 'Content-Type: application/json' -d '{"file": "~/jit-inventory/实时库存.csv"}' http://127.0.0.1:5000/api/v1/jitinventory/upload
 @ggfilm_server.route("/api/v1/jitinventory/upload", methods=["POST"])
 def import_jit_inventory_csv_file():
     csv_files = request.files.getlist("file")
@@ -144,7 +142,6 @@ def export_added_skus_csv_file():
 
 
 # 载入库存数据报表的接口
-# curl -X POST -H 'Content-Type: application/json' -d '{"file": "~/inventories/产品目录.csv"}' http://127.0.0.1:5000/api/v1/inventories/upload
 @ggfilm_server.route("/api/v1/inventories/upload", methods=["POST"])
 def import_inventories_csv_file():
     csv_files = request.files.getlist("file")
@@ -206,7 +203,7 @@ def products():
     response_object = {"status": "success"}
     if (products) == 0:
         response_object = {"status": "not found"}
-        response_object["products"] = None
+        response_object["products"] = []
     else:
         response_object["products"] = products
     return jsonify(response_object)
@@ -232,9 +229,95 @@ def inventories():
     response_object = {"status": "success"}
     if (inventories) == 0:
         response_object = {"status": "not found"}
-        response_object["inventories"] = None
+        response_object["inventories"] = []
     else:
         response_object["inventories"] = inventories
+    return jsonify(response_object)
+
+
+# 导出所有可供选择的选项列表的接口
+@ggfilm_server.route("/api/v1/allselections", methods=["GET"])
+def list_all_selections():
+    response_object = {"status": "success"}
+
+    stmt = "SELECT DISTINCT brand FROM ggfilm.products;"
+    brand_selections = DBConnector.query(stmt)
+    if (brand_selections) == 0:
+        response_object["brand_selections"] = []
+    else:
+        response_object["brand_selections"] = [{"id": i, "brand": brand[0]} for i, brand in enumerate(brand_selections)]
+
+    stmt = "SELECT DISTINCT classification_1 FROM ggfilm.products;"
+    classification_1_selections = DBConnector.query(stmt)
+    if (classification_1_selections) == 0:
+        response_object["classification_1_selections"] = []
+    else:
+        response_object["classification_1_selections"] = [{"id": i, "classification-1": classification_1[0]} for i, classification_1 in enumerate(classification_1_selections)]
+
+    stmt = "SELECT DISTINCT classification_2 FROM ggfilm.products;"
+    classification_2_selections = DBConnector.query(stmt)
+    if (classification_2_selections) == 0:
+        response_object["classification_2_selections"] = []
+    else:
+        response_object["classification_2_selections"] = [{"id": i, "classification-2": classification_2[0]} for i, classification_2 in enumerate(classification_2_selections)]
+
+    stmt = "SELECT DISTINCT product_series FROM ggfilm.products;"
+    product_series_selections = DBConnector.query(stmt)
+    if (product_series_selections) == 0:
+        response_object["product_series_selections"] = []
+    else:
+        response_object["product_series_selections"] = [{"id": i, "product-series": product_series[0]} for i, product_series in enumerate(product_series_selections)]
+
+    stmt = "SELECT DISTINCT supplier_name FROM ggfilm.products;"
+    supplier_name_selections = DBConnector.query(stmt)
+    if (supplier_name_selections) == 0:
+        response_object["supplier_name_selections"] = []
+    else:
+        response_object["supplier_name_selections"] = [{"id": i, "supplier-name": supplier_name[0]} for i, supplier_name in enumerate(supplier_name_selections)]
+
+    return jsonify(response_object)
+
+
+# 导出所有可供选择的选项列表的接口
+@ggfilm_server.route("/api/v1/allselections/slist", methods=["GET"])
+def list_all_selections_for_slist():
+    response_object = {"status": "success"}
+
+    stmt = "SELECT DISTINCT brand FROM ggfilm.products;"
+    brand_selections = DBConnector.query(stmt)
+    if (brand_selections) == 0:
+        response_object["brand_selections"] = []
+    else:
+        response_object["brand_selections"] = [{"value": brand[0], "text": brand[0]} for brand in brand_selections]
+
+    stmt = "SELECT DISTINCT classification_1 FROM ggfilm.products;"
+    classification_1_selections = DBConnector.query(stmt)
+    if (classification_1_selections) == 0:
+        response_object["classification_1_selections"] = []
+    else:
+        response_object["classification_1_selections"] = [{"value": classification_1_selection[0], "text": classification_1_selection[0]} for classification_1_selection in classification_1_selections]
+
+    stmt = "SELECT DISTINCT classification_2 FROM ggfilm.products;"
+    classification_2_selections = DBConnector.query(stmt)
+    if (classification_2_selections) == 0:
+        response_object["classification_2_selections"] = []
+    else:
+        response_object["classification_2_selections"] = [{"value": classification_2_selection[0], "text": classification_2_selection[0]} for classification_2_selection in classification_2_selections]
+
+    stmt = "SELECT DISTINCT product_series FROM ggfilm.products;"
+    product_series_selections = DBConnector.query(stmt)
+    if (product_series_selections) == 0:
+        response_object["product_series_selections"] = []
+    else:
+        response_object["product_series_selections"] = [{"value": product_series_selection[0], "text": product_series_selection[0]} for product_series_selection in product_series_selections]
+
+    stmt = "SELECT DISTINCT supplier_name FROM ggfilm.products;"
+    supplier_name_selections = DBConnector.query(stmt)
+    if (supplier_name_selections) == 0:
+        response_object["supplier_name_selections"] = []
+    else:
+        response_object["supplier_name_selections"] = [{"value": supplier_name_selection[0], "text": supplier_name_selection[0]} for supplier_name_selection in supplier_name_selections]
+
     return jsonify(response_object)
 
 
