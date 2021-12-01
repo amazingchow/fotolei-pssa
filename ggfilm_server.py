@@ -129,7 +129,9 @@ def export_added_skus_csv_file():
     added_skus = payload.get("added_skus")
     logger.info("Added SKUs {}".format(len(added_skus)))
 
-    csv_file = "{}/ggfilm-server/added_skus/新增SKU_{}.csv".format(os.path.expanduser("~"), int(time.time()))
+    ts = int(time.time())
+    csv_file = "{}/ggfilm-server/added_skus/新增SKU_{}.csv".format(os.path.expanduser("~"), ts)
+    output_file = "~/ggfilm-client/added_skus/新增SKU_{}.csv".format(ts)
     with open(csv_file, "w") as fd:
         csv_writer = csv.writer(fd, delimiter=",")
         csv_writer.writerow(["新增SKU"])
@@ -137,7 +139,7 @@ def export_added_skus_csv_file():
             csv_writer.writerow([sku])
 
     response_object = {"status": "success"}
-    response_object["output_file"] = csv_file
+    response_object["output_file"] = output_file
     return jsonify(response_object)
 
 

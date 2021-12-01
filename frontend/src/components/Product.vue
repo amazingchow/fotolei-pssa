@@ -260,7 +260,7 @@ export default {
     downloadAddedSKUs (payload) {
       axios.post(this.serverBaseURL + '/api/v1/addedskus/download', payload)
         .then((res) => {
-          this.message = '下载成功! 保存在' + res.data.output_file + '.'
+          this.message = '下载成功! 保存在为本地文件<' + res.data.output_file + '>.'
           this.showMessage = true
         })
         .catch((error) => {
