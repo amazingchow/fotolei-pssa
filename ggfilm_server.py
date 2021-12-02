@@ -221,7 +221,8 @@ def inventories():
         purchase_qty, purchase_total, purchase_then_return_qty, \
         purchase_then_return_total, sale_qty, sale_total, \
         sale_then_return_qty, sale_then_return_total, others_qty, \
-        others_total, ed_inventory_qty, ed_inventory_total \
+        others_total, ed_inventory_qty, ed_inventory_total, \
+        DATE_FORMAT(create_time, '%Y-%m-%d') \
         FROM ggfilm.inventories ORDER BY 'id' DESC LIMIT {}, {};".format(
         page_offset, page_limit)
     inventories = DBConnector.query(stmt)

@@ -39,6 +39,7 @@
         <b-table-simple striped hover small id="inventory-table">
           <b-thead>
             <b-tr>
+              <b-th scope="col">导入日期</b-th>
               <b-th scope="col">商品编号</b-th>
               <b-th scope="col">商品名称</b-th>
               <b-th scope="col">规格编号</b-th>
@@ -61,6 +62,7 @@
           </b-thead>
           <b-tbody>
             <b-tr v-for="(inventory, index) in inventories" :key="index">
+              <b-td>{{ inventory[18] }}</b-td>
               <b-td>{{ inventory[0] }}</b-td>
               <b-td>{{ inventory[1] }}</b-td>
               <b-td>{{ inventory[2] }}</b-td>
@@ -322,6 +324,7 @@
 
 <style>
 #inventory-table {
+  border: 2px solid black !important;
   font-size: small;
   table-layout: fixed !important;
 }

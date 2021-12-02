@@ -123,6 +123,7 @@
 
 <style>
 #product-table {
+  border: 2px solid black !important;
   font-size: small;
   table-layout: fixed !important;
 }
