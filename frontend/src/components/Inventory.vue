@@ -39,6 +39,7 @@
         <b-table-simple striped hover small id="inventory-table">
           <b-thead>
             <b-tr>
+              <b-th scope="col">导入日期</b-th>
               <b-th scope="col">商品编号</b-th>
               <b-th scope="col">商品名称</b-th>
               <b-th scope="col">规格编号</b-th>
@@ -61,6 +62,7 @@
           </b-thead>
           <b-tbody>
             <b-tr v-for="(inventory, index) in inventories" :key="index">
+              <b-td>{{ inventory[18] }}</b-td>
               <b-td>{{ inventory[0] }}</b-td>
               <b-td>{{ inventory[1] }}</b-td>
               <b-td>{{ inventory[2] }}</b-td>
@@ -122,10 +124,10 @@
       </b-form>
     </b-modal>
     <b-modal ref="exportFileCase3Modal" id="export-file-case3-modal" title="导出销售报表（按单个SKU汇总）" hide-footer>
-      <b-form @submit="onExportCase3" @reset="onCancelCase3">
+      <b-form>
         <b-card bg-variant="light">
           <b-form-group
-            label="开始日期"
+            label="起始日期"
             label-size="sm"
             label-align-sm="right"
             label-cols-sm="3"
@@ -148,7 +150,7 @@
             </b-input-group>
           </b-form-group>
           <b-form-group
-            label="结束日期"
+            label="截止日期"
             label-size="sm"
             label-align-sm="right"
             label-cols-sm="3"
@@ -227,7 +229,7 @@
             <v-suggest
               :data="classification2Selections"
               show-field="classification-2"
-              v-model="classification1Selection"
+              v-model="classification2Selection"
             ></v-suggest>
           </b-form-group>
           <b-form-group
@@ -287,8 +289,8 @@
             ></v-suggest>
           </b-form-group>
           <b-button-group id="inventory-table-operate-btn" class="w-100 d-block">
-            <b-button type="submit" variant="dark">导出</b-button>
-            <b-button type="reset" variant="dark">取消</b-button>
+            <b-button variant="dark" @click="onExportCase3">导出</b-button>
+            <b-button variant="dark" @click="onCancelCase3">取消</b-button>
           </b-button-group>
         </b-card>
       </b-form>
@@ -322,6 +324,7 @@
 
 <style>
 #inventory-table {
+  border: 2px solid black !important;
   font-size: small;
   table-layout: fixed !important;
 }
@@ -392,18 +395,6 @@ export default {
       inventories: [],
       pageOffset: 0,
       uploadCSVFile: null,
-      // 导出销售报表（按分类汇总）
-      exportReportFileCase1Form: {},
-      // 导出销售报表（按系列汇总）
-      exportReportFileCase2Form: {},
-      // 导出销售报表（按单个SKU汇总）
-      exportReportFileCase3Form: {},
-      // 导出滞销品报表
-      exportReportFileCase4Form: {},
-      // 导出进口产品采购单
-      exportReportFileCase5Form: {},
-      // 导出体积、重量计算汇总单
-      exportReportFileCase6Form: {},
       message: '',
       showMessage: false
     }
@@ -570,10 +561,29 @@ export default {
       // 确定导出销售报表（按单个SKU汇总）
       evt.preventDefault()
       this.$refs.exportFileCase3Modal.hide()
-      console.log('确定导出销售报表（按单个SKU汇总）')
-      const payload = {}
-      this.exportReportFileCase3(payload)
-      this.initExportForm()
+      if ((this.stDateSelection === '') || (this.edDateSelection === '')) {
+        this.message = '起始日期/截止日期不能为空!'
+        this.showMessage = true
+      } else {
+        const payload = {
+          st_date: this.stDateSelection,
+          ed_date: this.edDateSelection,
+          product_code: this.productCodeSelection,
+          product_name: this.productNameSelection,
+          specification_code: this.specificationCodeSelection,
+          brand: this.brandSelection,
+          classification_1: this.classification1Selection,
+          classification_2: this.classification2Selection,
+          product_series: this.productSeriesSelection,
+          stop_status: this.stopStatusSelection,
+          is_combined: this.isCombinedSelection,
+          be_aggregated: this.beAggregatedSelection,
+          is_import: this.isImportSelection,
+          supplier_name: this.supplierNameSelection
+        }
+        this.exportReportFileCase3(payload)
+        this.initExportForm()
+      }
     },
     onCancelCase3 (evt) {
       // 取消导出销售报表（按单个SKU汇总）

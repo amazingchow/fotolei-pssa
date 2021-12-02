@@ -221,7 +221,8 @@ def inventories():
         purchase_qty, purchase_total, purchase_then_return_qty, \
         purchase_then_return_total, sale_qty, sale_total, \
         sale_then_return_qty, sale_then_return_total, others_qty, \
-        others_total, ed_inventory_qty, ed_inventory_total \
+        others_total, ed_inventory_qty, ed_inventory_total, \
+        DATE_FORMAT(create_time, '%Y-%m-%d') \
         FROM ggfilm.inventories ORDER BY 'id' DESC LIMIT {}, {};".format(
         page_offset, page_limit)
     inventories = DBConnector.query(stmt)
@@ -336,6 +337,21 @@ def export_report_file_case2():
 # 导出销售报表（按单个SKU汇总）的接口
 @ggfilm_server.route("/api/v1/export/case3", methods=["POST"])
 def export_report_file_case3():
+    payload = request.get_json()
+    st_date = payload.get("st_date").strip()
+    ed_date = payload.get("ed_date").strip()
+    product_code = payload.get("product_code").strip()
+    product_name = payload.get("product_name").strip()
+    specification_code = payload.get("specification_code").strip()
+    brand = payload.get("brand").strip()
+    classification_1 = payload.get("classification_1").strip()
+    classification_2 = payload.get("classification_2").strip()
+    product_series = payload.get("product_series").strip()
+    stop_status = payload.get("stop_status").strip()
+    is_combined = payload.get("is_combined").strip()
+    be_aggregated = payload.get("be_aggregated").strip()
+    is_import = payload.get("is_import").strip()
+    supplier_name = payload.get("supplier_name").strip()
     return jsonify("导出销售报表（按单个SKU汇总）")
 
 
