@@ -9,7 +9,7 @@ mkdir -p ~/ggfilm-server/added_skus
 mkdir -p ~/ggfilm-server/inventories
 
 docker-compose -f "test/mysql-deploy/docker-compose.yml" up -d --build
-docker_container_id=`docker container ls | grep mysql-deploy_db_1 | awk '{print $1}'`
+docker_container_id=`docker container ls | grep mysql-deploy | awk '{print $1}'`
 sleep 2
 docker exec -i ${docker_container_id} /bin/bash -c 'mysql -u root -p"Pwd123!@" < /migrations/create_database_up.sql'
 sleep 2
