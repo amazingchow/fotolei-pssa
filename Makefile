@@ -6,6 +6,10 @@ init:
 clean:
 	@./clean_server.sh
 
+.PHONY: run_server_local
+run_server_local:
+	@export FLASK_APP=ggfilm_server && export FLASK_ENV=development && flask run --host="0.0.0.0" --port=15555
+
 .PHONY: run_server
 run_server:
 	@export FLASK_APP=ggfilm_server && export FLASK_ENV=production && flask run --host="0.0.0.0" --port=15555
