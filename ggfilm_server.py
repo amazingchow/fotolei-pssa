@@ -359,7 +359,7 @@ def preview_export_report_file_case3():
 
     specification_code = payload.get("specification_code").strip()
 
-    def inline(specification_code_in:str):
+    def inline():
         resp = {"status": "success"}
         stmt = "SELECT product_code, specification_code, \
             product_name, specification_name, \
@@ -373,10 +373,12 @@ def preview_export_report_file_case3():
             Month(create_time) <= {} AND \
             Year(create_time) <= {} \
             ORDER BY create_time ASC;".format(
-                specification_code_in, st_month, st_year, ed_month, ed_year
+                specification_code, st_month, st_year, ed_month, ed_year
             )
         rets = DBConnector.query(stmt)
         if type(rets) is list and len(rets) > 0:
+            resp["st_date"] = st_date
+            resp["ed_date"] = ed_date
             resp["product_code"] = rets[0][0]
             resp["specification_code"] = rets[0][1]
             resp["product_name"] = rets[0][2]
@@ -392,7 +394,7 @@ def preview_export_report_file_case3():
                 sale_qty += ret[6]
             resp["sale_qty"] = sale_qty
 
-            stmt = "SELECT jit_inventory FROM ggfilm.products WHERE specification_code = '{}';".format(specification_code_in)
+            stmt = "SELECT jit_inventory FROM ggfilm.products WHERE specification_code = '{}';".format(specification_code)
             rets = DBConnector.query(stmt)
             if type(rets) is list and len(rets) > 0:
                 resp["jit_inventory"] = rets[0][0]
@@ -403,7 +405,7 @@ def preview_export_report_file_case3():
         return resp
 
     if len(specification_code) > 0:
-        response_object = inline(specification_code)
+        response_object = inline()
         return jsonify(response_object)
     else:
         product_code = payload.get("product_code").strip()
@@ -448,7 +450,7 @@ def preview_export_report_file_case3():
         rets = DBConnector.query(stmt)
         if type(rets) is list and len(rets) > 0:
             specification_code = rets[0][0]
-            response_object = inline(specification_code)
+            response_object = inline()
             return jsonify(response_object)
         else:
             response_object = {"status": "not found"}
@@ -458,7 +460,60 @@ def preview_export_report_file_case3():
 # 导出销售报表（按单个SKU汇总）的接口
 @ggfilm_server.route("/api/v1/export/case3", methods=["POST"])
 def export_report_file_case3():
-    return jsonify("导出销售报表（按单个SKU汇总）")
+    payload = request.get_json()
+    st_date = payload.get("st_date").strip()
+    st_year, st_month = st_date.split("-")[0], st_date.split("-")[1]
+    ed_date = payload.get("ed_date").strip()
+    ed_year, ed_month = ed_date.split("-")[0], ed_date.split("-")[1]
+    specification_code = payload.get("specification_code").strip()
+
+    response_object = {"status": "success"}
+
+    stmt = "SELECT * FROM ggfilm.products WHERE specification_code = '{}' LIMIT 1;".format(specification_code)
+    rets = DBConnector.query(stmt)
+    cache = {}
+    cache["product_code"] = rets[0][1]
+    cache["product_name"] = rets[0][2]
+    cache["specification_code"] = rets[0][3]
+    cache["specification_name"] = rets[0][4]
+    cache["brand"] = rets[0][5]
+    cache["classification_1"] = rets[0][6]
+    cache["classification_2"] = rets[0][7]
+    cache["product_series"] = rets[0][8]
+    cache["stop_status"] = rets[0][9]
+    cache["product_weight"] = rets[0][10]
+    cache["product_length"] = rets[0][11]
+    cache["product_width"] = rets[0][12]
+    cache["product_hight"] = rets[0][13]
+    cache["is_combined"] = rets[0][14]
+    cache["is_import"] = rets[0][16]
+    cache["supplier_name"] = rets[0][17]
+    cache["purchase_name"] = rets[0][18]
+    cache["jit_inventory"] = rets[0][19]
+
+    stmt = "SELECT * FROM ggfilm.inventories \
+        WHERE specification_code = {} AND \
+        Month(create_time) >= {} AND \
+        Year(create_time) >= {} AND \
+        Month(create_time) <= {} AND \
+        Year(create_time) <= {} \
+        ORDER BY create_time ASC;".format(
+            specification_code, st_month, st_year, ed_month, ed_year
+        )
+    rets = DBConnector.query(stmt)
+    cache["st_inventory_qty"] = rets[0][5]
+    # todo
+    cache["ed_inventory_qty"] = rets[len(rets) - 1][7]
+    purchase_qty = 0
+    for ret in rets:
+        purchase_qty += ret[5]
+    cache["purchase_qty"] = purchase_qty
+    sale_qty = 0
+    for ret in rets:
+        sale_qty += ret[6]
+    cache["sale_qty"] = sale_qty
+
+    return jsonify(response_object)
 
 
 # 导出滞销品报表的接口

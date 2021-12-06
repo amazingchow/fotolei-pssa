@@ -436,6 +436,8 @@ export default {
       pageOffset: 0,
       uploadCSVFile: null,
       previewCase3: {
+        stDate: '',
+        edDate: '',
         productCode: '',
         specificationCode: '',
         productName: '',
@@ -503,7 +505,8 @@ export default {
       this.beAggregatedSelection = '参与'
       this.isImportSelection = '非进口品'
       this.supplierNameSelection = ''
-      this.uploadCSVFile = null
+      this.previewCase3.stDate = ''
+      this.previewCase3.edDate = ''
       this.previewCase3.productCode = ''
       this.previewCase3.specificationCode = ''
       this.previewCase3.productName = ''
@@ -539,10 +542,12 @@ export default {
       let formData = new FormData()
       formData.append('file', this.uploadCSVFile, this.uploadCSVFile.name)
       this.importCSVFile(formData)
+      this.uploadCSVFile = null
     },
     onCancel (evt) {
       evt.preventDefault()
       this.$refs.importCSVFileModal.hide()
+      this.uploadCSVFile = null
     },
     // 销售报表（按分类汇总）
     exportReportFileCase1 (payload) {
@@ -607,10 +612,12 @@ export default {
       this.initExportForm()
     },
     // 销售报表（按单个SKU汇总）
-    exportPreviewReportFileCase3 (payload) {
+    previewReportFileCase3 (payload) {
       axios.post(this.serverBaseURL + '/api/v1/export/case3/preview', payload)
         .then((res) => {
           if (res.data.status === 'success') {
+            this.previewCase3.stDate = res.data.st_date
+            this.previewCase3.edDate = res.data.ed_date
             this.previewCase3.productCode = res.data.product_code
             this.previewCase3.specificationCode = res.data.specification_code
             this.previewCase3.productName = res.data.product_name
@@ -624,7 +631,6 @@ export default {
           } else {
             this.message = '预览失败! 不存在指定的库存条目.'
             this.showMessage = true
-            this.initExportForm()
           }
         })
         .catch((error) => {
@@ -657,19 +663,39 @@ export default {
           is_import: this.isImportSelection,
           supplier_name: this.supplierNameSelection
         }
-        this.exportPreviewReportFileCase3(payload)
+        this.previewReportFileCase3(payload)
       }
+      this.initExportForm()
     },
     onCancelPreviewCase3 (evt) {
       evt.preventDefault()
       this.$refs.previewCase3Modal.hide()
       this.initExportForm()
     },
+    exportReportFileCase3 (payload) {
+      axios.post(this.serverBaseURL + '/api/v1/export/case3', payload)
+        .then((res) => {
+          this.message = '下载成功!'
+          this.showMessage = true
+        })
+        .catch((error) => {
+          // eslint-disable-next-line
+          console.log(error)
+          this.message = '下载失败!'
+          this.showMessage = true
+        })
+    },
     onExportCase3 (evt) {
       // 确定下载销售报表（按单个SKU汇总）
       evt.preventDefault()
       this.$refs.previewCase3Modal.hide()
       this.$refs.exportFileCase3Modal.hide()
+      const payload = {
+        st_date: this.previewCase3.stDate,
+        ed_date: this.previewCase3.edDate,
+        specification_code: this.previewCase3.specificationCode
+      }
+      this.exportReportFileCase3(payload)
       this.initExportForm()
     },
     onCancelExportCase3 (evt) {
