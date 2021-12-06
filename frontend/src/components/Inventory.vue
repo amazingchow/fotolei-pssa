@@ -108,7 +108,7 @@
       </b-form>
     </b-modal>
     <b-modal ref="exportFileCase1Modal" id="export-file-case1-modal" title="导出销售报表（按分类汇总）" hide-footer>
-      <b-form @submit="onExportCase1" @reset="onCancelCase1">
+      <b-form @submit="onExportCase1" @reset="onCancelExportCase1">
         <b-button-group id="inventory-table-operate-btn" class="w-100 d-block">
           <b-button type="submit" variant="dark">导出</b-button>
           <b-button type="reset" variant="dark">取消</b-button>
@@ -116,7 +116,7 @@
       </b-form>
     </b-modal>
     <b-modal ref="exportFileCase2Modal" id="export-file-case2-modal" title="导出销售报表（按系列汇总）" hide-footer>
-      <b-form @submit="onExportCase2" @reset="onCancelCase2">
+      <b-form @submit="onExportCase2" @reset="onCancelExportCase2">
         <b-button-group id="inventory-table-operate-btn" class="w-100 d-block">
           <b-button type="submit" variant="dark">导出</b-button>
           <b-button type="reset" variant="dark">取消</b-button>
@@ -290,7 +290,7 @@
           </b-form-group>
           <b-button-group id="inventory-table-operate-btn" class="w-100 d-block">
             <b-button variant="dark" @click="onPreviewCase3">预览</b-button>
-            <b-button variant="dark" @click="onCancelCase3">取消</b-button>
+            <b-button variant="dark" @click="onCancelExportCase3">取消</b-button>
           </b-button-group>
         </b-card>
       </b-form>
@@ -325,12 +325,12 @@
         </b-tbody>
       </b-table-simple>
       <b-button-group id="inventory-table-operate-btn" class="w-100 d-block">
-        <b-button variant="dark" @click="onExportCase3">导出</b-button>
+        <b-button variant="dark" @click="onExportCase3">下载</b-button>
         <b-button variant="dark" @click="onCancelPreviewCase3">取消</b-button>
       </b-button-group>
     </b-modal>
     <b-modal ref="exportFileCase4Modal" id="export-file-case4-modal" title="导出滞销品报表" hide-footer>
-      <b-form @submit="onExportCase4" @reset="onCancelCase4">
+      <b-form @submit="onExportCase4" @reset="onCancelExportCase4">
         <b-button-group id="inventory-table-operate-btn" class="w-100 d-block">
           <b-button type="submit" variant="dark">导出</b-button>
           <b-button type="reset" variant="dark">取消</b-button>
@@ -338,7 +338,7 @@
       </b-form>
     </b-modal>
     <b-modal ref="exportFileCase5Modal" id="export-file-case5-modal" title="导出进口产品采购单" hide-footer>
-      <b-form @submit="onExportCase5" @reset="onCancelCase5">
+      <b-form @submit="onExportCase5" @reset="onCancelExportCase5">
         <b-button-group id="inventory-table-operate-btn" class="w-100 d-block">
           <b-button type="submit" variant="dark">导出</b-button>
           <b-button type="reset" variant="dark">取消</b-button>
@@ -346,7 +346,7 @@
       </b-form>
     </b-modal>
     <b-modal ref="exportFileCase6Modal" id="export-file-case6-modal" title="导出体积、重量计算汇总单" hide-footer>
-      <b-form @submit="onExportCase6" @reset="onCancelCase6">
+      <b-form @submit="onExportCase6" @reset="onCancelExportCase6">
         <b-button-group id="inventory-table-operate-btn" class="w-100 d-block">
           <b-button type="submit" variant="dark">导出</b-button>
           <b-button type="reset" variant="dark">取消</b-button>
@@ -544,6 +544,7 @@ export default {
       evt.preventDefault()
       this.$refs.importCSVFileModal.hide()
     },
+    // 销售报表（按分类汇总）
     exportReportFileCase1 (payload) {
       axios.post(this.serverBaseURL + '/api/v1/export/case1', payload)
         .then((res) => {
@@ -567,13 +568,14 @@ export default {
       this.exportReportFileCase1(payload)
       this.initExportForm()
     },
-    onCancelCase1 (evt) {
+    onCancelExportCase1 (evt) {
       // 取消导出销售报表（按分类汇总）
       evt.preventDefault()
       this.$refs.exportFileCase1Modal.hide()
       console.log('取消导出销售报表（按分类汇总）')
       this.initExportForm()
     },
+    // 销售报表（按系列汇总）
     exportReportFileCase2 (payload) {
       axios.post(this.serverBaseURL + '/api/v1/export/case2', payload)
         .then((res) => {
@@ -597,13 +599,14 @@ export default {
       this.exportReportFileCase2(payload)
       this.initExportForm()
     },
-    onCancelCase2 (evt) {
+    onCancelExportCase2 (evt) {
       // 取消导出销售报表（按系列汇总）
       evt.preventDefault()
       this.$refs.exportFileCase2Modal.hide()
       console.log('取消导出销售报表（按系列汇总）')
       this.initExportForm()
     },
+    // 销售报表（按单个SKU汇总）
     exportPreviewReportFileCase3 (payload) {
       axios.post(this.serverBaseURL + '/api/v1/export/case3/preview', payload)
         .then((res) => {
@@ -663,18 +666,19 @@ export default {
       this.initExportForm()
     },
     onExportCase3 (evt) {
-      // 确定导出销售报表（按单个SKU汇总）
+      // 确定下载销售报表（按单个SKU汇总）
+      evt.preventDefault()
+      this.$refs.previewCase3Modal.hide()
+      this.$refs.exportFileCase3Modal.hide()
+      this.initExportForm()
+    },
+    onCancelExportCase3 (evt) {
+      // 取消下载销售报表（按单个SKU汇总）
       evt.preventDefault()
       this.$refs.exportFileCase3Modal.hide()
       this.initExportForm()
     },
-    onCancelCase3 (evt) {
-      // 取消导出销售报表（按单个SKU汇总）
-      evt.preventDefault()
-      this.$refs.exportFileCase3Modal.hide()
-      console.log('取消导出销售报表（按单个SKU汇总）')
-      this.initExportForm()
-    },
+    // 滞销品报表
     exportReportFileCase4 (payload) {
       axios.post(this.serverBaseURL + '/api/v1/export/case4', payload)
         .then((res) => {
@@ -698,13 +702,14 @@ export default {
       this.exportReportFileCase4(payload)
       this.initExportForm()
     },
-    onCancelCase4 (evt) {
+    onCancelExportCase4 (evt) {
       // 取消导出滞销品报表
       evt.preventDefault()
       this.$refs.exportFileCase4Modal.hide()
       console.log('取消导出滞销品报表')
       this.initExportForm()
     },
+    // 进口产品采购单
     exportReportFileCase5 (payload) {
       axios.post(this.serverBaseURL + '/api/v1/export/case5', payload)
         .then((res) => {
@@ -728,7 +733,7 @@ export default {
       this.exportReportFileCase5(payload)
       this.initExportForm()
     },
-    onCancelCase5 (evt) {
+    onCancelExportCase5 (evt) {
       // 取消导出进口产品采购单
       evt.preventDefault()
       this.$refs.exportFileCase5Modal.hide()
@@ -749,6 +754,7 @@ export default {
           this.showMessage = true
         })
     },
+    // 体积、重量计算汇总单
     onExportCase6 (evt) {
       // 确定导出体积、重量计算汇总单
       evt.preventDefault()
@@ -758,7 +764,7 @@ export default {
       this.exportReportFileCase6(payload)
       this.initExportForm()
     },
-    onCancelCase6 (evt) {
+    onCancelExportCase6 (evt) {
       // 取消导出体积、重量计算汇总单
       evt.preventDefault()
       this.$refs.exportFileCase6Modal.hide()

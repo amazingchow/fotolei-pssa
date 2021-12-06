@@ -455,6 +455,12 @@ def preview_export_report_file_case3():
             return jsonify(response_object)
 
 
+# 导出销售报表（按单个SKU汇总）的接口
+@ggfilm_server.route("/api/v1/export/case3", methods=["POST"])
+def export_report_file_case3():
+    return jsonify("导出销售报表（按单个SKU汇总）")
+
+
 # 导出滞销品报表的接口
 @ggfilm_server.route("/api/v1/export/case4", methods=["POST"])
 def export_report_file_case4():
