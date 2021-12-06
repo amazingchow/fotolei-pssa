@@ -334,24 +334,130 @@ def export_report_file_case2():
     return jsonify("导出销售报表（按系列汇总）")
 
 
+# 预览销售报表（按单个SKU汇总）的接口
+'''
+预览效果
+
+商品编码 | 规格编码	| 商品名称 | 规格名称 | 起始库存数量 | 采购数量	| 销售数量 | 截止库存数量 | 实时库存
+
+其中
+* 起始库存数量 = 时间段内第一个月的数量
+* 采购数量 = 时间段内每一个月的数量的累加
+* 销售数量 = 时间段内每一个月的数量的累加
+* 截止库存数量 = 时间段内最后一个月的数量
+'''
+@ggfilm_server.route("/api/v1/export/case3/preview", methods=["POST"])
+def preview_export_report_file_case3():
+    payload = request.get_json()
+    # 1. 起始日期和截止日期用于过滤掉时间条件不符合的记录项
+    # 2.1. 如果specification_code（规格编码）不为空，直接用规格编码筛选出想要的数据
+    # 2.2. 如果specification_code（规格编码）为空，则先用其他非空条件筛选出规格编码，再用规格编码筛选出想要的数据
+    st_date = payload.get("st_date").strip()
+    st_year, st_month = st_date.split("-")[0], st_date.split("-")[1]
+    ed_date = payload.get("ed_date").strip()
+    ed_year, ed_month = ed_date.split("-")[0], ed_date.split("-")[1]
+
+    specification_code = payload.get("specification_code").strip()
+
+    def inline(specification_code_in:str):
+        resp = {"status": "success"}
+        stmt = "SELECT product_code, specification_code, \
+            product_name, specification_name, \
+            st_inventory_qty, purchase_qty, \
+            sale_qty, ed_inventory_qty, \
+            DATE_FORMAT(create_time, '%Y-%m-%d') \
+            FROM ggfilm.inventories \
+            WHERE specification_code = {} AND \
+            Month(create_time) >= {} AND \
+            Year(create_time) >= {} AND \
+            Month(create_time) <= {} AND \
+            Year(create_time) <= {} \
+            ORDER BY create_time ASC;".format(
+                specification_code_in, st_month, st_year, ed_month, ed_year
+            )
+        rets = DBConnector.query(stmt)
+        if type(rets) is list and len(rets) > 0:
+            resp["product_code"] = rets[0][0]
+            resp["specification_code"] = rets[0][1]
+            resp["product_name"] = rets[0][2]
+            resp["specification_name"] = rets[0][3]
+            resp["st_inventory_qty"] = rets[0][4]
+            resp["ed_inventory_qty"] = rets[len(rets) - 1][7]
+            purchase_qty = 0
+            for ret in rets:
+                purchase_qty += ret[5]
+            resp["purchase_qty"] = purchase_qty
+            sale_qty = 0
+            for ret in rets:
+                sale_qty += ret[6]
+            resp["sale_qty"] = sale_qty
+
+            stmt = "SELECT jit_inventory FROM ggfilm.products WHERE specification_code = '{}';".format(specification_code_in)
+            rets = DBConnector.query(stmt)
+            if type(rets) is list and len(rets) > 0:
+                resp["jit_inventory"] = rets[0][0]
+            else:
+                resp["jit_inventory"] = 0
+        else:
+            resp = {"status": "not found"}
+        return resp
+
+    if len(specification_code) > 0:
+        response_object = inline(specification_code)
+        return jsonify(response_object)
+    else:
+        product_code = payload.get("product_code").strip()
+        product_name = payload.get("product_name").strip()
+        brand = payload.get("brand").strip()
+        classification_1 = payload.get("classification_1").strip()
+        classification_2 = payload.get("classification_2").strip()
+        product_series = payload.get("product_series").strip()
+        stop_status = payload.get("stop_status").strip()
+        is_combined = payload.get("is_combined").strip()
+        be_aggregated = payload.get("be_aggregated").strip()
+        is_import = payload.get("is_import").strip()
+        supplier_name = payload.get("supplier_name").strip()
+
+        stmt = "SELECT specification_code FROM ggfilm.products WHERE "
+        selections = []
+        if len(product_code) > 0:
+            selections.append("product_code = '{}'".format(product_code))
+        if len(product_name) > 0:
+            selections.append("product_name = '{}'".format(product_name))
+        if len(brand) > 0:
+            selections.append("brand = '{}'".format(brand))
+        if len(classification_1) > 0:
+            selections.append("classification_1 = '{}'".format(classification_1))
+        if len(classification_2) > 0:
+            selections.append("classification_2 = '{}'".format(classification_2))
+        if len(product_series) > 0:
+            selections.append("product_series = '{}'".format(product_series))
+        if len(stop_status) > 0:
+            selections.append("stop_status = '{}'".format(stop_status))
+        if len(is_combined) > 0:
+            selections.append("is_combined = '{}'".format(is_combined))
+        if len(be_aggregated) > 0:
+            selections.append("be_aggregated = '{}'".format(be_aggregated))
+        if len(is_import) > 0:
+            selections.append("is_import = '{}'".format(is_import))
+        if len(supplier_name) > 0:
+            selections.append("supplier_name = '{}'".format(supplier_name))
+        stmt += " AND ".join(selections)
+        stmt += ";"
+        logger.debug(stmt)
+        rets = DBConnector.query(stmt)
+        if type(rets) is list and len(rets) > 0:
+            specification_code = rets[0][0]
+            response_object = inline(specification_code)
+            return jsonify(response_object)
+        else:
+            response_object = {"status": "not found"}
+            return jsonify(response_object)
+
+
 # 导出销售报表（按单个SKU汇总）的接口
 @ggfilm_server.route("/api/v1/export/case3", methods=["POST"])
 def export_report_file_case3():
-    payload = request.get_json()
-    st_date = payload.get("st_date").strip()
-    ed_date = payload.get("ed_date").strip()
-    product_code = payload.get("product_code").strip()
-    product_name = payload.get("product_name").strip()
-    specification_code = payload.get("specification_code").strip()
-    brand = payload.get("brand").strip()
-    classification_1 = payload.get("classification_1").strip()
-    classification_2 = payload.get("classification_2").strip()
-    product_series = payload.get("product_series").strip()
-    stop_status = payload.get("stop_status").strip()
-    is_combined = payload.get("is_combined").strip()
-    be_aggregated = payload.get("be_aggregated").strip()
-    is_import = payload.get("is_import").strip()
-    supplier_name = payload.get("supplier_name").strip()
     return jsonify("导出销售报表（按单个SKU汇总）")
 
 
