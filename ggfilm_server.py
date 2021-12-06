@@ -357,12 +357,10 @@ def preview_export_report_file_case3():
     ed_date = payload.get("ed_date").strip()
     ed_year, ed_month = ed_date.split("-")[0], ed_date.split("-")[1]
 
-    response_object = {"status": "success"}
-
     specification_code = payload.get("specification_code").strip()
 
-    def inline():
-        global response_object
+    def inline(specification_code_in:str):
+        resp = {"status": "success"}
         stmt = "SELECT product_code, specification_code, \
             product_name, specification_name, \
             st_inventory_qty, purchase_qty, \
@@ -375,36 +373,38 @@ def preview_export_report_file_case3():
             Month(create_time) <= {} AND \
             Year(create_time) <= {} \
             ORDER BY create_time ASC;".format(
-                specification_code, st_month, st_year, ed_month, ed_year
+                specification_code_in, st_month, st_year, ed_month, ed_year
             )
         rets = DBConnector.query(stmt)
         if type(rets) is list and len(rets) > 0:
-            response_object["product_code"] = rets[0][0]
-            response_object["specification_code"] = rets[0][1]
-            response_object["product_name"] = rets[0][2]
-            response_object["specification_name"] = rets[0][3]
-            response_object["st_inventory_qty"] = rets[0][4]
-            response_object["ed_inventory_qty"] = rets[len(rets) - 1][7]
+            resp["product_code"] = rets[0][0]
+            resp["specification_code"] = rets[0][1]
+            resp["product_name"] = rets[0][2]
+            resp["specification_name"] = rets[0][3]
+            resp["st_inventory_qty"] = rets[0][4]
+            resp["ed_inventory_qty"] = rets[len(rets) - 1][7]
             purchase_qty = 0
             for ret in rets:
                 purchase_qty += ret[5]
-            response_object["purchase_qty"] = purchase_qty
+            resp["purchase_qty"] = purchase_qty
             sale_qty = 0
             for ret in rets:
                 sale_qty += ret[6]
-            response_object["sale_qty"] = sale_qty
+            resp["sale_qty"] = sale_qty
 
-            stmt = "SELECT jit_inventory FROM ggfilm.products WHERE specification_code = {};".format(specification_code)
+            stmt = "SELECT jit_inventory FROM ggfilm.products WHERE specification_code = '{}';".format(specification_code_in)
             rets = DBConnector.query(stmt)
             if type(rets) is list and len(rets) > 0:
-                response_object["jit_inventory"] = rets[0][0]
+                resp["jit_inventory"] = rets[0][0]
             else:
-                response_object["jit_inventory"] = 0
+                resp["jit_inventory"] = 0
         else:
-            response_object = {"status": "not found"}
+            resp = {"status": "not found"}
+        return resp
 
     if len(specification_code) > 0:
-        inline()
+        response_object = inline(specification_code)
+        return jsonify(response_object)
     else:
         product_code = payload.get("product_code").strip()
         product_name = payload.get("product_name").strip()
@@ -417,7 +417,42 @@ def preview_export_report_file_case3():
         be_aggregated = payload.get("be_aggregated").strip()
         is_import = payload.get("is_import").strip()
         supplier_name = payload.get("supplier_name").strip()
-    return jsonify(response_object)
+
+        stmt = "SELECT specification_code FROM ggfilm.products WHERE "
+        selections = []
+        if len(product_code) > 0:
+            selections.append("product_code = '{}'".format(product_code))
+        if len(product_name) > 0:
+            selections.append("product_name = '{}'".format(product_name))
+        if len(brand) > 0:
+            selections.append("brand = '{}'".format(brand))
+        if len(classification_1) > 0:
+            selections.append("classification_1 = '{}'".format(classification_1))
+        if len(classification_2) > 0:
+            selections.append("classification_2 = '{}'".format(classification_2))
+        if len(product_series) > 0:
+            selections.append("product_series = '{}'".format(product_series))
+        if len(stop_status) > 0:
+            selections.append("stop_status = '{}'".format(stop_status))
+        if len(is_combined) > 0:
+            selections.append("is_combined = '{}'".format(is_combined))
+        if len(be_aggregated) > 0:
+            selections.append("be_aggregated = '{}'".format(be_aggregated))
+        if len(is_import) > 0:
+            selections.append("is_import = '{}'".format(is_import))
+        if len(supplier_name) > 0:
+            selections.append("supplier_name = '{}'".format(supplier_name))
+        stmt += " AND ".join(selections)
+        stmt += ";"
+        logger.debug(stmt)
+        rets = DBConnector.query(stmt)
+        if type(rets) is list and len(rets) > 0:
+            specification_code = rets[0][0]
+            response_object = inline(specification_code)
+            return jsonify(response_object)
+        else:
+            response_object = {"status": "not found"}
+            return jsonify(response_object)
 
 
 # 导出滞销品报表的接口
