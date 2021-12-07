@@ -120,17 +120,17 @@ def upload_jit_inventory_data():
     return jsonify(response_object)
 
 
-# 下载新增SKU数据表的接口
-# curl -X POST -H 'Content-Type: application/json' -d '{"added_skus": ["xxx", "yyy", "zzz"]}' http://127.0.0.1:5000/api/v1/addedskus/download
-@ggfilm_server.route("/api/v1/addedskus/download", methods=["POST"])
-def export_added_skus_csv_file():
+# 预下载新增SKU数据表的接口
+@ggfilm_server.route("/api/v1/addedskus/prepare", methods=["POST"])
+def prepare_added_skus():
     payload = request.get_json()
     added_skus = payload.get("added_skus")
     logger.info("Added SKUs {}".format(len(added_skus)))
 
     ts = int(time.time())
-    csv_file = "{}/ggfilm-server/added_skus/新增SKU_{}.csv".format(os.path.expanduser("~"), ts)
-    output_file = "~/ggfilm-client/added_skus/新增SKU_{}.csv".format(ts)
+    csv_file_sha256 = generate_digest("新增SKU_{}.csv".format(ts))
+    csv_file = "{}/ggfilm-server/send_queue/{}".format(os.path.expanduser("~"), csv_file_sha256)
+    output_file = "新增SKU_{}.csv".format(ts)
     with open(csv_file, "w") as fd:
         csv_writer = csv.writer(fd, delimiter=",")
         csv_writer.writerow(["新增SKU"])
@@ -139,6 +139,8 @@ def export_added_skus_csv_file():
 
     response_object = {"status": "success"}
     response_object["output_file"] = output_file
+    response_object["server_send_queue_file"] = csv_file_sha256
+
     return jsonify(response_object)
 
 
@@ -579,12 +581,6 @@ def prepare_report_file_case3():
     return jsonify(response_object)
 
 
-# 导出销售报表（按单个SKU汇总）的接口
-@ggfilm_server.route("/api/v1/case3/download/<path:filename>", methods=["GET"])
-def export_report_file_case3(filename):
-    return send_from_directory(directory="{}/ggfilm-server/send_queue".format(os.path.expanduser("~")), path=filename)
-
-
 # 导出滞销品报表的接口
 @ggfilm_server.route("/api/v1/case4/download", methods=["POST"])
 def export_report_file_case4():
@@ -601,6 +597,12 @@ def export_report_file_case5():
 @ggfilm_server.route("/api/v1/case6/download", methods=["POST"])
 def export_report_file_case6():
     return jsonify("导出体积、重量计算汇总单")
+
+
+# 下载文件接口
+@ggfilm_server.route("/api/v1/download/<path:filename>", methods=["GET"])
+def export_report_file_case3(filename):
+    return send_from_directory(directory="{}/ggfilm-server/send_queue".format(os.path.expanduser("~")), path=filename)
 
 
 def generate_digest(s:str):

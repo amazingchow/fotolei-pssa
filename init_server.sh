@@ -3,7 +3,6 @@
 mkdir -p ~/mysql/data
 mkdir -p ~/mysql/migrations
 cp ./db/migrations/*.sql ~/mysql/migrations
-mkdir -p ~/ggfilm-server/added_skus
 mkdir -p ~/ggfilm-server/inventories
 mkdir -p ~/ggfilm-server/jit_inventory
 mkdir -p ~/ggfilm-server/products

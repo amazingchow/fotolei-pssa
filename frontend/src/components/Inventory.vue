@@ -685,7 +685,7 @@ export default {
         })
     },
     exportReportFileCase3 (queryFile, saveFile) {
-      axios.get(this.serverBaseURL + '/api/v1/case3/download/' + queryFile)
+      axios.get(this.serverBaseURL + '/api/v1/download/' + queryFile)
         .then((res) => {
           const evt = document.createEvent('MouseEvents')
           var docUrl = document.createElement('a')
