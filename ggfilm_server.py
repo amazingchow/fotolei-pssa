@@ -8,6 +8,7 @@ logger = logging.getLogger(__name__)
 import os
 import sys
 sys.path.append(os.path.abspath("./db"))
+import shutil
 import time
 
 from collections import defaultdict
@@ -42,10 +43,12 @@ def keepalive():
 @ggfilm_server.route("/api/v1/products/upload", methods=["POST"])
 def upload_products():
     csv_files = request.files.getlist("file")
-    csv_file = "{}/ggfilm-server/products/{}_{}".format(
-        os.path.expanduser("~"), int(time.time()), csv_files[0].filename
+    csv_file_sha256 = generate_digest("{}_{}".format(int(time.time()), csv_files[0].filename))
+    csv_file = "{}/ggfilm-server/products/{}".format(
+        os.path.expanduser("~"), csv_file_sha256
     )
     csv_files[0].save(csv_file)
+    intelligent_calibration_for_input_products(csv_file)
     logger.info("Load data from {}".format(csv_file))
 
     DBConnector.load_data_infile(
@@ -292,35 +295,55 @@ def list_all_selections_for_slist():
     if (brand_selections) == 0:
         response_object["brand_selections"] = []
     else:
-        response_object["brand_selections"] = [{"value": brand[0], "text": brand[0]} for brand in brand_selections]
+        response_object["brand_selections"] = [
+            {"value": brand[0], "text": brand[0]} \
+                for brand in brand_selections \
+                    if len(brand[0].strip()) > 0
+        ]
 
     stmt = "SELECT DISTINCT classification_1 FROM ggfilm.products;"
     classification_1_selections = DBConnector.query(stmt)
     if (classification_1_selections) == 0:
         response_object["classification_1_selections"] = []
     else:
-        response_object["classification_1_selections"] = [{"value": classification_1_selection[0], "text": classification_1_selection[0]} for classification_1_selection in classification_1_selections]
+        response_object["classification_1_selections"] = [
+            {"value": classification_1_selection[0], "text": classification_1_selection[0]} \
+                for classification_1_selection in classification_1_selections \
+                    if len(classification_1_selection[0].strip()) > 0
+        ]
 
     stmt = "SELECT DISTINCT classification_2 FROM ggfilm.products;"
     classification_2_selections = DBConnector.query(stmt)
     if (classification_2_selections) == 0:
         response_object["classification_2_selections"] = []
     else:
-        response_object["classification_2_selections"] = [{"value": classification_2_selection[0], "text": classification_2_selection[0]} for classification_2_selection in classification_2_selections]
+        response_object["classification_2_selections"] = [
+            {"value": classification_2_selection[0], "text": classification_2_selection[0]} \
+                for classification_2_selection in classification_2_selections \
+                    if len(classification_2_selection[0].strip()) > 0
+        ]
 
     stmt = "SELECT DISTINCT product_series FROM ggfilm.products;"
     product_series_selections = DBConnector.query(stmt)
     if (product_series_selections) == 0:
         response_object["product_series_selections"] = []
     else:
-        response_object["product_series_selections"] = [{"value": product_series_selection[0], "text": product_series_selection[0]} for product_series_selection in product_series_selections]
+        response_object["product_series_selections"] = [
+            {"value": product_series_selection[0], "text": product_series_selection[0]} \
+                for product_series_selection in product_series_selections \
+                    if len(product_series_selection[0].strip()) > 0
+        ]
 
     stmt = "SELECT DISTINCT supplier_name FROM ggfilm.products;"
     supplier_name_selections = DBConnector.query(stmt)
     if (supplier_name_selections) == 0:
         response_object["supplier_name_selections"] = []
     else:
-        response_object["supplier_name_selections"] = [{"value": supplier_name_selection[0], "text": supplier_name_selection[0]} for supplier_name_selection in supplier_name_selections]
+        response_object["supplier_name_selections"] = [
+            {"value": supplier_name_selection[0], "text": supplier_name_selection[0]} \
+                for supplier_name_selection in supplier_name_selections \
+                    if len(supplier_name_selection[0].strip()) > 0
+        ]
 
     return jsonify(response_object)
 
@@ -607,3 +630,51 @@ def export_report_file_case3(filename):
 
 def generate_digest(s:str):
     return hashlib.sha256(s.encode("utf-8")).hexdigest()
+
+
+def intelligent_calibration_for_input_products(csv_file:str):
+    # 1. 表格里面存在中文逗号，程序需要做下智能矫正
+    fr = open(csv_file, "r")
+    fw = open(csv_file + ".tmp", "w")
+    for line in fr.readlines():
+        line = line.replace("，", ",")
+        fw.write(line)
+    fw.close()
+    fr.close()
+    shutil.move(csv_file + ".tmp", csv_file)
+
+    # 2.1. 表格里面存在很多空行（但是有占位符），程序需要做下智能矫正
+    # 2.2. 表格里面存在很多只有逗号的行，程序需要做下智能矫正
+    # 2.3. “品牌”，“分类1”，“分类2”，“产品系列”，“STOP状态”，“组合商品”，“参与统计”，“进口商品”，“供应商名称”，“采购名称”存在“0”这种输入，程序需要做下智能矫正
+    fr = open(csv_file, "r")
+    csv_reader = csv.reader(fr, delimiter=",")
+    fw = open(csv_file + ".tmp", "w")
+    csv_writer = csv.writer(fw, delimiter=",")
+    line = 0
+    for row in csv_reader:
+        if line == 0:
+            csv_writer.writerow(row)
+        else:
+            new_row = []
+            for item in row:
+                new_row.append(item.strip())
+            all_empty = True
+            for item in new_row:
+                if len(item) > 0:
+                    all_empty = False
+            if not all_empty:
+                for i in [4, 5, 6, 7, 8, 16, 17]:
+                    if new_row[i] == "0":
+                        new_row[i] = ""
+                if new_row[13] == "0":
+                    new_row[13] == "否"
+                if new_row[14] == "0":
+                    new_row[14] == "不参与"
+                if new_row[15] == "0":
+                    new_row[15] == "非进口品"
+                csv_writer.writerow(new_row)
+        line += 1
+
+    fw.close()
+    fr.close()
+    shutil.move(csv_file + ".tmp", csv_file)
