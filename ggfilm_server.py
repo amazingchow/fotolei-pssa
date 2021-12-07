@@ -324,13 +324,13 @@ def list_all_selections_for_slist():
 
 
 # 导出销售报表（按分类汇总）的接口
-@ggfilm_server.route("/api/v1/export/case1", methods=["POST"])
+@ggfilm_server.route("/api/v1/case1/download", methods=["POST"])
 def export_report_file_case1():
     return jsonify("导出销售报表（按分类汇总）")
 
 
 # 导出销售报表（按系列汇总）的接口
-@ggfilm_server.route("/api/v1/export/case2", methods=["POST"])
+@ggfilm_server.route("/api/v1/case2/download", methods=["POST"])
 def export_report_file_case2():
     return jsonify("导出销售报表（按系列汇总）")
 
@@ -347,8 +347,8 @@ def export_report_file_case2():
 * 销售数量 = 时间段内每一个月的数量的累加
 * 截止库存数量 = 时间段内最后一个月的数量
 '''
-@ggfilm_server.route("/api/v1/export/case3/preview", methods=["POST"])
-def preview_export_report_file_case3():
+@ggfilm_server.route("/api/v1/case3/preview", methods=["POST"])
+def preview_report_file_case3():
     payload = request.get_json()
     # 1. 起始日期和截止日期用于过滤掉时间条件不符合的记录项
     # 2.1. 如果specification_code（规格编码）不为空，直接用规格编码筛选出想要的数据
@@ -459,8 +459,8 @@ def preview_export_report_file_case3():
 
 
 # 预导出销售报表（按单个SKU汇总）的接口
-@ggfilm_server.route("/api/v1/export/case3/prepare", methods=["POST"])
-def prepare_export_report_file_case3():
+@ggfilm_server.route("/api/v1/case3/prepare", methods=["POST"])
+def prepare_report_file_case3():
     payload = request.get_json()
     st_date = payload.get("st_date").strip()
     st_year, st_month = st_date.split("-")[0], st_date.split("-")[1]
@@ -580,25 +580,25 @@ def prepare_export_report_file_case3():
 
 
 # 导出销售报表（按单个SKU汇总）的接口
-@ggfilm_server.route("/api/v1/export/case3/<path:filename>", methods=["GET"])
+@ggfilm_server.route("/api/v1/case3/download/<path:filename>", methods=["GET"])
 def export_report_file_case3(filename):
     return send_from_directory(directory="{}/ggfilm-server/send_queue".format(os.path.expanduser("~")), path=filename)
 
 
 # 导出滞销品报表的接口
-@ggfilm_server.route("/api/v1/export/case4", methods=["POST"])
+@ggfilm_server.route("/api/v1/case4/download", methods=["POST"])
 def export_report_file_case4():
     return jsonify("导出滞销品报表")
 
 
 # 导出进口产品采购单的接口
-@ggfilm_server.route("/api/v1/export/case5", methods=["POST"])
+@ggfilm_server.route("/api/v1/case5/download", methods=["POST"])
 def export_report_file_case5():
     return jsonify("导出进口产品采购单")
 
 
 # 导出体积、重量计算汇总单的接口
-@ggfilm_server.route("/api/v1/export/case6", methods=["POST"])
+@ggfilm_server.route("/api/v1/case6/download", methods=["POST"])
 def export_report_file_case6():
     return jsonify("导出体积、重量计算汇总单")
 

@@ -551,7 +551,7 @@ export default {
     },
     // 销售报表（按分类汇总）
     exportReportFileCase1 (payload) {
-      axios.post(this.serverBaseURL + '/api/v1/export/case1', payload)
+      axios.post(this.serverBaseURL + '/api/v1/case1/download', payload)
         .then((res) => {
           console.log(res.data)
           this.message = '导出成功!'
@@ -582,7 +582,7 @@ export default {
     },
     // 销售报表（按系列汇总）
     exportReportFileCase2 (payload) {
-      axios.post(this.serverBaseURL + '/api/v1/export/case2', payload)
+      axios.post(this.serverBaseURL + '/api/v1/case2/download', payload)
         .then((res) => {
           console.log(res.data)
           this.message = '导出成功!'
@@ -613,7 +613,7 @@ export default {
     },
     // 销售报表（按单个SKU汇总）
     previewReportFileCase3 (payload) {
-      axios.post(this.serverBaseURL + '/api/v1/export/case3/preview', payload)
+      axios.post(this.serverBaseURL + '/api/v1/case3/preview', payload)
         .then((res) => {
           if (res.data.status === 'success') {
             this.previewCase3.stDate = res.data.st_date
@@ -673,7 +673,7 @@ export default {
       this.initExportForm()
     },
     prepareExportReportFileCase3 (payload) {
-      axios.post(this.serverBaseURL + '/api/v1/export/case3/prepare', payload)
+      axios.post(this.serverBaseURL + '/api/v1/case3/prepare', payload)
         .then((res) => {
           this.exportReportFileCase3(res.data.server_send_queue_file, res.data.output_file)
         })
@@ -685,7 +685,7 @@ export default {
         })
     },
     exportReportFileCase3 (queryFile, saveFile) {
-      axios.get(this.serverBaseURL + '/api/v1/export/case3/' + queryFile)
+      axios.get(this.serverBaseURL + '/api/v1/case3/download/' + queryFile)
         .then((res) => {
           const evt = document.createEvent('MouseEvents')
           var docUrl = document.createElement('a')
@@ -726,7 +726,7 @@ export default {
     },
     // 滞销品报表
     exportReportFileCase4 (payload) {
-      axios.post(this.serverBaseURL + '/api/v1/export/case4', payload)
+      axios.post(this.serverBaseURL + '/api/v1/case4/download', payload)
         .then((res) => {
           console.log(res.data)
           this.message = '导出成功!'
@@ -757,7 +757,7 @@ export default {
     },
     // 进口产品采购单
     exportReportFileCase5 (payload) {
-      axios.post(this.serverBaseURL + '/api/v1/export/case5', payload)
+      axios.post(this.serverBaseURL + '/api/v1/case5/download', payload)
         .then((res) => {
           console.log(res.data)
           this.message = '导出成功!'
@@ -787,7 +787,7 @@ export default {
       this.initExportForm()
     },
     exportReportFileCase6 (payload) {
-      axios.post(this.serverBaseURL + '/api/v1/export/case6', payload)
+      axios.post(this.serverBaseURL + '/api/v1/case6/download', payload)
         .then((res) => {
           console.log(res.data)
           this.message = '导出成功!'
