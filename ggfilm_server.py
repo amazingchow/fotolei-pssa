@@ -48,39 +48,42 @@ def upload_products():
         os.path.expanduser("~"), csv_file_sha256
     )
     csv_files[0].save(csv_file)
-    intelligent_calibration_for_input_products(csv_file)
-    logger.info("Load data from {}".format(csv_file))
+    if not do_data_schema_validation_for_input_products(csv_file):
+        response_object = {"status": "invalid input data schema"}
+    else:
+        do_intelligent_calibration_for_input_products(csv_file)
+        logger.info("Load data from {}".format(csv_file))
 
-    DBConnector.load_data_infile(
-        """LOAD DATA LOCAL INFILE "{}" """.format(csv_file) +
-        "INTO TABLE ggfilm.products " +
-        "FIELDS TERMINATED BY ',' " +
-        """ENCLOSED BY '"' """ +
-        "LINES TERMINATED BY '\n' " +
-        "IGNORE 1 LINES " +
-        "(product_code, specification_code, product_name, specification_name, " +
-        "brand, classification_1, classification_2, product_series, stop_status, " +
-        "product_weight, product_length, product_width, product_hight, " +
-        "is_combined, be_aggregated, is_import, " +
-        "supplier_name, purchase_name, jit_inventory);"
-    )
+        DBConnector.load_data_infile(
+            """LOAD DATA LOCAL INFILE "{}" """.format(csv_file) +
+            "INTO TABLE ggfilm.products " +
+            "FIELDS TERMINATED BY ',' " +
+            """ENCLOSED BY '"' """ +
+            "LINES TERMINATED BY '\n' " +
+            "IGNORE 1 LINES " +
+            "(product_code, specification_code, product_name, specification_name, " +
+            "brand, classification_1, classification_2, product_series, stop_status, " +
+            "product_weight, product_length, product_width, product_hight, " +
+            "is_combined, be_aggregated, is_import, " +
+            "supplier_name, purchase_name, jit_inventory);"
+        )
 
-    stmt = "SELECT specification_code FROM ggfilm.products;"
-    rets = DBConnector.query(stmt)
-    SKU_LOOKUP_TABLE.clear()
-    for ret in rets:
-        SKU_LOOKUP_TABLE[ret[0]] = True
-    logger.info("Insert {} SKUs into SKU_LOOKUP_TABLE!!!".format(len(SKU_LOOKUP_TABLE)))
+        stmt = "SELECT specification_code FROM ggfilm.products;"
+        rets = DBConnector.query(stmt)
+        SKU_LOOKUP_TABLE.clear()
+        for ret in rets:
+            SKU_LOOKUP_TABLE[ret[0]] = True
+        logger.info("Insert {} SKUs into SKU_LOOKUP_TABLE!!!".format(len(SKU_LOOKUP_TABLE)))
 
-    with open(csv_file, "r") as fd:
-        csv_reader = csv.reader(fd, delimiter=",")
-        for _ in csv_reader:
-            pass
-        stmt = "INSERT INTO ggfilm.product_summary (total) VALUES (%s);"
-        DBConnector.insert(stmt, (csv_reader.line_num - 1,))
-        logger.info("There {} records have been inserted!!!".format(csv_reader.line_num - 1))
+        with open(csv_file, "r") as fd:
+            csv_reader = csv.reader(fd, delimiter=",")
+            for _ in csv_reader:
+                pass
+            stmt = "INSERT INTO ggfilm.product_summary (total) VALUES (%s);"
+            DBConnector.insert(stmt, (csv_reader.line_num - 1,))
+            logger.info("There {} records have been inserted!!!".format(csv_reader.line_num - 1))
 
-    response_object = {"status": "success"}
+        response_object = {"status": "success"}
     return jsonify(response_object)
 
 
@@ -632,7 +635,30 @@ def generate_digest(s:str):
     return hashlib.sha256(s.encode("utf-8")).hexdigest()
 
 
-def intelligent_calibration_for_input_products(csv_file:str):
+def do_data_schema_validation_for_input_products(csv_file:str):
+    data_schema = [
+        "商品编码", "规格编码", "商品名称", "规格名称",
+        "品牌", "分类1", "分类2", "产品系列", "STOP状态",
+        "重量", "长度CM", "宽度CM", "高度CM",
+        "组合商品", "参与统计", "进口产品",
+        "供应商名称", "采购名称", "实时库存"
+    ]
+    is_valid = True
+    with open(csv_file, "r") as fd:
+        csv_reader = csv.reader(fd, delimiter=",")
+        for row in csv_reader:
+            if len(row) != len(data_schema):
+                is_valid = False
+                break
+            for idx, item in enumerate(row):
+                if item.strip() != data_schema[idx]:
+                    is_valid = False
+                    break
+            break
+    return is_valid
+
+
+def do_intelligent_calibration_for_input_products(csv_file:str):
     # 1. 表格里面存在中文逗号，程序需要做下智能矫正
     fr = open(csv_file, "r")
     fw = open(csv_file + ".tmp", "w")
