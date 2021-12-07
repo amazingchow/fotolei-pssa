@@ -174,7 +174,7 @@ def upload_inventories():
 # 获取总商品量的接口
 # curl -X GET -L http://127.0.0.1:5000/api/v1/products/total
 @ggfilm_server.route("/api/v1/products/total", methods=["GET"])
-def products_total():
+def get_products_total():
     stmt = "SELECT SUM(total) FROM ggfilm.product_summary;"
     ret = DBConnector.query(stmt)
     response_object = {"status": "success"}
