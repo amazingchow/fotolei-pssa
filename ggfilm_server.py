@@ -48,6 +48,7 @@ def upload_products():
         os.path.expanduser("~"), csv_file_sha256
     )
     csv_files[0].save(csv_file)
+
     if not do_data_schema_validation_for_input_products(csv_file):
         response_object = {"status": "invalid input data schema"}
     else:
@@ -154,28 +155,33 @@ def prepare_added_skus():
 @ggfilm_server.route("/api/v1/inventories/upload", methods=["POST"])
 def upload_inventories():
     csv_files = request.files.getlist("file")
-    csv_file = "{}/ggfilm-server/inventories/{}_{}".format(
-        os.path.expanduser("~"), int(time.time()), csv_files[0].filename
+    csv_file_sha256 = generate_digest("{}_{}".format(int(time.time()), csv_files[0].filename))
+    csv_file = "{}/ggfilm-server/inventories/{}".format(
+        os.path.expanduser("~"), csv_file_sha256
     )
     csv_files[0].save(csv_file)
-    logger.info("Load data from {}".format(csv_file))
 
-    DBConnector.load_data_infile(
-        """LOAD DATA LOCAL INFILE "{}" """.format(csv_file) +
-        "INTO TABLE ggfilm.inventories " +
-        "FIELDS TERMINATED BY ',' " +
-        """ENCLOSED BY '"' """ +
-        "LINES TERMINATED BY '\n' " +
-        "IGNORE 1 LINES " +
-        "(product_code, product_name, specification_code, " +
-        "specification_name, st_inventory_qty, st_inventory_total, " +
-        "purchase_qty, purchase_total, purchase_then_return_qty, " +
-        "purchase_then_return_total, sale_qty, sale_total, " +
-        "sale_then_return_qty, sale_then_return_total, others_qty, " +
-        "others_total, ed_inventory_qty, ed_inventory_total);"
-    )
+    if not do_data_schema_validation_for_input_inventories(csv_file):
+        response_object = {"status": "invalid input data schema"}
+    else:
+        logger.info("Load data from {}".format(csv_file))
 
-    response_object = {"status": "success"}
+        DBConnector.load_data_infile(
+            """LOAD DATA LOCAL INFILE "{}" """.format(csv_file) +
+            "INTO TABLE ggfilm.inventories " +
+            "FIELDS TERMINATED BY ',' " +
+            """ENCLOSED BY '"' """ +
+            "LINES TERMINATED BY '\n' " +
+            "IGNORE 1 LINES " +
+            "(product_code, product_name, specification_code, " +
+            "specification_name, st_inventory_qty, st_inventory_total, " +
+            "purchase_qty, purchase_total, purchase_then_return_qty, " +
+            "purchase_then_return_total, sale_qty, sale_total, " +
+            "sale_then_return_qty, sale_then_return_total, others_qty, " +
+            "others_total, ed_inventory_qty, ed_inventory_total);"
+        )
+
+        response_object = {"status": "success"}
     return jsonify(response_object)
 
 
@@ -704,3 +710,26 @@ def do_intelligent_calibration_for_input_products(csv_file:str):
     fw.close()
     fr.close()
     shutil.move(csv_file + ".tmp", csv_file)
+
+
+def do_data_schema_validation_for_input_inventories(csv_file:str):
+    data_schema = [
+        "商品编码", "商品名称", "规格编码", "规格名称",
+        "起始库存数量", "起始库存总额", "采购数量", "采购总额",
+        "采购退货数量", "采购退货总额", "销售数量", "销售总额",
+        "销售退货数量", "销售退货总额", "其他变更数量", "其他变更总额",
+        "截止库存数量", "截止库存总额",
+    ]
+    is_valid = True
+    with open(csv_file, "r") as fd:
+        csv_reader = csv.reader(fd, delimiter=",")
+        for row in csv_reader:
+            if len(row) != len(data_schema):
+                is_valid = False
+                break
+            for idx, item in enumerate(row):
+                if item.strip() != data_schema[idx]:
+                    is_valid = False
+                    break
+            break
+    return is_valid

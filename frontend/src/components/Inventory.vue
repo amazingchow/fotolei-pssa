@@ -524,10 +524,15 @@ export default {
         }
       }
       axios.post(this.serverBaseURL + '/api/v1/inventories/upload', formData, config)
-        .then(() => {
-          this.listInventories()
-          this.message = '导入成功!'
-          this.showMessage = true
+        .then((res) => {
+          if (res.data.status === 'success') {
+            this.listInventories()
+            this.message = '导入成功!'
+            this.showMessage = true
+          } else {
+            this.message = '导入失败! 数据表格格式有变更，请人工复合！'
+            this.showMessage = true
+          }
         })
         .catch((error) => {
           // eslint-disable-next-line
