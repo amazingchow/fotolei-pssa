@@ -295,7 +295,7 @@
         </b-card>
       </b-form>
     </b-modal>
-    <b-modal ref="previewCase3Modal" title="预览销售报表（按单个SKU汇总）" size="lg" hide-footer>
+    <b-modal ref="previewCase3Modal" title="预览销售报表（按单个SKU汇总）" size="xl" hide-footer>
       <b-table-simple striped hover small id="preview-case3-table">
         <b-thead>
           <b-tr>
@@ -672,10 +672,30 @@ export default {
       this.$refs.previewCase3Modal.hide()
       this.initExportForm()
     },
-    exportReportFileCase3 (payload) {
-      axios.post(this.serverBaseURL + '/api/v1/export/case3', payload)
+    prepareExportReportFileCase3 (payload) {
+      axios.post(this.serverBaseURL + '/api/v1/export/case3/prepare', payload)
         .then((res) => {
-          this.message = '下载成功!'
+          this.exportReportFileCase3(res.data.server_send_queue_file, res.data.output_file)
+        })
+        .catch((error) => {
+          // eslint-disable-next-line
+          console.log(error)
+          this.message = '下载失败!'
+          this.showMessage = true
+        })
+    },
+    exportReportFileCase3 (queryFile, saveFile) {
+      axios.get(this.serverBaseURL + '/api/v1/export/case3/' + queryFile)
+        .then((res) => {
+          const evt = document.createEvent('MouseEvents')
+          var docUrl = document.createElement('a')
+          docUrl.download = saveFile
+          docUrl.href = window.URL.createObjectURL(new Blob([res.data]), {type: 'text/plain'})
+          docUrl.dataset.downloadurl = ['.csv', docUrl.download, docUrl.href].join(':')
+          // TODO: 替换为支持的解决方案
+          evt.initEvent('click', true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null)
+          docUrl.dispatchEvent(evt)
+          this.message = '下载成功! 保存为本地文件<' + saveFile + '>.'
           this.showMessage = true
         })
         .catch((error) => {
@@ -695,7 +715,7 @@ export default {
         ed_date: this.previewCase3.edDate,
         specification_code: this.previewCase3.specificationCode
       }
-      this.exportReportFileCase3(payload)
+      this.prepareExportReportFileCase3(payload)
       this.initExportForm()
     },
     onCancelExportCase3 (evt) {

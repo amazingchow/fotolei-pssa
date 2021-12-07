@@ -3,10 +3,11 @@
 mkdir -p ~/mysql/data
 mkdir -p ~/mysql/migrations
 cp ./db/migrations/*.sql ~/mysql/migrations
-mkdir -p ~/ggfilm-server/products
-mkdir -p ~/ggfilm-server/jit_inventory
 mkdir -p ~/ggfilm-server/added_skus
 mkdir -p ~/ggfilm-server/inventories
+mkdir -p ~/ggfilm-server/jit_inventory
+mkdir -p ~/ggfilm-server/products
+mkdir -p ~/ggfilm-server/send_queue
 
 docker-compose -f "test/mysql-deploy/docker-compose.yml" up -d --build
 docker_container_id=`docker container ls | grep mysql-deploy | awk '{print $1}'`

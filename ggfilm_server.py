@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import atexit
 import csv
+import hashlib
 import logging
 logging.basicConfig(level=logging.INFO, format="[%(asctime)s][%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
@@ -22,7 +23,7 @@ if type(_rets) is list and len(_rets) > 0:
     logger.info("Insert {} SKUs into SKU_LOOKUP_TABLE!!!".format(len(SKU_LOOKUP_TABLE)))
 atexit.register(lambda: DBConnector.release_conn())
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 
 ggfilm_server = Flask(__name__)
@@ -457,17 +458,15 @@ def preview_export_report_file_case3():
             return jsonify(response_object)
 
 
-# 导出销售报表（按单个SKU汇总）的接口
-@ggfilm_server.route("/api/v1/export/case3", methods=["POST"])
-def export_report_file_case3():
+# 预导出销售报表（按单个SKU汇总）的接口
+@ggfilm_server.route("/api/v1/export/case3/prepare", methods=["POST"])
+def prepare_export_report_file_case3():
     payload = request.get_json()
     st_date = payload.get("st_date").strip()
     st_year, st_month = st_date.split("-")[0], st_date.split("-")[1]
     ed_date = payload.get("ed_date").strip()
     ed_year, ed_month = ed_date.split("-")[0], ed_date.split("-")[1]
     specification_code = payload.get("specification_code").strip()
-
-    response_object = {"status": "success"}
 
     stmt = "SELECT * FROM ggfilm.products WHERE specification_code = '{}' LIMIT 1;".format(specification_code)
     rets = DBConnector.query(stmt)
@@ -502,18 +501,88 @@ def export_report_file_case3():
         )
     rets = DBConnector.query(stmt)
     cache["st_inventory_qty"] = rets[0][5]
-    # todo
-    cache["ed_inventory_qty"] = rets[len(rets) - 1][7]
+    cache["st_inventory_total"] = rets[0][6]
+    cache["ed_inventory_qty"] = rets[len(rets) - 1][17]
+    cache["ed_inventory_total"] = rets[len(rets) - 1][18]
     purchase_qty = 0
     for ret in rets:
-        purchase_qty += ret[5]
+        purchase_qty += ret[7]
     cache["purchase_qty"] = purchase_qty
+    purchase_total = 0
+    for ret in rets:
+        purchase_total += ret[8]
+    cache["purchase_total"] = purchase_total
+    purchase_then_return_qty = 0
+    for ret in rets:
+        purchase_then_return_qty += ret[9]
+    cache["purchase_then_return_qty"] = purchase_then_return_qty
+    purchase_then_return_total = 0
+    for ret in rets:
+        purchase_then_return_total += ret[10]
+    cache["purchase_then_return_total"] = purchase_then_return_total
     sale_qty = 0
     for ret in rets:
-        sale_qty += ret[6]
+        sale_qty += ret[11]
     cache["sale_qty"] = sale_qty
+    sale_total = 0
+    for ret in rets:
+        sale_total += ret[12]
+    cache["sale_total"] = sale_total
+    sale_then_return_qty = 0
+    for ret in rets:
+        sale_then_return_qty += ret[13]
+    cache["sale_then_return_qty"] = sale_then_return_qty
+    sale_then_return_total = 0
+    for ret in rets:
+        sale_then_return_total += ret[14]
+    cache["sale_then_return_total"] = sale_then_return_total
+    others_qty = 0
+    for ret in rets:
+        others_qty += ret[15]
+    cache["others_qty"] = others_qty
+    others_total = 0
+    for ret in rets:
+        others_total += ret[16]
+    cache["others_total"] = others_total
+
+    ts = int(time.time())
+    csv_file_sha256 = generate_digest("销售报表（按单个SKU汇总）_{}.csv".format(ts))
+    csv_file = "{}/ggfilm-server/send_queue/{}".format(os.path.expanduser("~"), csv_file_sha256)
+    output_file = "销售报表（按单个SKU汇总）_{}.csv".format(ts)
+    with open(csv_file, "w") as fd:
+        csv_writer = csv.writer(fd, delimiter=",")
+        csv_writer.writerow([
+            "商品编码", "规格编码", "商品名称", "规格名称",
+            "品牌", "分类1", "分类2", "产品系列",
+            "STOP状态", "重量/g", "长度/cm", "宽度/cm", "高度/cm",
+            "组合商品", "进口产品", "供应商名称", "采购名称",
+            "起始库存数量", "起始库存总额", "采购数量", "采购总额",
+            "采购退货数量", "采购退货总额", "销售数量", "销售总额",
+            "销售退货数量", "销售退货总额", "其他变更数量", "其他变更总额",
+            "截止库存数量", "截止库存总额", "实时库存",
+        ])
+        csv_writer.writerow([
+            cache["product_code"], cache["specification_code"], cache["product_name"], cache["specification_name"],
+            cache["brand"], cache["classification_1"], cache["classification_2"], cache["product_series"],
+            cache["stop_status"], cache["product_weight"], cache["product_length"], cache["product_width"], cache["product_hight"],
+            cache["is_combined"], cache["is_import"], cache["supplier_name"], cache["purchase_name"],
+            cache["st_inventory_qty"], cache["st_inventory_total"], cache["purchase_qty"], cache["purchase_total"],
+            cache["purchase_then_return_qty"], cache["purchase_then_return_total"], cache["sale_qty"], cache["sale_total"],
+            cache["sale_then_return_qty"], cache["sale_then_return_total"], cache["others_qty"], cache["others_total"],
+            cache["ed_inventory_qty"], cache["ed_inventory_total"], cache["jit_inventory"],
+        ])
+
+    response_object = {"status": "success"}
+    response_object["output_file"] = output_file
+    response_object["server_send_queue_file"] = csv_file_sha256
 
     return jsonify(response_object)
+
+
+# 导出销售报表（按单个SKU汇总）的接口
+@ggfilm_server.route("/api/v1/export/case3/<path:filename>", methods=["GET"])
+def export_report_file_case3(filename):
+    return send_from_directory(directory="{}/ggfilm-server/send_queue".format(os.path.expanduser("~")), path=filename)
 
 
 # 导出滞销品报表的接口
@@ -532,3 +601,7 @@ def export_report_file_case5():
 @ggfilm_server.route("/api/v1/export/case6", methods=["POST"])
 def export_report_file_case6():
     return jsonify("导出体积、重量计算汇总单")
+
+
+def generate_digest(s:str):
+    return hashlib.sha256(s.encode("utf-8")).hexdigest()
