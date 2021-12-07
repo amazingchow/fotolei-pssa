@@ -144,7 +144,7 @@ def export_added_skus_csv_file():
 
 # 载入库存数据报表的接口
 @ggfilm_server.route("/api/v1/inventories/upload", methods=["POST"])
-def import_inventories_csv_file():
+def upload_inventories():
     csv_files = request.files.getlist("file")
     csv_file = "{}/ggfilm-server/inventories/{}_{}".format(
         os.path.expanduser("~"), int(time.time()), csv_files[0].filename
