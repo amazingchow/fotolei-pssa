@@ -213,7 +213,7 @@ def list_products():
 # 获取所有库存的接口, 带有翻页功能
 # curl -X GET -L http://127.0.0.1:5000/api/v1/inventories?page.offset=0&page.limit=20
 @ggfilm_server.route("/api/v1/inventories", methods=["GET"])
-def inventories():
+def list_inventories():
     page_offset = request.args.get("page.offset")
     page_limit = request.args.get("page.limit")
 
