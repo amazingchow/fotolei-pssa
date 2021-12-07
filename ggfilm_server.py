@@ -83,7 +83,7 @@ def upload_products():
 
 # 载入即时库存报表的接口
 @ggfilm_server.route("/api/v1/jitinventory/upload", methods=["POST"])
-def import_jit_inventory_csv_file():
+def upload_jit_inventory_data():
     csv_files = request.files.getlist("file")
     csv_file = "{}/ggfilm-server/jit_inventory/{}_{}".format(
         os.path.expanduser("~"), int(time.time()), csv_files[0].filename
