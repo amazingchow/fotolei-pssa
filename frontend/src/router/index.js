@@ -9,7 +9,7 @@ Vue.use(VueRouter)
 
 const routes = [
   {
-    path: '/inventory',
+    path: '/',
     name: 'Inventory',
     component: Inventory
   },

@@ -40,7 +40,7 @@ def keepalive():
 
 # 载入商品数据报表的接口
 @ggfilm_server.route("/api/v1/products/upload", methods=["POST"])
-def import_products_csv_file():
+def upload_products():
     csv_files = request.files.getlist("file")
     csv_file = "{}/ggfilm-server/products/{}_{}".format(
         os.path.expanduser("~"), int(time.time()), csv_files[0].filename
