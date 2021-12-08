@@ -219,11 +219,16 @@ export default {
         }
       }
       axios.post(this.serverBaseURL + '/api/v1/products/upload', formData, config)
-        .then(() => {
-          this.listProducts()
-          this.getProductsTotal()
-          this.message = '导入成功!'
-          this.showMessage = true
+        .then((res) => {
+          if (res.data.status === 'success') {
+            this.listProducts()
+            this.getProductsTotal()
+            this.message = '导入成功!'
+            this.showMessage = true
+          } else {
+            this.message = '导入失败! 数据表格格式有变更，请人工复合！'
+            this.showMessage = true
+          }
         })
         .catch((error) => {
           // eslint-disable-next-line
@@ -258,10 +263,30 @@ export default {
           this.showMessage = true
         })
     },
-    downloadAddedSKUs (payload) {
-      axios.post(this.serverBaseURL + '/api/v1/addedskus/download', payload)
+    preDownloadAddedSKUs (payload) {
+      axios.post(this.serverBaseURL + '/api/v1/addedskus/prepare', payload)
         .then((res) => {
-          this.message = '下载成功! 保存在为本地文件<' + res.data.output_file + '>.'
+          this.downloadAddedSKUs(res.data.server_send_queue_file, res.data.output_file)
+        })
+        .catch((error) => {
+          // eslint-disable-next-line
+          console.log(error)
+          this.message = '下载失败!'
+          this.showMessage = true
+        })
+    },
+    downloadAddedSKUs (queryFile, saveFile) {
+      axios.get(this.serverBaseURL + '/api/v1/download/' + queryFile)
+        .then((res) => {
+          const evt = document.createEvent('MouseEvents')
+          var docUrl = document.createElement('a')
+          docUrl.download = saveFile
+          docUrl.href = window.URL.createObjectURL(new Blob([res.data]), {type: 'text/plain'})
+          docUrl.dataset.downloadurl = ['.csv', docUrl.download, docUrl.href].join(':')
+          // TODO: 替换为支持的解决方案
+          evt.initEvent('click', true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null)
+          docUrl.dispatchEvent(evt)
+          this.message = '下载成功! 保存为本地文件<' + saveFile + '>.'
           this.showMessage = true
         })
         .catch((error) => {
@@ -298,7 +323,7 @@ export default {
       const payload = {
         added_skus: this.addedSkus
       }
-      this.downloadAddedSKUs(payload)
+      this.preDownloadAddedSKUs(payload)
       this.shouldOpenSidebar = false
       this.addedSkus = []
     },

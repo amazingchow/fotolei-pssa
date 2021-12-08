@@ -35,7 +35,6 @@
             </b-dropdown-item-button>
           </b-dropdown>
         </div>
-        <br/>
         <b-table-simple striped hover small id="inventory-table">
           <b-thead>
             <b-tr>
@@ -91,6 +90,14 @@
       </div>
     </div>
     <b-modal ref="importCSVFileModal" id="csv-file-modal" title="导入库存数据" hide-footer>
+      <b-form-group
+        label="自定义年月（可选）："
+        label-size="sm"
+        label-align-sm="right"
+        label-cols-sm="4"
+      >
+        <b-form-input v-model="customDateSelection" placeholder="YYYY-MM"></b-form-input>
+      </b-form-group>
       <b-form @submit="onImport" @reset="onCancel">
         <b-form-group>
           <b-form-file
@@ -100,7 +107,6 @@
             placeholder="请选择UTF-8编码的CSV文件">
           </b-form-file>
         </b-form-group>
-        <br/>
         <b-button-group id="inventory-table-operate-btn" class="w-100 d-block">
           <b-button type="submit" variant="dark">导入</b-button>
           <b-button type="reset" variant="dark">取消</b-button>
@@ -132,22 +138,7 @@
             label-align-sm="right"
             label-cols-sm="3"
           >
-            <b-input-group>
-              <b-form-input
-                v-model="stDateSelection"
-                type="text"
-                placeholder="YYYY-MM-DD"
-                autocomplete="off"
-              ></b-form-input>
-              <b-input-group-append>
-                <b-form-datepicker
-                  v-model="stDateSelection"
-                  button-only
-                  right
-                  locale="zh-CH"
-                ></b-form-datepicker>
-              </b-input-group-append>
-            </b-input-group>
+            <b-form-input v-model="stDateSelection" placeholder="YYYY-MM"></b-form-input>
           </b-form-group>
           <b-form-group
             label="截止日期"
@@ -155,22 +146,7 @@
             label-align-sm="right"
             label-cols-sm="3"
           >
-            <b-input-group>
-              <b-form-input
-                v-model="edDateSelection"
-                type="text"
-                placeholder="YYYY-MM-DD"
-                autocomplete="off"
-              ></b-form-input>
-              <b-input-group-append>
-                <b-form-datepicker
-                  v-model="edDateSelection"
-                  button-only
-                  right
-                  locale="zh-CH"
-                ></b-form-datepicker>
-              </b-input-group-append>
-            </b-input-group>
+            <b-form-input v-model="edDateSelection" placeholder="YYYY-MM"></b-form-input>
           </b-form-group>
           <b-form-group
             label="商品编码"
@@ -295,7 +271,7 @@
         </b-card>
       </b-form>
     </b-modal>
-    <b-modal ref="previewCase3Modal" title="预览销售报表（按单个SKU汇总）" size="lg" hide-footer>
+    <b-modal ref="previewCase3Modal" title="预览销售报表（按单个SKU汇总）" size="xl" hide-footer>
       <b-table-simple striped hover small id="preview-case3-table">
         <b-thead>
           <b-tr>
@@ -357,6 +333,11 @@
 </template>
 
 <style>
+#import-and-export-btn-area {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
 #inventory-table {
   border: 2px solid black !important;
   font-size: small;
@@ -397,6 +378,7 @@ export default {
   data () {
     return {
       serverBaseURL: process.env.SERVER_BASE_URL,
+      customDateSelection: '',
       stDateSelection: '',
       edDateSelection: '',
       productCodeSelection: '',
@@ -436,6 +418,8 @@ export default {
       pageOffset: 0,
       uploadCSVFile: null,
       previewCase3: {
+        stDate: '',
+        edDate: '',
         productCode: '',
         specificationCode: '',
         productName: '',
@@ -503,7 +487,8 @@ export default {
       this.beAggregatedSelection = '参与'
       this.isImportSelection = '非进口品'
       this.supplierNameSelection = ''
-      this.uploadCSVFile = null
+      this.previewCase3.stDate = ''
+      this.previewCase3.edDate = ''
       this.previewCase3.productCode = ''
       this.previewCase3.specificationCode = ''
       this.previewCase3.productName = ''
@@ -521,10 +506,15 @@ export default {
         }
       }
       axios.post(this.serverBaseURL + '/api/v1/inventories/upload', formData, config)
-        .then(() => {
-          this.listInventories()
-          this.message = '导入成功!'
-          this.showMessage = true
+        .then((res) => {
+          if (res.data.status === 'success') {
+            this.listInventories()
+            this.message = '导入成功!'
+            this.showMessage = true
+          } else {
+            this.message = '导入失败! 数据表格格式有变更，请人工复合！'
+            this.showMessage = true
+          }
         })
         .catch((error) => {
           // eslint-disable-next-line
@@ -538,15 +528,20 @@ export default {
       this.$refs.importCSVFileModal.hide()
       let formData = new FormData()
       formData.append('file', this.uploadCSVFile, this.uploadCSVFile.name)
+      formData.append('import_date', this.customDateSelection)
       this.importCSVFile(formData)
+      this.customDateSelection = ''
+      this.uploadCSVFile = null
     },
     onCancel (evt) {
       evt.preventDefault()
       this.$refs.importCSVFileModal.hide()
+      this.customDateSelection = ''
+      this.uploadCSVFile = null
     },
     // 销售报表（按分类汇总）
     exportReportFileCase1 (payload) {
-      axios.post(this.serverBaseURL + '/api/v1/export/case1', payload)
+      axios.post(this.serverBaseURL + '/api/v1/case1/download', payload)
         .then((res) => {
           console.log(res.data)
           this.message = '导出成功!'
@@ -577,7 +572,7 @@ export default {
     },
     // 销售报表（按系列汇总）
     exportReportFileCase2 (payload) {
-      axios.post(this.serverBaseURL + '/api/v1/export/case2', payload)
+      axios.post(this.serverBaseURL + '/api/v1/case2/download', payload)
         .then((res) => {
           console.log(res.data)
           this.message = '导出成功!'
@@ -607,10 +602,12 @@ export default {
       this.initExportForm()
     },
     // 销售报表（按单个SKU汇总）
-    exportPreviewReportFileCase3 (payload) {
-      axios.post(this.serverBaseURL + '/api/v1/export/case3/preview', payload)
+    previewReportFileCase3 (payload) {
+      axios.post(this.serverBaseURL + '/api/v1/case3/preview', payload)
         .then((res) => {
           if (res.data.status === 'success') {
+            this.previewCase3.stDate = res.data.st_date
+            this.previewCase3.edDate = res.data.ed_date
             this.previewCase3.productCode = res.data.product_code
             this.previewCase3.specificationCode = res.data.specification_code
             this.previewCase3.productName = res.data.product_name
@@ -624,7 +621,6 @@ export default {
           } else {
             this.message = '预览失败! 不存在指定的库存条目.'
             this.showMessage = true
-            this.initExportForm()
           }
         })
         .catch((error) => {
@@ -657,19 +653,59 @@ export default {
           is_import: this.isImportSelection,
           supplier_name: this.supplierNameSelection
         }
-        this.exportPreviewReportFileCase3(payload)
+        this.previewReportFileCase3(payload)
       }
+      this.initExportForm()
     },
     onCancelPreviewCase3 (evt) {
       evt.preventDefault()
       this.$refs.previewCase3Modal.hide()
       this.initExportForm()
     },
+    prepareExportReportFileCase3 (payload) {
+      axios.post(this.serverBaseURL + '/api/v1/case3/prepare', payload)
+        .then((res) => {
+          this.exportReportFileCase3(res.data.server_send_queue_file, res.data.output_file)
+        })
+        .catch((error) => {
+          // eslint-disable-next-line
+          console.log(error)
+          this.message = '下载失败!'
+          this.showMessage = true
+        })
+    },
+    exportReportFileCase3 (queryFile, saveFile) {
+      axios.get(this.serverBaseURL + '/api/v1/download/' + queryFile)
+        .then((res) => {
+          const evt = document.createEvent('MouseEvents')
+          var docUrl = document.createElement('a')
+          docUrl.download = saveFile
+          docUrl.href = window.URL.createObjectURL(new Blob([res.data]), {type: 'text/plain'})
+          docUrl.dataset.downloadurl = ['.csv', docUrl.download, docUrl.href].join(':')
+          // TODO: 替换为支持的解决方案
+          evt.initEvent('click', true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null)
+          docUrl.dispatchEvent(evt)
+          this.message = '下载成功! 保存为本地文件<' + saveFile + '>.'
+          this.showMessage = true
+        })
+        .catch((error) => {
+          // eslint-disable-next-line
+          console.log(error)
+          this.message = '下载失败!'
+          this.showMessage = true
+        })
+    },
     onExportCase3 (evt) {
       // 确定下载销售报表（按单个SKU汇总）
       evt.preventDefault()
       this.$refs.previewCase3Modal.hide()
       this.$refs.exportFileCase3Modal.hide()
+      const payload = {
+        st_date: this.previewCase3.stDate,
+        ed_date: this.previewCase3.edDate,
+        specification_code: this.previewCase3.specificationCode
+      }
+      this.prepareExportReportFileCase3(payload)
       this.initExportForm()
     },
     onCancelExportCase3 (evt) {
@@ -680,7 +716,7 @@ export default {
     },
     // 滞销品报表
     exportReportFileCase4 (payload) {
-      axios.post(this.serverBaseURL + '/api/v1/export/case4', payload)
+      axios.post(this.serverBaseURL + '/api/v1/case4/download', payload)
         .then((res) => {
           console.log(res.data)
           this.message = '导出成功!'
@@ -711,7 +747,7 @@ export default {
     },
     // 进口产品采购单
     exportReportFileCase5 (payload) {
-      axios.post(this.serverBaseURL + '/api/v1/export/case5', payload)
+      axios.post(this.serverBaseURL + '/api/v1/case5/download', payload)
         .then((res) => {
           console.log(res.data)
           this.message = '导出成功!'
@@ -741,7 +777,7 @@ export default {
       this.initExportForm()
     },
     exportReportFileCase6 (payload) {
-      axios.post(this.serverBaseURL + '/api/v1/export/case6', payload)
+      axios.post(this.serverBaseURL + '/api/v1/case6/download', payload)
         .then((res) => {
           console.log(res.data)
           this.message = '导出成功!'
