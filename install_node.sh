@@ -9,5 +9,7 @@ sudo npm install -g vue-cli
 sudo ln -s -f /usr/local/node-v10.19.0-linux-x64/bin/vue /usr/local/bin/vue
 sudo ln -s -f /usr/local/node-v10.19.0-linux-x64/bin/vue-init /usr/local/bin/vue-init 
 sudo ln -s -f /usr/local/node-v10.19.0-linux-x64/bin/vue-list /usr/local/bin/vue-list
+sudo npm install -g serve
+sudo ln -s -f /usr/local/node-v10.19.0-linux-x64/bin/serve /usr/local/bin/serve
 npm config set registry https://registry.npm.taobao.org
 npm config get registry
