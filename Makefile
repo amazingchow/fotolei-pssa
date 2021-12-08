@@ -14,6 +14,10 @@ run_server_local:
 run_server:
 	@export FLASK_APP=ggfilm_server && export FLASK_ENV=production && flask run --host="0.0.0.0" --port=15555
 
+.PHONY: run_serverd
+run_serverd:
+	@nohup `export FLASK_APP=ggfilm_server && export FLASK_ENV=production && flask run --host="0.0.0.0" --port=15555 2>&1 | tee serverd.log` &
+
 .PHONY: run_client_local
 run_client_local:
 	@cd frontend && npm run dev
@@ -25,3 +29,7 @@ build_client_prod:
 .PHONY: run_client
 run_client: build_client_prod
 	@serve -s frontend/dist -l 8888
+
+.PHONY: run_clientd
+run_clientd: build_client_prod
+	@nohup `serve -s frontend/dist -l 8888 2>&1 | tee clientd.log` &
