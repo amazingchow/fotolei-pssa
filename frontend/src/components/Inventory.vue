@@ -132,22 +132,7 @@
             label-align-sm="right"
             label-cols-sm="3"
           >
-            <b-input-group>
-              <b-form-input
-                v-model="stDateSelection"
-                type="text"
-                placeholder="YYYY-MM-DD"
-                autocomplete="off"
-              ></b-form-input>
-              <b-input-group-append>
-                <b-form-datepicker
-                  v-model="stDateSelection"
-                  button-only
-                  right
-                  locale="zh-CH"
-                ></b-form-datepicker>
-              </b-input-group-append>
-            </b-input-group>
+            <b-form-input v-model="stDateSelection" placeholder="YYYY-MM"></b-form-input>
           </b-form-group>
           <b-form-group
             label="截止日期"
@@ -155,22 +140,7 @@
             label-align-sm="right"
             label-cols-sm="3"
           >
-            <b-input-group>
-              <b-form-input
-                v-model="edDateSelection"
-                type="text"
-                placeholder="YYYY-MM-DD"
-                autocomplete="off"
-              ></b-form-input>
-              <b-input-group-append>
-                <b-form-datepicker
-                  v-model="edDateSelection"
-                  button-only
-                  right
-                  locale="zh-CH"
-                ></b-form-datepicker>
-              </b-input-group-append>
-            </b-input-group>
+            <b-form-input v-model="edDateSelection" placeholder="YYYY-MM"></b-form-input>
           </b-form-group>
           <b-form-group
             label="商品编码"

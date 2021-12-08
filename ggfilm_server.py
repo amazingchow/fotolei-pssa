@@ -53,7 +53,6 @@ def upload_products():
         response_object = {"status": "invalid input data schema"}
     else:
         do_intelligent_calibration_for_input_products(csv_file)
-        logger.info("Load data from {}".format(csv_file))
 
         DBConnector.load_data_infile(
             """LOAD DATA LOCAL INFILE "{}" """.format(csv_file) +
@@ -76,13 +75,12 @@ def upload_products():
             SKU_LOOKUP_TABLE[ret[0]] = True
         logger.info("Insert {} SKUs into SKU_LOOKUP_TABLE!!!".format(len(SKU_LOOKUP_TABLE)))
 
-        with open(csv_file, "r") as fd:
+        with open(csv_file, "r", encoding='utf-8-sig') as fd:
             csv_reader = csv.reader(fd, delimiter=",")
             for _ in csv_reader:
                 pass
             stmt = "INSERT INTO ggfilm.product_summary (total) VALUES (%s);"
             DBConnector.insert(stmt, (csv_reader.line_num - 1,))
-            logger.info("There {} records have been inserted!!!".format(csv_reader.line_num - 1))
 
         response_object = {"status": "success"}
     return jsonify(response_object)
@@ -96,11 +94,10 @@ def upload_jit_inventory_data():
         os.path.expanduser("~"), int(time.time()), csv_files[0].filename
     )
     csv_files[0].save(csv_file)
-    logger.info("Load data from {}".format(csv_file))
 
     sku_inventory_tuple_list = []
     not_inserted_sku_list = []
-    with open(csv_file, "r") as fd:
+    with open(csv_file, "r", encoding='utf-8-sig') as fd:
         csv_reader = csv.reader(fd, delimiter=",")
         line = 0
         for row in csv_reader:
@@ -112,7 +109,6 @@ def upload_jit_inventory_data():
                     not_inserted_sku_list.append(row[0])
                 else:
                     sku_inventory_tuple_list.append((row[1], row[0]))
-    logger.info("Update for {} SKUs".format(len(sku_inventory_tuple_list)))
     logger.info("There are {} SKUs not inserted".format(len(not_inserted_sku_list)))
 
     stmt = "UPDATE ggfilm.products SET jit_inventory = %s WHERE specification_code = %s;"
@@ -132,13 +128,12 @@ def upload_jit_inventory_data():
 def prepare_added_skus():
     payload = request.get_json()
     added_skus = payload.get("added_skus")
-    logger.info("Added SKUs {}".format(len(added_skus)))
 
     ts = int(time.time())
     csv_file_sha256 = generate_digest("新增SKU_{}.csv".format(ts))
     csv_file = "{}/ggfilm-server/send_queue/{}".format(os.path.expanduser("~"), csv_file_sha256)
     output_file = "新增SKU_{}.csv".format(ts)
-    with open(csv_file, "w") as fd:
+    with open(csv_file, "w", encoding='utf-8-sig') as fd:
         csv_writer = csv.writer(fd, delimiter=",")
         csv_writer.writerow(["新增SKU"])
         for sku in added_skus:
@@ -164,8 +159,6 @@ def upload_inventories():
     if not do_data_schema_validation_for_input_inventories(csv_file):
         response_object = {"status": "invalid input data schema"}
     else:
-        logger.info("Load data from {}".format(csv_file))
-
         DBConnector.load_data_infile(
             """LOAD DATA LOCAL INFILE "{}" """.format(csv_file) +
             "INTO TABLE ggfilm.inventories " +
@@ -481,7 +474,6 @@ def preview_report_file_case3():
             selections.append("supplier_name = '{}'".format(supplier_name))
         stmt += " AND ".join(selections)
         stmt += ";"
-        logger.debug(stmt)
         rets = DBConnector.query(stmt)
         if type(rets) is list and len(rets) > 0:
             specification_code = rets[0][0]
@@ -583,7 +575,7 @@ def prepare_report_file_case3():
     csv_file_sha256 = generate_digest("销售报表（按单个SKU汇总）_{}.csv".format(ts))
     csv_file = "{}/ggfilm-server/send_queue/{}".format(os.path.expanduser("~"), csv_file_sha256)
     output_file = "销售报表（按单个SKU汇总）_{}.csv".format(ts)
-    with open(csv_file, "w") as fd:
+    with open(csv_file, "w", encoding='utf-8-sig') as fd:
         csv_writer = csv.writer(fd, delimiter=",")
         csv_writer.writerow([
             "商品编码", "规格编码", "商品名称", "规格名称",
@@ -650,7 +642,9 @@ def do_data_schema_validation_for_input_products(csv_file:str):
         "供应商名称", "采购名称", "实时库存"
     ]
     is_valid = True
-    with open(csv_file, "r") as fd:
+    # 详情见 https://stackoverflow.com/questions/17912307/u-ufeff-in-python-string
+    # 真是一个非常难搞的问题啊!!!
+    with open(csv_file, "r", encoding='utf-8-sig') as fd:
         csv_reader = csv.reader(fd, delimiter=",")
         for row in csv_reader:
             if len(row) != len(data_schema):
@@ -666,8 +660,8 @@ def do_data_schema_validation_for_input_products(csv_file:str):
 
 def do_intelligent_calibration_for_input_products(csv_file:str):
     # 1. 表格里面存在中文逗号，程序需要做下智能矫正
-    fr = open(csv_file, "r")
-    fw = open(csv_file + ".tmp", "w")
+    fr = open(csv_file, "r", encoding='utf-8-sig')
+    fw = open(csv_file + ".tmp", "w", encoding='utf-8-sig')
     for line in fr.readlines():
         line = line.replace("，", ",")
         fw.write(line)
@@ -678,9 +672,9 @@ def do_intelligent_calibration_for_input_products(csv_file:str):
     # 2.1. 表格里面存在很多空行（但是有占位符），程序需要做下智能矫正
     # 2.2. 表格里面存在很多只有逗号的行，程序需要做下智能矫正
     # 2.3. “品牌”，“分类1”，“分类2”，“产品系列”，“STOP状态”，“组合商品”，“参与统计”，“进口商品”，“供应商名称”，“采购名称”存在“0”这种输入，程序需要做下智能矫正
-    fr = open(csv_file, "r")
+    fr = open(csv_file, "r", encoding='utf-8-sig')
     csv_reader = csv.reader(fr, delimiter=",")
-    fw = open(csv_file + ".tmp", "w")
+    fw = open(csv_file + ".tmp", "w", encoding='utf-8-sig')
     csv_writer = csv.writer(fw, delimiter=",")
     line = 0
     for row in csv_reader:
@@ -721,7 +715,7 @@ def do_data_schema_validation_for_input_inventories(csv_file:str):
         "截止库存数量", "截止库存总额",
     ]
     is_valid = True
-    with open(csv_file, "r") as fd:
+    with open(csv_file, "r", encoding='utf-8-sig') as fd:
         csv_reader = csv.reader(fd, delimiter=",")
         for row in csv_reader:
             if len(row) != len(data_schema):
