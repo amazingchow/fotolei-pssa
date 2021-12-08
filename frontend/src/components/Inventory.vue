@@ -35,7 +35,6 @@
             </b-dropdown-item-button>
           </b-dropdown>
         </div>
-        <br/>
         <b-table-simple striped hover small id="inventory-table">
           <b-thead>
             <b-tr>
@@ -91,6 +90,14 @@
       </div>
     </div>
     <b-modal ref="importCSVFileModal" id="csv-file-modal" title="导入库存数据" hide-footer>
+      <b-form-group
+        label="自定义年月（可选）："
+        label-size="sm"
+        label-align-sm="right"
+        label-cols-sm="4"
+      >
+        <b-form-input v-model="customDateSelection" placeholder="YYYY-MM"></b-form-input>
+      </b-form-group>
       <b-form @submit="onImport" @reset="onCancel">
         <b-form-group>
           <b-form-file
@@ -100,7 +107,6 @@
             placeholder="请选择UTF-8编码的CSV文件">
           </b-form-file>
         </b-form-group>
-        <br/>
         <b-button-group id="inventory-table-operate-btn" class="w-100 d-block">
           <b-button type="submit" variant="dark">导入</b-button>
           <b-button type="reset" variant="dark">取消</b-button>
@@ -327,6 +333,11 @@
 </template>
 
 <style>
+#import-and-export-btn-area {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
 #inventory-table {
   border: 2px solid black !important;
   font-size: small;
@@ -367,6 +378,7 @@ export default {
   data () {
     return {
       serverBaseURL: process.env.SERVER_BASE_URL,
+      customDateSelection: '',
       stDateSelection: '',
       edDateSelection: '',
       productCodeSelection: '',
@@ -516,12 +528,15 @@ export default {
       this.$refs.importCSVFileModal.hide()
       let formData = new FormData()
       formData.append('file', this.uploadCSVFile, this.uploadCSVFile.name)
+      formData.append('import_date', this.customDateSelection)
       this.importCSVFile(formData)
+      this.customDateSelection = ''
       this.uploadCSVFile = null
     },
     onCancel (evt) {
       evt.preventDefault()
       this.$refs.importCSVFileModal.hide()
+      this.customDateSelection = ''
       this.uploadCSVFile = null
     },
     // 销售报表（按分类汇总）
