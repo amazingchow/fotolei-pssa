@@ -532,6 +532,9 @@ export default {
             this.listInventories()
             this.message = '导入成功!'
             this.showMessage = true
+          } else if (res.data.status === 'repetition') {
+            this.message = '导入失败! 数据表格重复导入！'
+            this.showMessage = true
           } else if (res.data.status === 'new SKUs') {
             this.message = '禁止导入，有新增SKU！'
             this.showMessage = true

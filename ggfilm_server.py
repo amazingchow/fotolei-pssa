@@ -9,6 +9,7 @@ import pendulum
 import os
 import sys
 sys.path.append(os.path.abspath("./db"))
+import shelve
 import shutil
 import time
 
@@ -23,7 +24,6 @@ if type(_rets) is list and len(_rets) > 0:
     for ret in _rets:
         SKU_LOOKUP_TABLE[ret[0]] = True
     logger.info("Insert {} SKUs into SKU_LOOKUP_TABLE!!!".format(len(SKU_LOOKUP_TABLE)))
-atexit.register(lambda: DBConnector.release_conn())
 
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
@@ -53,37 +53,45 @@ def upload_products():
     if not do_data_schema_validation_for_input_products(csv_file):
         response_object = {"status": "invalid input data schema"}
     else:
-        do_intelligent_calibration_for_input_products(csv_file)
+        RepetitionLookupTable = shelve.open("repetiation_lookup_table.db", flag='c', writeback=False)
+        file_digest = generate_file_digest(csv_file)
+        if not RepetitionLookupTable.get(file_digest, False):
+            RepetitionLookupTable[file_digest] = True
 
-        DBConnector.load_data_infile(
-            """LOAD DATA LOCAL INFILE "{}" """.format(csv_file) +
-            "INTO TABLE ggfilm.products " +
-            "FIELDS TERMINATED BY ',' " +
-            """ENCLOSED BY '"' """ +
-            "LINES TERMINATED BY '\n' " +
-            "IGNORE 1 LINES " +
-            "(product_code, specification_code, product_name, specification_name, " +
-            "brand, classification_1, classification_2, product_series, stop_status, " +
-            "product_weight, product_length, product_width, product_hight, " +
-            "is_combined, be_aggregated, is_import, " +
-            "supplier_name, purchase_name, jit_inventory);"
-        )
+            do_intelligent_calibration_for_input_products(csv_file)
 
-        stmt = "SELECT specification_code FROM ggfilm.products;"
-        rets = DBConnector.query(stmt)
-        SKU_LOOKUP_TABLE.clear()
-        for ret in rets:
-            SKU_LOOKUP_TABLE[ret[0]] = True
-        logger.info("Insert {} SKUs into SKU_LOOKUP_TABLE!!!".format(len(SKU_LOOKUP_TABLE)))
+            DBConnector.load_data_infile(
+                """LOAD DATA LOCAL INFILE "{}" """.format(csv_file) +
+                "INTO TABLE ggfilm.products " +
+                "FIELDS TERMINATED BY ',' " +
+                """ENCLOSED BY '"' """ +
+                "LINES TERMINATED BY '\n' " +
+                "IGNORE 1 LINES " +
+                "(product_code, specification_code, product_name, specification_name, " +
+                "brand, classification_1, classification_2, product_series, stop_status, " +
+                "product_weight, product_length, product_width, product_hight, " +
+                "is_combined, be_aggregated, is_import, " +
+                "supplier_name, purchase_name, jit_inventory);"
+            )
 
-        with open(csv_file, "r", encoding='utf-8-sig') as fd:
-            csv_reader = csv.reader(fd, delimiter=",")
-            for _ in csv_reader:
-                pass
-            stmt = "INSERT INTO ggfilm.product_summary (total) VALUES (%s);"
-            DBConnector.insert(stmt, (csv_reader.line_num - 1,))
+            stmt = "SELECT specification_code FROM ggfilm.products;"
+            rets = DBConnector.query(stmt)
+            SKU_LOOKUP_TABLE.clear()
+            for ret in rets:
+                SKU_LOOKUP_TABLE[ret[0]] = True
+            logger.info("Insert {} SKUs into SKU_LOOKUP_TABLE!!!".format(len(SKU_LOOKUP_TABLE)))
 
-        response_object = {"status": "success"}
+            with open(csv_file, "r", encoding='utf-8-sig') as fd:
+                csv_reader = csv.reader(fd, delimiter=",")
+                for _ in csv_reader:
+                    pass
+                stmt = "INSERT INTO ggfilm.product_summary (total) VALUES (%s);"
+                DBConnector.insert(stmt, (csv_reader.line_num - 1,))
+
+            response_object = {"status": "success"}
+        else:
+            response_object = {"status": "repetition"}
+        RepetitionLookupTable.close()
     return jsonify(response_object)
 
 
@@ -160,43 +168,51 @@ def upload_inventories():
     if not do_data_schema_validation_for_input_inventories(csv_file):
         response_object = {"status": "invalid input data schema"}
     else:
-        not_inserted_sku_list = []
-        with open(csv_file, "r", encoding='utf-8-sig') as fd:
-            csv_reader = csv.reader(fd, delimiter=",")
-            line = 0
-            for row in csv_reader:
-                if line > 0:
-                    if not SKU_LOOKUP_TABLE.get(row[2], False):
-                        not_inserted_sku_list.append(row[2])
-                line += 1
-        if len(not_inserted_sku_list) > 0:
-            logger.info("There are {} SKUs not inserted".format(len(not_inserted_sku_list)))
-            response_object = {"status": "new SKUs"}
-            response_object["added_skus"] = not_inserted_sku_list
+        RepetitionLookupTable = shelve.open("repetiation_lookup_table.db", flag='c', writeback=False)
+        file_digest = generate_file_digest(csv_file)
+        if not RepetitionLookupTable.get(file_digest, False):
+            RepetitionLookupTable[file_digest] = True
+
+            not_inserted_sku_list = []
+            with open(csv_file, "r", encoding='utf-8-sig') as fd:
+                csv_reader = csv.reader(fd, delimiter=",")
+                line = 0
+                for row in csv_reader:
+                    if line > 0:
+                        if not SKU_LOOKUP_TABLE.get(row[2], False):
+                            not_inserted_sku_list.append(row[2])
+                    line += 1
+            if len(not_inserted_sku_list) > 0:
+                logger.info("There are {} SKUs not inserted".format(len(not_inserted_sku_list)))
+                response_object = {"status": "new SKUs"}
+                response_object["added_skus"] = not_inserted_sku_list
+            else:
+                do_intelligent_calibration_for_input_inventories(csv_file)
+
+                if len(import_date) == 0:
+                    today = pendulum.today()
+                    last_month = today.subtract(months=1)
+                    import_date = last_month.strftime('%Y-%m')
+                add_date_for_input_inventories(csv_file, import_date.strip())
+
+                DBConnector.load_data_infile(
+                    """LOAD DATA LOCAL INFILE "{}" """.format(csv_file) +
+                    "INTO TABLE ggfilm.inventories " +
+                    "FIELDS TERMINATED BY ',' " +
+                    """ENCLOSED BY '"' """ +
+                    "LINES TERMINATED BY '\n' " +
+                    "IGNORE 1 LINES " +
+                    "(create_time, product_code, product_name, specification_code, specification_name, " +
+                    "st_inventory_qty, st_inventory_total, purchase_qty, purchase_total, " +
+                    "purchase_then_return_qty, purchase_then_return_total, sale_qty, sale_total, " +
+                    "sale_then_return_qty, sale_then_return_total, others_qty, others_total, " +
+                    "ed_inventory_qty, ed_inventory_total);"
+                )
+
+                response_object = {"status": "success"}
         else:
-            do_intelligent_calibration_for_input_inventories(csv_file)
-
-            if len(import_date) == 0:
-                today = pendulum.today()
-                last_month = today.subtract(months=1)
-                import_date = last_month.strftime('%Y-%m')
-            add_date_for_input_inventories(csv_file, import_date.strip())
-
-            DBConnector.load_data_infile(
-                """LOAD DATA LOCAL INFILE "{}" """.format(csv_file) +
-                "INTO TABLE ggfilm.inventories " +
-                "FIELDS TERMINATED BY ',' " +
-                """ENCLOSED BY '"' """ +
-                "LINES TERMINATED BY '\n' " +
-                "IGNORE 1 LINES " +
-                "(create_time, product_code, product_name, specification_code, specification_name, " +
-                "st_inventory_qty, st_inventory_total, purchase_qty, purchase_total, " +
-                "purchase_then_return_qty, purchase_then_return_total, sale_qty, sale_total, " +
-                "sale_then_return_qty, sale_then_return_total, others_qty, others_total, " +
-                "ed_inventory_qty, ed_inventory_total);"
-            )
-
-            response_object = {"status": "success"}
+            response_object = {"status": "repetition"}
+        RepetitionLookupTable.close()
     return jsonify(response_object)
 
 
@@ -640,6 +656,14 @@ def export_report_file_case3(filename):
     return send_from_directory(directory="{}/ggfilm-server/send_queue".format(os.path.expanduser("~")), path=filename)
 
 
+def generate_file_digest(f:str):
+    sha256_hash = hashlib.sha256()
+    with open(f, "rb") as fin:
+        for byte_block in iter(lambda: fin.read(4096), b""):
+            sha256_hash.update(byte_block)
+    return sha256_hash.hexdigest()
+
+
 def generate_digest(s:str):
     return hashlib.sha256(s.encode("utf-8")).hexdigest()
 
@@ -779,3 +803,9 @@ def add_date_for_input_inventories(csv_file:str, import_date:str):
     fw.close()
     fr.close()
     shutil.move(csv_file + ".tmp", csv_file)
+
+
+def all_done():
+    DBConnector.release_conn()
+
+atexit.register(all_done)
