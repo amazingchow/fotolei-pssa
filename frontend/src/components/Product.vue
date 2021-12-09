@@ -225,6 +225,9 @@ export default {
             this.getProductsTotal()
             this.message = '导入成功!'
             this.showMessage = true
+          } else if (res.data.status === 'repetition') {
+            this.message = '导入失败! 数据表格重复导入！'
+            this.showMessage = true
           } else {
             this.message = '导入失败! 数据表格格式有变更，请人工复合！'
             this.showMessage = true
