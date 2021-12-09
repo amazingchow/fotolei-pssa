@@ -102,21 +102,20 @@ def upload_jit_inventory_data():
         csv_reader = csv.reader(fd, delimiter=",")
         line = 0
         for row in csv_reader:
-            if line == 0:
-                line += 1
-            else:
+            if line > 0:
                 line += 1
                 if not SKU_LOOKUP_TABLE.get(row[0], False):
                     not_inserted_sku_list.append(row[0])
                 else:
                     sku_inventory_tuple_list.append((row[1], row[0]))
-    logger.info("There are {} SKUs not inserted".format(len(not_inserted_sku_list)))
+            line += 1
 
     stmt = "UPDATE ggfilm.products SET jit_inventory = %s WHERE specification_code = %s;"
     DBConnector.batch_update(stmt, sku_inventory_tuple_list)
 
     response_object = {"status": "success"}
     if len(not_inserted_sku_list) > 0:
+        logger.info("There are {} SKUs not inserted".format(len(not_inserted_sku_list)))
         # 新增sku，需要向用户展示
         response_object["added_skus"] = not_inserted_sku_list
     else:
@@ -161,29 +160,43 @@ def upload_inventories():
     if not do_data_schema_validation_for_input_inventories(csv_file):
         response_object = {"status": "invalid input data schema"}
     else:
-        do_intelligent_calibration_for_input_inventories(csv_file)
+        not_inserted_sku_list = []
+        with open(csv_file, "r", encoding='utf-8-sig') as fd:
+            csv_reader = csv.reader(fd, delimiter=",")
+            line = 0
+            for row in csv_reader:
+                if line > 0:
+                    if not SKU_LOOKUP_TABLE.get(row[2], False):
+                        not_inserted_sku_list.append(row[2])
+                line += 1
+        if len(not_inserted_sku_list) > 0:
+            logger.info("There are {} SKUs not inserted".format(len(not_inserted_sku_list)))
+            response_object = {"status": "new SKUs"}
+            response_object["added_skus"] = not_inserted_sku_list
+        else:
+            do_intelligent_calibration_for_input_inventories(csv_file)
 
-        if len(import_date) == 0:
-            today = pendulum.today()
-            last_month = today.subtract(months=1)
-            import_date = last_month.strftime('%Y-%m')
-        add_date_for_input_inventories(csv_file, import_date.strip())
+            if len(import_date) == 0:
+                today = pendulum.today()
+                last_month = today.subtract(months=1)
+                import_date = last_month.strftime('%Y-%m')
+            add_date_for_input_inventories(csv_file, import_date.strip())
 
-        DBConnector.load_data_infile(
-            """LOAD DATA LOCAL INFILE "{}" """.format(csv_file) +
-            "INTO TABLE ggfilm.inventories " +
-            "FIELDS TERMINATED BY ',' " +
-            """ENCLOSED BY '"' """ +
-            "LINES TERMINATED BY '\n' " +
-            "IGNORE 1 LINES " +
-            "(create_time, product_code, product_name, specification_code, specification_name, " +
-            "st_inventory_qty, st_inventory_total, purchase_qty, purchase_total, " +
-            "purchase_then_return_qty, purchase_then_return_total, sale_qty, sale_total, " +
-            "sale_then_return_qty, sale_then_return_total, others_qty, others_total, " +
-            "ed_inventory_qty, ed_inventory_total);"
-        )
+            DBConnector.load_data_infile(
+                """LOAD DATA LOCAL INFILE "{}" """.format(csv_file) +
+                "INTO TABLE ggfilm.inventories " +
+                "FIELDS TERMINATED BY ',' " +
+                """ENCLOSED BY '"' """ +
+                "LINES TERMINATED BY '\n' " +
+                "IGNORE 1 LINES " +
+                "(create_time, product_code, product_name, specification_code, specification_name, " +
+                "st_inventory_qty, st_inventory_total, purchase_qty, purchase_total, " +
+                "purchase_then_return_qty, purchase_then_return_total, sale_qty, sale_total, " +
+                "sale_then_return_qty, sale_then_return_total, others_qty, others_total, " +
+                "ed_inventory_qty, ed_inventory_total);"
+            )
 
-        response_object = {"status": "success"}
+            response_object = {"status": "success"}
     return jsonify(response_object)
 
 

@@ -329,6 +329,21 @@
         </b-button-group>
       </b-form>
     </b-modal>
+    <b-sidebar id="added-skus-sidebar" title="新增SKU清单" v-model="shouldOpenSidebar" right shadow>
+      <div class="px-3 py-2">
+        <b-table-simple striped hover small id="added-skus-table">
+          <b-tbody>
+            <b-tr v-for="(sku, index) in addedSkus" :key="index">
+              <b-td>{{ sku }}</b-td>
+            </b-tr>
+          </b-tbody>
+        </b-table-simple>
+        <b-button-group id="added-skus-table-operate-btn" class="w-100 d-block">
+          <b-button variant="dark" @click="onDownloadAddedSKUs">下载</b-button>
+          <b-button variant="dark" @click="onCancelDownloadAddedSKUs">取消</b-button>
+        </b-button-group>
+      </div>
+    </b-sidebar>
   </div>
 </template>
 
@@ -366,6 +381,10 @@
   border: 2px solid black !important;
   font-size: small;
   table-layout: fixed !important;
+}
+
+#added-skus-table-operate-btn {
+  text-align: right;
 }
 </style>
 
@@ -415,6 +434,8 @@ export default {
       supplierNameSelections: [],
       supplierNameSelection: '',
       inventories: [],
+      shouldOpenSidebar: false,
+      addedSkus: [],
       pageOffset: 0,
       uploadCSVFile: null,
       previewCase3: {
@@ -511,6 +532,11 @@ export default {
             this.listInventories()
             this.message = '导入成功!'
             this.showMessage = true
+          } else if (res.data.status === 'new SKUs') {
+            this.message = '禁止导入，有新增SKU！'
+            this.showMessage = true
+            this.addedSkus = res.data.added_skus
+            this.shouldOpenSidebar = true
           } else {
             this.message = '导入失败! 数据表格格式有变更，请人工复合！'
             this.showMessage = true
@@ -806,6 +832,53 @@ export default {
       this.$refs.exportFileCase6Modal.hide()
       console.log('取消导出体积、重量计算汇总单')
       this.initExportForm()
+    },
+    preDownloadAddedSKUs (payload) {
+      axios.post(this.serverBaseURL + '/api/v1/addedskus/prepare', payload)
+        .then((res) => {
+          this.downloadAddedSKUs(res.data.server_send_queue_file, res.data.output_file)
+        })
+        .catch((error) => {
+          // eslint-disable-next-line
+          console.log(error)
+          this.message = '下载失败!'
+          this.showMessage = true
+        })
+    },
+    downloadAddedSKUs (queryFile, saveFile) {
+      axios.get(this.serverBaseURL + '/api/v1/download/' + queryFile)
+        .then((res) => {
+          const evt = document.createEvent('MouseEvents')
+          var docUrl = document.createElement('a')
+          docUrl.download = saveFile
+          docUrl.href = window.URL.createObjectURL(new Blob([res.data]), {type: 'text/plain'})
+          docUrl.dataset.downloadurl = ['.csv', docUrl.download, docUrl.href].join(':')
+          // TODO: 替换为支持的解决方案
+          evt.initEvent('click', true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null)
+          docUrl.dispatchEvent(evt)
+          this.message = '下载成功! 保存为本地文件<' + saveFile + '>.'
+          this.showMessage = true
+        })
+        .catch((error) => {
+          // eslint-disable-next-line
+          console.log(error)
+          this.message = '下载失败!'
+          this.showMessage = true
+        })
+    },
+    onDownloadAddedSKUs (evt) {
+      evt.preventDefault()
+      const payload = {
+        added_skus: this.addedSkus
+      }
+      this.preDownloadAddedSKUs(payload)
+      this.shouldOpenSidebar = false
+      this.addedSkus = []
+    },
+    onCancelDownloadAddedSKUs (evt) {
+      evt.preventDefault()
+      this.shouldOpenSidebar = false
+      this.addedSkus = []
     },
     onPrevPage (evt) {
       evt.preventDefault()
