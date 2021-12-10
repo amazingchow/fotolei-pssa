@@ -122,10 +122,30 @@
       </b-form>
     </b-modal>
     <b-modal ref="exportFileCase2Modal" id="export-file-case2-modal" title="导出销售报表（按系列汇总）" hide-footer>
-      <b-form @submit="onExportCase2" @reset="onCancelExportCase2">
+      <b-form>
+        <b-form>
+          <b-card bg-variant="light">
+            <b-form-group
+              label="起始日期"
+              label-size="sm"
+              label-align-sm="right"
+              label-cols-sm="3"
+            >
+              <b-form-input v-model="stDateSelection" placeholder="YYYY-MM"></b-form-input>
+            </b-form-group>
+            <b-form-group
+              label="截止日期"
+              label-size="sm"
+              label-align-sm="right"
+              label-cols-sm="3"
+            >
+              <b-form-input v-model="edDateSelection" placeholder="YYYY-MM"></b-form-input>
+            </b-form-group>
+          </b-card>
+        </b-form>
         <b-button-group id="inventory-table-operate-btn" class="w-100 d-block">
-          <b-button type="submit" variant="dark">导出</b-button>
-          <b-button type="reset" variant="dark">取消</b-button>
+          <b-button variant="dark" @click="onExportCase2">下载</b-button>
+          <b-button variant="dark" @click="onCancelExportCase2">取消</b-button>
         </b-button-group>
       </b-form>
     </b-modal>
