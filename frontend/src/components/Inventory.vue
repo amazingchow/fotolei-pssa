@@ -141,12 +141,12 @@
             >
               <b-form-input v-model="edDateSelection" placeholder="YYYY-MM"></b-form-input>
             </b-form-group>
+            <b-button-group id="inventory-table-operate-btn" class="w-100 d-block">
+              <b-button variant="dark" @click="onExportCase2">下载</b-button>
+              <b-button variant="dark" @click="onCancelExportCase2">取消</b-button>
+            </b-button-group>
           </b-card>
         </b-form>
-        <b-button-group id="inventory-table-operate-btn" class="w-100 d-block">
-          <b-button variant="dark" @click="onExportCase2">下载</b-button>
-          <b-button variant="dark" @click="onCancelExportCase2">取消</b-button>
-        </b-button-group>
       </b-form>
     </b-modal>
     <b-modal ref="exportFileCase3Modal" id="export-file-case3-modal" title="导出销售报表（按单个SKU汇总）" hide-footer>
@@ -619,28 +619,16 @@ export default {
       console.log('取消导出销售报表（按分类汇总）')
       this.initExportForm()
     },
-    // 销售报表（按系列汇总）
-    exportReportFileCase2 (payload) {
-      axios.post(this.serverBaseURL + '/api/v1/case2/download', payload)
-        .then((res) => {
-          console.log(res.data)
-          this.message = '导出成功!'
-          this.showMessage = true
-        })
-        .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          this.message = '导出失败!'
-          this.showMessage = true
-        })
-    },
     onExportCase2 (evt) {
       // 确定导出销售报表（按系列汇总）
       evt.preventDefault()
       this.$refs.exportFileCase2Modal.hide()
       console.log('确定导出销售报表（按系列汇总）')
-      const payload = {}
-      this.exportReportFileCase2(payload)
+      const payload = {
+        st_date: this.stDateSelection,
+        ed_date: this.edDateSelection
+      }
+      this.prepareExportReportFile('/api/v1/case2/prepare', payload)
       this.initExportForm()
     },
     onCancelExportCase2 (evt) {
@@ -711,39 +699,6 @@ export default {
       this.$refs.previewCase3Modal.hide()
       this.initExportForm()
     },
-    prepareExportReportFileCase3 (payload) {
-      axios.post(this.serverBaseURL + '/api/v1/case3/prepare', payload)
-        .then((res) => {
-          this.exportReportFileCase3(res.data.server_send_queue_file, res.data.output_file)
-        })
-        .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          this.message = '下载失败!'
-          this.showMessage = true
-        })
-    },
-    exportReportFileCase3 (queryFile, saveFile) {
-      axios.get(this.serverBaseURL + '/api/v1/download/' + queryFile)
-        .then((res) => {
-          const evt = document.createEvent('MouseEvents')
-          var docUrl = document.createElement('a')
-          docUrl.download = saveFile
-          docUrl.href = window.URL.createObjectURL(new Blob([res.data]), {type: 'text/plain'})
-          docUrl.dataset.downloadurl = ['.csv', docUrl.download, docUrl.href].join(':')
-          // TODO: 替换为支持的解决方案
-          evt.initEvent('click', true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null)
-          docUrl.dispatchEvent(evt)
-          this.message = '下载成功! 保存为本地文件<' + saveFile + '>.'
-          this.showMessage = true
-        })
-        .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          this.message = '下载失败!'
-          this.showMessage = true
-        })
-    },
     onExportCase3 (evt) {
       // 确定下载销售报表（按单个SKU汇总）
       evt.preventDefault()
@@ -754,7 +709,7 @@ export default {
         ed_date: this.previewCase3.edDate,
         specification_code: this.previewCase3.specificationCode
       }
-      this.prepareExportReportFileCase3(payload)
+      this.prepareExportReportFile('/api/v1/case3/prepare', payload)
       this.initExportForm()
     },
     onCancelExportCase3 (evt) {
@@ -855,6 +810,39 @@ export default {
       this.$refs.exportFileCase6Modal.hide()
       console.log('取消导出体积、重量计算汇总单')
       this.initExportForm()
+    },
+    prepareExportReportFile (url, payload) {
+      axios.post(this.serverBaseURL + url, payload)
+        .then((res) => {
+          this.exportReportFile(res.data.server_send_queue_file, res.data.output_file)
+        })
+        .catch((error) => {
+          // eslint-disable-next-line
+          console.log(error)
+          this.message = '下载失败!'
+          this.showMessage = true
+        })
+    },
+    exportReportFile (queryFile, saveFile) {
+      axios.get(this.serverBaseURL + '/api/v1/download/' + queryFile)
+        .then((res) => {
+          const evt = document.createEvent('MouseEvents')
+          var docUrl = document.createElement('a')
+          docUrl.download = saveFile
+          docUrl.href = window.URL.createObjectURL(new Blob([res.data]), {type: 'text/plain'})
+          docUrl.dataset.downloadurl = ['.csv', docUrl.download, docUrl.href].join(':')
+          // TODO: 替换为支持的解决方案
+          evt.initEvent('click', true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null)
+          docUrl.dispatchEvent(evt)
+          this.message = '下载成功! 保存为本地文件<' + saveFile + '>.'
+          this.showMessage = true
+        })
+        .catch((error) => {
+          // eslint-disable-next-line
+          console.log(error)
+          this.message = '下载失败!'
+          this.showMessage = true
+        })
     },
     preDownloadAddedSKUs (payload) {
       axios.post(this.serverBaseURL + '/api/v1/addedskus/prepare', payload)
