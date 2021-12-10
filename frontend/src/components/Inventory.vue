@@ -335,17 +335,27 @@
     </b-modal>
     <b-modal ref="exportFileCase5Modal" id="export-file-case5-modal" title="导出进口产品采购单" hide-footer>
       <b-form @submit="onExportCase5" @reset="onCancelExportCase5">
-        <b-button-group id="inventory-table-operate-btn" class="w-100 d-block">
-          <b-button type="submit" variant="dark">导出</b-button>
-          <b-button type="reset" variant="dark">取消</b-button>
-        </b-button-group>
+        <b-card bg-variant="light">
+          <b-button-group id="inventory-table-operate-btn" class="w-100 d-block">
+            <b-button type="submit" variant="dark">导出</b-button>
+            <b-button type="reset" variant="dark">取消</b-button>
+          </b-button-group>
+        </b-card>
       </b-form>
     </b-modal>
     <b-modal ref="exportFileCase6Modal" id="export-file-case6-modal" title="导出体积、重量计算汇总单" hide-footer>
-      <b-form @submit="onExportCase6" @reset="onCancelExportCase6">
+      <b-form>
+        <b-form-group>
+          <b-form-file
+            accept=".csv"
+            v-model="uploadCSVFileForCase6"
+            :state="Boolean(uploadCSVFileForCase6)"
+            placeholder="导入需求表，请选择UTF-8编码的CSV文件">
+          </b-form-file>
+        </b-form-group>
         <b-button-group id="inventory-table-operate-btn" class="w-100 d-block">
-          <b-button type="submit" variant="dark">导出</b-button>
-          <b-button type="reset" variant="dark">取消</b-button>
+          <b-button variant="dark" @click="onImportForCase6">导入</b-button>
+          <b-button variant="dark" @click="onCancleImportForCase6">取消</b-button>
         </b-button-group>
       </b-form>
     </b-modal>
@@ -458,6 +468,7 @@ export default {
       addedSkus: [],
       pageOffset: 0,
       uploadCSVFile: null,
+      uploadCSVFileForCase6: null,
       previewCase3: {
         stDate: '',
         edDate: '',
@@ -793,6 +804,16 @@ export default {
           this.message = '导出失败!'
           this.showMessage = true
         })
+    },
+    onImportForCase6 (evt) {
+      evt.preventDefault()
+      this.$refs.exportFileCase6Modal.hide()
+      this.uploadCSVFileForCase6 = null
+    },
+    onCancleImportForCase6 (evt) {
+      evt.preventDefault()
+      this.$refs.exportFileCase6Modal.hide()
+      this.uploadCSVFileForCase6 = null
     },
     // 体积、重量计算汇总单
     onExportCase6 (evt) {
