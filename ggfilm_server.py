@@ -403,7 +403,7 @@ def prepare_report_file_case2():
     logger.info(st_date)
     logger.info(ed_date)
 
-    stmt = "SELECT specification_code, product_series FROM ggfilm.products \
+    stmt = "SELECT specification_code, product_series, jit_inventory FROM ggfilm.products \
         WHERE COALESCE(CHAR_LENGTH(product_series), 0) != 0;"
     rets = DBConnector.query(stmt)
 
@@ -415,10 +415,10 @@ def prepare_report_file_case2():
         with open(csv_file, "w", encoding='utf-8-sig') as fd:
             csv_writer = csv.writer(fd, delimiter=",")
             csv_writer.writerow([
-                "筛选时间", "产品系列", "起始库存数量", "起始库存总额",
-                "采购数量", "采购总额", "采购退货数量", "采购退货总额",
-                "销售数量", "销售总额", "销售退货数量", "销售退货总额", 
-                "其他变更数量", "其他变更总额", "截止库存数量", "截止库存总额",
+                "产品系列", "起始库存数量", "起始库存总额", "采购数量",
+                "采购总额", "采购退货数量", "采购退货总额", "销售数量",
+                "销售总额", "销售退货数量", "销售退货总额", "其他变更数量",
+                "其他变更总额", "截止库存数量", "截止库存总额", "实时库存",
             ])
             for ret in rets:
                 specification_code = ret[0]
@@ -434,6 +434,7 @@ def prepare_report_file_case2():
 
                 if type(inner_rets) is list and len(inner_rets) > 0:
                     product_series = ret[1]
+                    jit_inventory = ret[2]
 
                     cache = {}
                     cache["st_inventory_qty"] = inner_rets[0][5]
@@ -482,10 +483,10 @@ def prepare_report_file_case2():
                     cache["others_total"] = others_total
 
                     csv_writer.writerow([
-                        "{} ~ {}".format(st_date, ed_date), product_series, cache["st_inventory_qty"], cache["st_inventory_total"],
-                        cache["purchase_qty"], cache["purchase_total"], cache["purchase_then_return_qty"], cache["purchase_then_return_total"],
-                        cache["sale_qty"], cache["sale_total"], cache["sale_then_return_qty"], cache["sale_then_return_total"],
-                        cache["others_qty"], cache["others_total"], cache["ed_inventory_qty"], cache["ed_inventory_total"],
+                        product_series, cache["st_inventory_qty"], cache["st_inventory_total"], cache["purchase_qty"],
+                        cache["purchase_total"], cache["purchase_then_return_qty"], cache["purchase_then_return_total"], cache["sale_qty"],
+                        cache["sale_total"], cache["sale_then_return_qty"], cache["sale_then_return_total"], cache["others_qty"],
+                        cache["others_total"], cache["ed_inventory_qty"], cache["ed_inventory_total"], jit_inventory,
                     ])
         
         response_object = {"status": "success"}
