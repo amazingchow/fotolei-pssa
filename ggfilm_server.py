@@ -171,8 +171,6 @@ def upload_inventories():
         RepetitionLookupTable = shelve.open("repetiation_lookup_table.db", flag='c', writeback=False)
         file_digest = generate_file_digest(csv_file)
         if not RepetitionLookupTable.get(file_digest, False):
-            RepetitionLookupTable[file_digest] = True
-
             not_inserted_sku_list = []
             with open(csv_file, "r", encoding='utf-8-sig') as fd:
                 csv_reader = csv.reader(fd, delimiter=",")
@@ -187,6 +185,8 @@ def upload_inventories():
                 response_object = {"status": "new SKUs"}
                 response_object["added_skus"] = not_inserted_sku_list
             else:
+                RepetitionLookupTable[file_digest] = True
+
                 do_intelligent_calibration_for_input_inventories(csv_file)
 
                 if len(import_date) == 0:
@@ -392,10 +392,109 @@ def export_report_file_case1():
     return jsonify("导出销售报表（按分类汇总）")
 
 
-# 导出销售报表（按系列汇总）的接口
-@ggfilm_server.route("/api/v1/case2/download", methods=["POST"])
-def export_report_file_case2():
-    return jsonify("导出销售报表（按系列汇总）")
+# 预下载销售报表（按系列汇总）的接口
+@ggfilm_server.route("/api/v1/case2/prepare", methods=["POST"])
+def prepare_report_file_case2():
+    payload = request.get_json()
+    # 1. 起始日期和截止日期用于过滤掉时间条件不符合的记录项
+    # 2. 按照“产品系列”进行分类汇总，没有系列名称的不参与汇总
+    st_date = payload.get("st_date").strip()
+    ed_date = payload.get("ed_date").strip()
+    logger.info(st_date)
+    logger.info(ed_date)
+
+    stmt = "SELECT specification_code, product_series FROM ggfilm.products \
+        WHERE COALESCE(CHAR_LENGTH(product_series), 0) != 0;"
+    rets = DBConnector.query(stmt)
+
+    if type(rets) is list and len(rets) > 0:
+        ts = int(time.time())
+        csv_file_sha256 = generate_digest("销售报表（按系列汇总）_{}.csv".format(ts))
+        csv_file = "{}/ggfilm-server/send_queue/{}".format(os.path.expanduser("~"), csv_file_sha256)
+        output_file = "销售报表（按系列汇总）_{}.csv".format(ts)
+        with open(csv_file, "w", encoding='utf-8-sig') as fd:
+            csv_writer = csv.writer(fd, delimiter=",")
+            csv_writer.writerow([
+                "筛选时间", "产品系列", "起始库存数量", "起始库存总额",
+                "采购数量", "采购总额", "采购退货数量", "采购退货总额",
+                "销售数量", "销售总额", "销售退货数量", "销售退货总额", 
+                "其他变更数量", "其他变更总额", "截止库存数量", "截止库存总额",
+            ])
+            for ret in rets:
+                specification_code = ret[0]
+
+                stmt = "SELECT * FROM ggfilm.inventories \
+                    WHERE specification_code = '{}' AND \
+                    create_time >= '{}' AND \
+                    create_time <= '{}' \
+                    ORDER BY create_time ASC;".format(
+                        specification_code, st_date, ed_date
+                    )
+                inner_rets = DBConnector.query(stmt)
+
+                if type(inner_rets) is list and len(inner_rets) > 0:
+                    product_series = ret[1]
+
+                    cache = {}
+                    cache["st_inventory_qty"] = inner_rets[0][5]
+                    cache["st_inventory_total"] = inner_rets[0][6]
+                    cache["ed_inventory_qty"] = inner_rets[len(inner_rets) - 1][17]
+                    cache["ed_inventory_total"] = inner_rets[len(inner_rets) - 1][18]
+                    purchase_qty = 0
+                    for inner_ret in inner_rets:
+                        purchase_qty += inner_ret[7]
+                    cache["purchase_qty"] = purchase_qty
+                    purchase_total = 0
+                    for inner_ret in inner_rets:
+                        purchase_total += inner_ret[8]
+                    cache["purchase_total"] = purchase_total
+                    purchase_then_return_qty = 0
+                    for inner_ret in inner_rets:
+                        purchase_then_return_qty += inner_ret[9]
+                    cache["purchase_then_return_qty"] = purchase_then_return_qty
+                    purchase_then_return_total = 0
+                    for inner_ret in inner_rets:
+                        purchase_then_return_total += inner_ret[10]
+                    cache["purchase_then_return_total"] = purchase_then_return_total
+                    sale_qty = 0
+                    for inner_ret in inner_rets:
+                        sale_qty += inner_ret[11]
+                    cache["sale_qty"] = sale_qty
+                    sale_total = 0
+                    for inner_ret in inner_rets:
+                        sale_total += inner_ret[12]
+                    cache["sale_total"] = sale_total
+                    sale_then_return_qty = 0
+                    for inner_ret in inner_rets:
+                        sale_then_return_qty += inner_ret[13]
+                    cache["sale_then_return_qty"] = sale_then_return_qty
+                    sale_then_return_total = 0
+                    for inner_ret in inner_rets:
+                        sale_then_return_total += inner_ret[14]
+                    cache["sale_then_return_total"] = sale_then_return_total
+                    others_qty = 0
+                    for inner_ret in inner_rets:
+                        others_qty += inner_ret[15]
+                    cache["others_qty"] = others_qty
+                    others_total = 0
+                    for inner_ret in inner_rets:
+                        others_total += inner_ret[16]
+                    cache["others_total"] = others_total
+
+                    csv_writer.writerow([
+                        "{} ~ {}".format(st_date, ed_date), product_series, cache["st_inventory_qty"], cache["st_inventory_total"],
+                        cache["purchase_qty"], cache["purchase_total"], cache["purchase_then_return_qty"], cache["purchase_then_return_total"],
+                        cache["sale_qty"], cache["sale_total"], cache["sale_then_return_qty"], cache["sale_then_return_total"],
+                        cache["others_qty"], cache["others_total"], cache["ed_inventory_qty"], cache["ed_inventory_total"],
+                    ])
+        
+        response_object = {"status": "success"}
+        response_object["output_file"] = output_file
+        response_object["server_send_queue_file"] = csv_file_sha256
+        return jsonify(response_object)
+    else:
+        response_object = {"status": "not found"}
+        return jsonify(response_object)
 
 
 # 预览销售报表（按单个SKU汇总）的接口
