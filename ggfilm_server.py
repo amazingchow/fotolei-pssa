@@ -69,7 +69,7 @@ def upload_products():
                 "IGNORE 1 LINES " +
                 "(product_code, specification_code, product_name, specification_name, " +
                 "brand, classification_1, classification_2, product_series, stop_status, " +
-                "product_weight, product_length, product_width, product_hight, " +
+                "product_weight, product_length, product_width, product_height, " +
                 "is_combined, be_aggregated, is_import, " +
                 "supplier_name, purchase_name, jit_inventory);"
             )
@@ -135,7 +135,7 @@ def upload_jit_inventory_data():
 @ggfilm_server.route("/api/v1/addedskus/prepare", methods=["POST"])
 def prepare_added_skus():
     payload = request.get_json()
-    added_skus = payload.get("added_skus")
+    added_skus = payload.get("added_skus", [])
 
     ts = int(time.time())
     csv_file_sha256 = generate_digest("新增SKU_{}.csv".format(ts))
@@ -239,7 +239,7 @@ def list_products():
 
     stmt = "SELECT product_code, specification_code, product_name, specification_name, \
         brand, classification_1, classification_2, product_series, stop_status, \
-        product_weight, product_length, product_width, product_hight, \
+        product_weight, product_length, product_width, product_height, \
         is_combined, be_aggregated, is_import, \
         supplier_name, purchase_name, jit_inventory \
         FROM ggfilm.products ORDER BY 'id' DESC LIMIT {}, {};".format(
@@ -398,10 +398,8 @@ def prepare_report_file_case2():
     payload = request.get_json()
     # 1. 起始日期和截止日期用于过滤掉时间条件不符合的记录项
     # 2. 按照“产品系列”进行分类汇总，没有系列名称的不参与汇总
-    st_date = payload.get("st_date").strip()
-    ed_date = payload.get("ed_date").strip()
-    logger.info(st_date)
-    logger.info(ed_date)
+    st_date = payload.get("st_date", "").strip()
+    ed_date = payload.get("ed_date", "").strip()
 
     stmt = "SELECT specification_code, product_series, jit_inventory FROM ggfilm.products \
         WHERE COALESCE(CHAR_LENGTH(product_series), 0) != 0;"
@@ -516,10 +514,10 @@ def preview_report_file_case3():
     # 1. 起始日期和截止日期用于过滤掉时间条件不符合的记录项
     # 2.1. 如果specification_code（规格编码）不为空，直接用规格编码筛选出想要的数据
     # 2.2. 如果specification_code（规格编码）为空，则先用其他非空条件筛选出规格编码，再用规格编码筛选出想要的数据
-    st_date = payload.get("st_date").strip()
-    ed_date = payload.get("ed_date").strip()
+    st_date = payload.get("st_date", "").strip()
+    ed_date = payload.get("ed_date", "").strip()
 
-    specification_code = payload.get("specification_code").strip()
+    specification_code = payload.get("specification_code", "").strip()
 
     def inline():
         resp = {"status": "success"}
@@ -567,17 +565,17 @@ def preview_report_file_case3():
         response_object = inline()
         return jsonify(response_object)
     else:
-        product_code = payload.get("product_code").strip()
-        product_name = payload.get("product_name").strip()
-        brand = payload.get("brand").strip()
-        classification_1 = payload.get("classification_1").strip()
-        classification_2 = payload.get("classification_2").strip()
-        product_series = payload.get("product_series").strip()
-        stop_status = payload.get("stop_status").strip()
-        is_combined = payload.get("is_combined").strip()
-        be_aggregated = payload.get("be_aggregated").strip()
-        is_import = payload.get("is_import").strip()
-        supplier_name = payload.get("supplier_name").strip()
+        product_code = payload.get("product_code", "").strip()
+        product_name = payload.get("product_name", "").strip()
+        brand = payload.get("brand", "").strip()
+        classification_1 = payload.get("classification_1", "").strip()
+        classification_2 = payload.get("classification_2", "").strip()
+        product_series = payload.get("product_series", "").strip()
+        stop_status = payload.get("stop_status", "").strip()
+        is_combined = payload.get("is_combined", "").strip()
+        be_aggregated = payload.get("be_aggregated", "").strip()
+        is_import = payload.get("is_import", "").strip()
+        supplier_name = payload.get("supplier_name", "").strip()
 
         stmt = "SELECT specification_code FROM ggfilm.products WHERE "
         selections = []
@@ -619,9 +617,9 @@ def preview_report_file_case3():
 @ggfilm_server.route("/api/v1/case3/prepare", methods=["POST"])
 def prepare_report_file_case3():
     payload = request.get_json()
-    st_date = payload.get("st_date").strip()
-    ed_date = payload.get("ed_date").strip()
-    specification_code = payload.get("specification_code").strip()
+    st_date = payload.get("st_date", "").strip()
+    ed_date = payload.get("ed_date", "").strip()
+    specification_code = payload.get("specification_code", "").strip()
 
     stmt = "SELECT * FROM ggfilm.products WHERE specification_code = '{}' LIMIT 1;".format(specification_code)
     rets = DBConnector.query(stmt)
@@ -638,7 +636,7 @@ def prepare_report_file_case3():
     cache["product_weight"] = rets[0][10]
     cache["product_length"] = rets[0][11]
     cache["product_width"] = rets[0][12]
-    cache["product_hight"] = rets[0][13]
+    cache["product_height"] = rets[0][13]
     cache["is_combined"] = rets[0][14]
     cache["is_import"] = rets[0][16]
     cache["supplier_name"] = rets[0][17]
@@ -717,7 +715,7 @@ def prepare_report_file_case3():
         csv_writer.writerow([
             cache["product_code"], cache["specification_code"], cache["product_name"], cache["specification_name"],
             cache["brand"], cache["classification_1"], cache["classification_2"], cache["product_series"],
-            cache["stop_status"], cache["product_weight"], cache["product_length"], cache["product_width"], cache["product_hight"],
+            cache["stop_status"], cache["product_weight"], cache["product_length"], cache["product_width"], cache["product_height"],
             cache["is_combined"], cache["is_import"], cache["supplier_name"], cache["purchase_name"],
             cache["st_inventory_qty"], cache["st_inventory_total"], cache["purchase_qty"], cache["purchase_total"],
             cache["purchase_then_return_qty"], cache["purchase_then_return_total"], cache["sale_qty"], cache["sale_total"],
@@ -728,7 +726,6 @@ def prepare_report_file_case3():
     response_object = {"status": "success"}
     response_object["output_file"] = output_file
     response_object["server_send_queue_file"] = csv_file_sha256
-
     return jsonify(response_object)
 
 
@@ -754,14 +751,119 @@ def upload_csv_file_for_case6():
     )
     csv_files[0].save(csv_file)
 
-    
-    return jsonify("导出体积、重量计算汇总单")
+    demand_table = []
+    with open(csv_file, "r", encoding='utf-8-sig') as fd:
+        csv_reader = csv.reader(fd, delimiter=",")
+        line = 0
+        for row in csv_reader:
+            if line > 0:
+                demand_table.append(
+                    {
+                        "specification_code": row[0].strip(), 
+                        "quantity": row[1].strip()
+                    }
+                )
+            line += 1
+
+    response_object = {"status": "success"}
+    response_object["demand_table"] = demand_table
+    return jsonify(response_object)
+
+
+# 预览体积、重量计算汇总单的接口
+'''
+预览效果
+
+规格编码 | 商品名称 | 规格名称 | 数量 | 长度/cm | 宽度/cm | 高度/cm | 体积合计/cm^3 | 重量/g | 重量合计/g
+'''
+@ggfilm_server.route("/api/v1/case6/preview", methods=["POST"])
+def preview_report_file_case6():
+    payload = request.get_json()
+    demand_table = payload.get("demand_table", [])
+
+    preview_table = []
+    for item in demand_table:
+        stmt = "SELECT product_name, specification_name, \
+            product_weight, product_length, product_width, product_height \
+            FROM ggfilm.products WHERE specification_code = '{}';".format(item["specification_code"])
+        rets = DBConnector.query(stmt)
+        cache = {}
+        cache["specification_code"] = item["specification_code"]
+        cache["quantity"] = int(item["quantity"])
+        if type(rets) is list and len(rets) > 0:
+            cache["product_name"] = rets[0][0]
+            cache["specification_name"] = rets[0][1]
+            cache["product_length"] = rets[0][3]
+            cache["product_width"] = rets[0][4]
+            cache["product_height"] = rets[0][5]
+            cache["product_volume_total"] = rets[0][3] * rets[0][4] * rets[0][5] * int(item["quantity"])
+            cache["product_weight"] = rets[0][2]
+            cache["product_weight_total"] = rets[0][2] * int(item["quantity"])
+        else:
+            cache["product_name"] = ""
+            cache["specification_name"] = ""
+            cache["product_length"] = 0
+            cache["product_width"] = 0
+            cache["product_height"] = 0
+            cache["product_volume_total"] = 0
+            cache["product_weight"] = 0
+            cache["product_weight_total"] = 0
+        preview_table.append(cache)
+    preview_summary_table = {
+        "quantity": 0,
+        "product_volume_total": 0,
+        "product_weight_total": 0
+    }
+    for item in preview_table:
+        preview_summary_table["quantity"] += item["quantity"]
+        preview_summary_table["product_volume_total"] += item["product_volume_total"]
+        preview_summary_table["product_weight_total"] += item["product_weight_total"]
+
+    response_object = {"status": "success"}
+    response_object["preview_table"] = preview_table
+    response_object["preview_summary_table"] = preview_summary_table
+    return jsonify(response_object)
 
 
 # 导出体积、重量计算汇总单的接口
 @ggfilm_server.route("/api/v1/case6/download", methods=["POST"])
 def export_report_file_case6():
     return jsonify("导出体积、重量计算汇总单")
+
+
+# 预下载体积、重量计算汇总单的接口
+@ggfilm_server.route("/api/v1/case6/prepare", methods=["POST"])
+def prepare_report_file_case6():
+    payload = request.get_json()
+    preview_table = payload.get("preview_table", [])
+    preview_summary_table = payload.get("preview_summary_table", {})
+
+    ts = int(time.time())
+    csv_file_sha256 = generate_digest("体积、重量计算汇总单_{}.csv".format(ts))
+    csv_file = "{}/ggfilm-server/send_queue/{}".format(os.path.expanduser("~"), csv_file_sha256)
+    output_file = "体积、重量计算汇总单_{}.csv".format(ts)
+    with open(csv_file, "w", encoding='utf-8-sig') as fd:
+        csv_writer = csv.writer(fd, delimiter=",")
+        csv_writer.writerow([
+            "规格编码", "商品名称", "规格名称", "数量",
+            "长度/cm", "宽度/cm", "高度/cm", "体积合计/cm^3", "重量/g", "重量合计/g",
+        ])
+        for item in preview_table:
+            csv_writer.writerow([
+                item["specification_code"], item["product_name"], item["specification_name"], item["quantity"],
+                item["product_length"], item["product_width"], item["product_height"],
+                item["product_volume_total"], item["product_weight"], item["product_weight_total"],
+            ])
+        csv_writer.writerow([
+            "", "", "", preview_summary_table["quantity"],
+            "", "", "",
+            preview_summary_table["product_volume_total"], "", preview_summary_table["product_weight_total"],
+        ])
+
+    response_object = {"status": "success"}
+    response_object["output_file"] = output_file
+    response_object["server_send_queue_file"] = csv_file_sha256
+    return jsonify(response_object)
 
 
 # 下载文件接口

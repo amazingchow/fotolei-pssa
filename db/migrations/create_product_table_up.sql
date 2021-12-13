@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS ggfilm.products (
     product_weight     INT,                    /* 重量/g */
     product_length     INT,                    /* 长度/cm */
     product_width      INT,                    /* 宽度/cm */
-    product_hight      INT,                    /* 高度/cm */
+    product_height     INT,                    /* 高度/cm */
     is_combined        VARCHAR(32) ,           /* 是否是组合商品 */
     be_aggregated      VARCHAR(32) ,           /* 是否参与统计 */
     is_import          VARCHAR(32) ,           /* 是否是进口产品 */
