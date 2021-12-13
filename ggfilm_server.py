@@ -745,6 +745,20 @@ def export_report_file_case5():
 
 
 # 导出体积、重量计算汇总单的接口
+@ggfilm_server.route("/api/v1/case6/upload", methods=["POST"])
+def upload_csv_file_for_case6():
+    csv_files = request.files.getlist("file")
+    csv_file_sha256 = generate_digest("{}_{}".format(int(time.time()), csv_files[0].filename))
+    csv_file = "{}/ggfilm-server/recev_queue/{}".format(
+        os.path.expanduser("~"), csv_file_sha256
+    )
+    csv_files[0].save(csv_file)
+
+    
+    return jsonify("导出体积、重量计算汇总单")
+
+
+# 导出体积、重量计算汇总单的接口
 @ggfilm_server.route("/api/v1/case6/download", methods=["POST"])
 def export_report_file_case6():
     return jsonify("导出体积、重量计算汇总单")

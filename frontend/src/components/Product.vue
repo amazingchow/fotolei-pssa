@@ -305,6 +305,7 @@ export default {
       let formData = new FormData()
       formData.append('file', this.uploadProductCSVFile, this.uploadProductCSVFile.name)
       this.importProductCSVFile(formData)
+      this.uploadProductCSVFile = null
     },
     onCancelImportProduct (evt) {
       evt.preventDefault()

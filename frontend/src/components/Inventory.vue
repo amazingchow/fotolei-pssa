@@ -808,12 +808,32 @@ export default {
     onImportForCase6 (evt) {
       evt.preventDefault()
       this.$refs.exportFileCase6Modal.hide()
+      let formData = new FormData()
+      formData.append('file', this.uploadCSVFileForCase6, this.uploadCSVFileForCase6.name)
+      this.importCSVFileForCase6(formData)
       this.uploadCSVFileForCase6 = null
     },
     onCancleImportForCase6 (evt) {
       evt.preventDefault()
       this.$refs.exportFileCase6Modal.hide()
-      this.uploadCSVFileForCase6 = null
+    },
+    importCSVFileForCase6 (formData) {
+      let config = {
+        header: {
+          'Content-Type': 'multipart/form-data'
+        }
+      }
+      axios.post(this.serverBaseURL + '/api/v1/case6/upload', formData, config)
+        .then(() => {
+          this.message = '导入成功!'
+          this.showMessage = true
+        })
+        .catch((error) => {
+          // eslint-disable-next-line
+          console.log(error)
+          this.message = '导入失败!'
+          this.showMessage = true
+        })
     },
     // 体积、重量计算汇总单
     onExportCase6 (evt) {
