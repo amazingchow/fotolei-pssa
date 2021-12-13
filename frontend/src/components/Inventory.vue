@@ -285,14 +285,14 @@
             ></v-suggest>
           </b-form-group>
           <b-button-group id="inventory-table-operate-btn" class="w-100 d-block">
-            <b-button variant="dark" @click="onPreviewCase3">预览</b-button>
+            <b-button variant="dark" @click="onPreviewCase3">生成报表</b-button>
             <b-button variant="dark" @click="onCancelExportCase3">取消</b-button>
           </b-button-group>
         </b-card>
       </b-form>
     </b-modal>
     <b-modal ref="previewCase3Modal" title="预览销售报表（按单个SKU汇总）" size="xl" hide-footer>
-      <b-table-simple striped hover small id="preview-case3-table">
+      <b-table-simple striped hover small id="preview-table">
         <b-thead>
           <b-tr>
             <b-th scope="col">商品编号</b-th>
@@ -321,7 +321,7 @@
         </b-tbody>
       </b-table-simple>
       <b-button-group id="inventory-table-operate-btn" class="w-100 d-block">
-        <b-button variant="dark" @click="onExportCase3">下载</b-button>
+        <b-button variant="dark" @click="onExportCase3">下载报表</b-button>
         <b-button variant="dark" @click="onCancelPreviewCase3">取消</b-button>
       </b-button-group>
     </b-modal>
@@ -335,19 +335,92 @@
     </b-modal>
     <b-modal ref="exportFileCase5Modal" id="export-file-case5-modal" title="导出进口产品采购单" hide-footer>
       <b-form @submit="onExportCase5" @reset="onCancelExportCase5">
-        <b-button-group id="inventory-table-operate-btn" class="w-100 d-block">
-          <b-button type="submit" variant="dark">导出</b-button>
-          <b-button type="reset" variant="dark">取消</b-button>
-        </b-button-group>
+        <b-card bg-variant="light">
+          <b-button-group id="inventory-table-operate-btn" class="w-100 d-block">
+            <b-button type="submit" variant="dark">导出</b-button>
+            <b-button type="reset" variant="dark">取消</b-button>
+          </b-button-group>
+        </b-card>
       </b-form>
     </b-modal>
     <b-modal ref="exportFileCase6Modal" id="export-file-case6-modal" title="导出体积、重量计算汇总单" hide-footer>
-      <b-form @submit="onExportCase6" @reset="onCancelExportCase6">
+      <b-form>
+        <b-form-group>
+          <b-form-file
+            accept=".csv"
+            v-model="uploadCSVFileForCase6"
+            :state="Boolean(uploadCSVFileForCase6)"
+            placeholder="导入需求表，请选择UTF-8编码的CSV文件">
+          </b-form-file>
+        </b-form-group>
+        <b-table-simple striped hover small id="preview-table">
+          <b-thead>
+            <b-tr>
+              <b-th scope="col">规格编号</b-th>
+              <b-th scope="col">商品数量</b-th>
+            </b-tr>
+          </b-thead>
+          <b-tbody>
+            <b-tr v-for="(item, index) in demandTable" :key="index">
+              <b-td>{{ item.specification_code }}</b-td>
+              <b-td>{{ item.quantity }}</b-td>
+            </b-tr>
+          </b-tbody>
+        </b-table-simple>
         <b-button-group id="inventory-table-operate-btn" class="w-100 d-block">
-          <b-button type="submit" variant="dark">导出</b-button>
-          <b-button type="reset" variant="dark">取消</b-button>
+          <b-button variant="dark" @click="onImportForCase6">导入</b-button>
+          <b-button variant="dark" @click="onPreviewCase6">生成报表</b-button>
+          <b-button variant="dark" @click="onCancleImportForCase6">取消</b-button>
         </b-button-group>
       </b-form>
+    </b-modal>
+    <b-modal ref="previewCase6Modal" title="预览体积、重量计算汇总单" size="xl" hide-footer>
+      <b-table-simple striped hover small id="preview-table">
+        <b-thead>
+          <b-tr>
+            <b-th scope="col">规格编码</b-th>
+            <b-th scope="col">商品名称</b-th>
+            <b-th scope="col">规格名称</b-th>
+            <b-th scope="col">数量</b-th>
+            <b-th scope="col">长度/cm</b-th>
+            <b-th scope="col">宽度/cm</b-th>
+            <b-th scope="col">高度/cm</b-th>
+            <b-th scope="col">体积合计/cm^3</b-th>
+            <b-th scope="col">重量/g</b-th>
+            <b-th scope="col">重量合计/g</b-th>
+          </b-tr>
+        </b-thead>
+        <b-tbody>
+          <b-tr v-for="(item, index) in previewCase6.previewTable" :key="index">
+            <b-td>{{ item.specification_code }}</b-td>
+            <b-td>{{ item.product_name }}</b-td>
+            <b-td>{{ item.specification_name }}</b-td>
+            <b-td>{{ item.quantity }}</b-td>
+            <b-td>{{ item.product_length }}</b-td>
+            <b-td>{{ item.product_width }}</b-td>
+            <b-td>{{ item.product_height }}</b-td>
+            <b-td>{{ item.product_volume_total }}</b-td>
+            <b-td>{{ item.product_weight }}</b-td>
+            <b-td>{{ item.product_weight_total }}</b-td>
+          </b-tr>
+          <b-tr>
+            <b-td></b-td>
+            <b-td></b-td>
+            <b-td></b-td>
+            <b-td>{{ previewCase6.previewSummaryTable.quantity }}</b-td>
+            <b-td></b-td>
+            <b-td></b-td>
+            <b-td></b-td>
+            <b-td>{{ previewCase6.previewSummaryTable.product_volume_total }}</b-td>
+            <b-td></b-td>
+            <b-td>{{ previewCase6.previewSummaryTable.product_weight_total }}</b-td>
+          </b-tr>
+        </b-tbody>
+      </b-table-simple>
+      <b-button-group id="inventory-table-operate-btn" class="w-100 d-block">
+        <b-button variant="dark" @click="onExportCase6">下载报表</b-button>
+        <b-button variant="dark" @click="onCancelPreviewCase6">取消</b-button>
+      </b-button-group>
     </b-modal>
     <b-sidebar id="added-skus-sidebar" title="新增SKU清单" v-model="shouldOpenSidebar" right shadow>
       <div class="px-3 py-2">
@@ -397,7 +470,7 @@
   text-align: right;
 }
 
-#preview-case3-table {
+#preview-table {
   border: 2px solid black !important;
   font-size: small;
   table-layout: fixed !important;
@@ -453,11 +526,6 @@ export default {
       isImportSelection: '非进口品',
       supplierNameSelections: [],
       supplierNameSelection: '',
-      inventories: [],
-      shouldOpenSidebar: false,
-      addedSkus: [],
-      pageOffset: 0,
-      uploadCSVFile: null,
       previewCase3: {
         stDate: '',
         edDate: '',
@@ -471,6 +539,17 @@ export default {
         edInventoryQty: 0,
         jitInventory: 0
       },
+      previewCase6: {
+        previewTable: [],
+        previewSummaryTable: []
+      },
+      inventories: [],
+      shouldOpenSidebar: false,
+      addedSkus: [],
+      pageOffset: 0,
+      uploadCSVFile: null,
+      uploadCSVFileForCase6: null,
+      demandTable: [],
       message: '',
       showMessage: false
     }
@@ -539,6 +618,8 @@ export default {
       this.previewCase3.saleQty = 0
       this.previewCase3.edInventoryQty = 0
       this.previewCase3.jitInventory = 0
+      this.previewCase6.previewTable = []
+      this.previewCase6.previewSummaryTable = []
     },
     importCSVFile (formData) {
       let config = {
@@ -589,20 +670,6 @@ export default {
       this.uploadCSVFile = null
     },
     // 销售报表（按分类汇总）
-    exportReportFileCase1 (payload) {
-      axios.post(this.serverBaseURL + '/api/v1/case1/download', payload)
-        .then((res) => {
-          console.log(res.data)
-          this.message = '导出成功!'
-          this.showMessage = true
-        })
-        .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          this.message = '导出失败!'
-          this.showMessage = true
-        })
-    },
     onExportCase1 (evt) {
       // 确定导出销售报表（按分类汇总）
       evt.preventDefault()
@@ -619,11 +686,11 @@ export default {
       console.log('取消导出销售报表（按分类汇总）')
       this.initExportForm()
     },
+    // 销售报表（按系列汇总）
     onExportCase2 (evt) {
       // 确定导出销售报表（按系列汇总）
       evt.preventDefault()
       this.$refs.exportFileCase2Modal.hide()
-      console.log('确定导出销售报表（按系列汇总）')
       const payload = {
         st_date: this.stDateSelection,
         ed_date: this.edDateSelection
@@ -635,7 +702,6 @@ export default {
       // 取消导出销售报表（按系列汇总）
       evt.preventDefault()
       this.$refs.exportFileCase2Modal.hide()
-      console.log('取消导出销售报表（按系列汇总）')
       this.initExportForm()
     },
     // 销售报表（按单个SKU汇总）
@@ -668,7 +734,6 @@ export default {
         })
     },
     onPreviewCase3 (evt) {
-      // 预览销售报表（按单个SKU汇总）
       evt.preventDefault()
       if ((this.stDateSelection === '') || (this.edDateSelection === '')) {
         this.message = '起始日期/截止日期不能为空!'
@@ -719,20 +784,6 @@ export default {
       this.initExportForm()
     },
     // 滞销品报表
-    exportReportFileCase4 (payload) {
-      axios.post(this.serverBaseURL + '/api/v1/case4/download', payload)
-        .then((res) => {
-          console.log(res.data)
-          this.message = '导出成功!'
-          this.showMessage = true
-        })
-        .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          this.message = '导出失败!'
-          this.showMessage = true
-        })
-    },
     onExportCase4 (evt) {
       // 确定导出滞销品报表
       evt.preventDefault()
@@ -750,20 +801,6 @@ export default {
       this.initExportForm()
     },
     // 进口产品采购单
-    exportReportFileCase5 (payload) {
-      axios.post(this.serverBaseURL + '/api/v1/case5/download', payload)
-        .then((res) => {
-          console.log(res.data)
-          this.message = '导出成功!'
-          this.showMessage = true
-        })
-        .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          this.message = '导出失败!'
-          this.showMessage = true
-        })
-    },
     onExportCase5 (evt) {
       // 确定导出进口产品采购单
       evt.preventDefault()
@@ -780,35 +817,85 @@ export default {
       console.log('取消导出进口产品采购单')
       this.initExportForm()
     },
-    exportReportFileCase6 (payload) {
-      axios.post(this.serverBaseURL + '/api/v1/case6/download', payload)
+    // 体积、重量计算汇总单
+    onImportForCase6 (evt) {
+      evt.preventDefault()
+      let formData = new FormData()
+      formData.append('file', this.uploadCSVFileForCase6, this.uploadCSVFileForCase6.name)
+      this.importCSVFileForCase6(formData)
+    },
+    onCancleImportForCase6 (evt) {
+      evt.preventDefault()
+      this.$refs.exportFileCase6Modal.hide()
+      this.uploadCSVFileForCase6 = null
+      this.demandTable = []
+    },
+    importCSVFileForCase6 (formData) {
+      let config = {
+        header: {
+          'Content-Type': 'multipart/form-data'
+        }
+      }
+      axios.post(this.serverBaseURL + '/api/v1/case6/upload', formData, config)
         .then((res) => {
-          console.log(res.data)
-          this.message = '导出成功!'
+          this.message = '导入成功!'
           this.showMessage = true
+          this.demandTable = res.data.demand_table
         })
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '导出失败!'
+          this.message = '导入失败!'
           this.showMessage = true
         })
     },
-    // 体积、重量计算汇总单
-    onExportCase6 (evt) {
-      // 确定导出体积、重量计算汇总单
+    onPreviewCase6 (evt) {
       evt.preventDefault()
+      if (this.demandTable.length === 0) {
+        this.message = '请先加载需求表!'
+        this.showMessage = true
+      } else {
+        const payload = {
+          demand_table: this.demandTable
+        }
+        this.previewReportFileCase6(payload)
+      }
+    },
+    previewReportFileCase6 (payload) {
+      axios.post(this.serverBaseURL + '/api/v1/case6/preview', payload)
+        .then((res) => {
+          if (res.data.status === 'success') {
+            this.previewCase6.previewTable = res.data.preview_table
+            this.previewCase6.previewSummaryTable = res.data.preview_summary_table
+            this.$refs.previewCase6Modal.show()
+          } else {
+            this.message = '预览失败! 不存在指定的商品条目.'
+            this.showMessage = true
+          }
+        })
+        .catch((error) => {
+          // eslint-disable-next-line
+          console.log(error)
+          this.message = '预览失败!'
+          this.showMessage = true
+        })
+    },
+    onExportCase6 (evt) {
+      // 确定下载体积、重量计算汇总单
+      evt.preventDefault()
+      this.$refs.previewCase6Modal.hide()
       this.$refs.exportFileCase6Modal.hide()
-      console.log('确定导出体积、重量计算汇总单')
-      const payload = {}
-      this.exportReportFileCase6(payload)
+      const payload = {
+        preview_table: this.previewCase6.previewTable,
+        preview_summary_table: this.previewCase6.previewSummaryTable
+      }
+      this.prepareExportReportFile('/api/v1/case6/prepare', payload)
       this.initExportForm()
     },
-    onCancelExportCase6 (evt) {
-      // 取消导出体积、重量计算汇总单
+    onCancelPreviewCase6 (evt) {
+      // 取消下载体积、重量计算汇总单
       evt.preventDefault()
-      this.$refs.exportFileCase6Modal.hide()
-      console.log('取消导出体积、重量计算汇总单')
+      this.$refs.previewCase6Modal.hide()
       this.initExportForm()
     },
     prepareExportReportFile (url, payload) {
