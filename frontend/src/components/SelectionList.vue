@@ -71,7 +71,7 @@ export default {
   },
   methods: {
     listAllSelections () {
-      axios.get(this.serverBaseURL + '/api/v1/allselections/slist')
+      axios.get(this.serverBaseURL + '/api/v1/allselections')
         .then((res) => {
           this.brandSelections = res.data.brand_selections
           console.log(this.brandSelections.length)

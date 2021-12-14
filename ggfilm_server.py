@@ -281,51 +281,51 @@ def list_inventories():
 
 
 # 导出所有可供选择的选项列表的接口
-@ggfilm_server.route("/api/v1/allselections", methods=["GET"])
-def list_all_selections():
+@ggfilm_server.route("/api/v1/alloptions", methods=["GET"])
+def list_all_options():
     response_object = {"status": "success"}
 
     stmt = "SELECT DISTINCT brand FROM ggfilm.products;"
-    brand_selections = DBConnector.query(stmt)
-    if (brand_selections) == 0:
-        response_object["brand_selections"] = []
+    brand_options = DBConnector.query(stmt)
+    if (brand_options) == 0:
+        response_object["brand_options"] = []
     else:
-        response_object["brand_selections"] = [{"id": i, "brand": brand[0]} for i, brand in enumerate(brand_selections)]
+        response_object["brand_options"] = [{"id": i, "brand": brand[0]} for i, brand in enumerate(brand_options)]
 
     stmt = "SELECT DISTINCT classification_1 FROM ggfilm.products;"
-    classification_1_selections = DBConnector.query(stmt)
-    if (classification_1_selections) == 0:
-        response_object["classification_1_selections"] = []
+    classification_1_options = DBConnector.query(stmt)
+    if (classification_1_options) == 0:
+        response_object["classification_1_options"] = []
     else:
-        response_object["classification_1_selections"] = [{"id": i, "classification-1": classification_1[0]} for i, classification_1 in enumerate(classification_1_selections)]
+        response_object["classification_1_options"] = [{"id": i, "classification-1": classification_1[0]} for i, classification_1 in enumerate(classification_1_options)]
 
     stmt = "SELECT DISTINCT classification_2 FROM ggfilm.products;"
-    classification_2_selections = DBConnector.query(stmt)
-    if (classification_2_selections) == 0:
-        response_object["classification_2_selections"] = []
+    classification_2_options = DBConnector.query(stmt)
+    if (classification_2_options) == 0:
+        response_object["classification_2_options"] = []
     else:
-        response_object["classification_2_selections"] = [{"id": i, "classification-2": classification_2[0]} for i, classification_2 in enumerate(classification_2_selections)]
+        response_object["classification_2_options"] = [{"id": i, "classification-2": classification_2[0]} for i, classification_2 in enumerate(classification_2_options)]
 
     stmt = "SELECT DISTINCT product_series FROM ggfilm.products;"
-    product_series_selections = DBConnector.query(stmt)
-    if (product_series_selections) == 0:
-        response_object["product_series_selections"] = []
+    product_series_options = DBConnector.query(stmt)
+    if (product_series_options) == 0:
+        response_object["product_series_options"] = []
     else:
-        response_object["product_series_selections"] = [{"id": i, "product-series": product_series[0]} for i, product_series in enumerate(product_series_selections)]
+        response_object["product_series_options"] = [{"id": i, "product-series": product_series[0]} for i, product_series in enumerate(product_series_options)]
 
     stmt = "SELECT DISTINCT supplier_name FROM ggfilm.products;"
-    supplier_name_selections = DBConnector.query(stmt)
-    if (supplier_name_selections) == 0:
-        response_object["supplier_name_selections"] = []
+    supplier_name_options = DBConnector.query(stmt)
+    if (supplier_name_options) == 0:
+        response_object["supplier_name_options"] = []
     else:
-        response_object["supplier_name_selections"] = [{"id": i, "supplier-name": supplier_name[0]} for i, supplier_name in enumerate(supplier_name_selections)]
+        response_object["supplier_name_options"] = [{"id": i, "supplier-name": supplier_name[0]} for i, supplier_name in enumerate(supplier_name_options)]
 
     return jsonify(response_object)
 
 
 # 导出所有可供选择的选项列表的接口
-@ggfilm_server.route("/api/v1/allselections/slist", methods=["GET"])
-def list_all_selections_for_slist():
+@ggfilm_server.route("/api/v1/allselections", methods=["GET"])
+def list_all_selections():
     response_object = {"status": "success"}
 
     stmt = "SELECT DISTINCT brand FROM ggfilm.products;"
@@ -371,6 +371,25 @@ def list_all_selections_for_slist():
                 for product_series_selection in product_series_selections \
                     if len(product_series_selection[0].strip()) > 0
         ]
+
+    stmt = "SELECT DISTINCT supplier_name FROM ggfilm.products;"
+    supplier_name_selections = DBConnector.query(stmt)
+    if (supplier_name_selections) == 0:
+        response_object["supplier_name_selections"] = []
+    else:
+        response_object["supplier_name_selections"] = [
+            {"value": supplier_name_selection[0], "text": supplier_name_selection[0]} \
+                for supplier_name_selection in supplier_name_selections \
+                    if len(supplier_name_selection[0].strip()) > 0
+        ]
+
+    return jsonify(response_object)
+
+
+# 导出所有可供选择的供应商列表的接口
+@ggfilm_server.route("/api/v1/allselections/suppliers", methods=["GET"])
+def list_all_supplier_selections():
+    response_object = {"status": "success"}
 
     stmt = "SELECT DISTINCT supplier_name FROM ggfilm.products;"
     supplier_name_selections = DBConnector.query(stmt)
@@ -735,10 +754,74 @@ def export_report_file_case4():
     return jsonify("导出滞销品报表")
 
 
-# 导出进口产品采购单的接口
-@ggfilm_server.route("/api/v1/case5/download", methods=["POST"])
-def export_report_file_case5():
-    return jsonify("导出进口产品采购单")
+# 预览采购辅助分析报表的接口
+'''
+预览效果
+
+商品编码 | 品牌 | 商品名称 | 规格名称 | 供应商 | X个月销量 | Y个月销量 | 库存量 | 库存/X个月销量 | 库存/Y个月销量 | 
+库存/X个月折算销量 | 库存/Y个月折算销量	| 拟定进货量 | 单个重量/g | 小计重量/kg | 单个体积/cm³ | 小计体积/m³
+'''
+@ggfilm_server.route("/api/v1/case5/preview", methods=["POST"])
+def preview_report_file_case5():
+    way = request.args.get("way", "1")
+    payload = request.get_json()
+    supplier_name = payload.get("supplier_name", "")
+    time_quantum_1 = int(payload.get("time_quantum_1", "6"))
+    threshold_1 = int(payload.get("threshold_1", "2"))
+    time_quantum_2 = int(payload.get("time_quantum_2", "12"))
+    threshold_2 = int(payload.get("threshold_2", "1"))
+    projected_purchase = int(payload.get("projected_purchase", "12"))
+    reduced_btn_option = int(payload.get("reduced_btn_option", "open"))
+    stop_status = int(payload.get("stop_status", "全部"))
+    be_aggregated = int(payload.get("be_aggregated", "全部"))
+
+    # 1. “供应商”选项为空，则为全部供应商（包括没有供应商的商品条目）
+    # 2. way == 2时，不考虑“STOP状态”选项+“是否参与统计”选项
+    
+    specification_code_list = []
+    preview_table = []
+    if way == "1":
+        stmt = "SELECT product_code, brand, \
+            product_weight, product_length, product_width, product_height \
+            FROM ggfilm.products WHERE specification_code = '{}';".format(item["specification_code"])
+        rets = DBConnector.query(stmt)
+    elif way == "2":
+        stmt = "SELECT product_name, specification_name, \
+            product_weight, product_length, product_width, product_height \
+            FROM ggfilm.products WHERE specification_code = '{}';".format(item["specification_code"])
+        rets = DBConnector.query(stmt)
+
+    for item in demand_table:
+        stmt = "SELECT product_name, specification_name, \
+            product_weight, product_length, product_width, product_height \
+            FROM ggfilm.products WHERE specification_code = '{}';".format(item["specification_code"])
+        rets = DBConnector.query(stmt)
+        cache = {}
+        cache["specification_code"] = item["specification_code"]
+        cache["quantity"] = int(item["quantity"])
+        if type(rets) is list and len(rets) > 0:
+            cache["product_name"] = rets[0][0]
+            cache["specification_name"] = rets[0][1]
+            cache["product_length"] = rets[0][3]
+            cache["product_width"] = rets[0][4]
+            cache["product_height"] = rets[0][5]
+            cache["product_volume_total"] = rets[0][3] * rets[0][4] * rets[0][5] * int(item["quantity"])
+            cache["product_weight"] = rets[0][2]
+            cache["product_weight_total"] = rets[0][2] * int(item["quantity"])
+        else:
+            cache["product_name"] = ""
+            cache["specification_name"] = ""
+            cache["product_length"] = 0
+            cache["product_width"] = 0
+            cache["product_height"] = 0
+            cache["product_volume_total"] = 0
+            cache["product_weight"] = 0
+            cache["product_weight_total"] = 0
+        preview_table.append(cache)
+
+    response_object = {"status": "success"}
+    response_object["preview_table"] = preview_table
+    return jsonify(response_object)
 
 
 # 导出体积、重量计算汇总单的接口
@@ -774,7 +857,7 @@ def upload_csv_file_for_case6():
 '''
 预览效果
 
-规格编码 | 商品名称 | 规格名称 | 数量 | 长度/cm | 宽度/cm | 高度/cm | 体积合计/cm^3 | 重量/g | 重量合计/g
+规格编码 | 商品名称 | 规格名称 | 数量 | 长度/cm | 宽度/cm | 高度/cm | 体积合计/cm³ | 重量/g | 重量合计/g
 '''
 @ggfilm_server.route("/api/v1/case6/preview", methods=["POST"])
 def preview_report_file_case6():

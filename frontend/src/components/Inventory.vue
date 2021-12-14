@@ -24,7 +24,7 @@
               导出
             </b-dropdown-item-button>
             <b-dropdown-divider></b-dropdown-divider>
-            <b-dropdown-header id="dropdown-header-3"><strong>进口产品采购单</strong></b-dropdown-header>
+            <b-dropdown-header id="dropdown-header-3"><strong>采购辅助分析报表</strong></b-dropdown-header>
             <b-dropdown-item-button aria-describedby="dropdown-header-3" variant="secondary" v-b-modal.export-file-case5-modal>
               导出
             </b-dropdown-item-button>
@@ -107,18 +107,18 @@
             placeholder="请选择UTF-8编码的CSV文件">
           </b-form-file>
         </b-form-group>
-        <b-button-group id="inventory-table-operate-btn" class="w-100 d-block">
+        <div id="inventory-table-operate-btn" class="w-100 d-block">
           <b-button type="submit" variant="dark">导入</b-button>
           <b-button type="reset" variant="dark">取消</b-button>
-        </b-button-group>
+        </div>
       </b-form>
     </b-modal>
     <b-modal ref="exportFileCase1Modal" id="export-file-case1-modal" title="导出销售报表（按分类汇总）" hide-footer>
       <b-form @submit="onExportCase1" @reset="onCancelExportCase1">
-        <b-button-group id="inventory-table-operate-btn" class="w-100 d-block">
+        <div id="inventory-table-operate-btn" class="w-100 d-block">
           <b-button type="submit" variant="dark">导出</b-button>
           <b-button type="reset" variant="dark">取消</b-button>
-        </b-button-group>
+        </div>
       </b-form>
     </b-modal>
     <b-modal ref="exportFileCase2Modal" id="export-file-case2-modal" title="导出销售报表（按系列汇总）" hide-footer>
@@ -141,10 +141,10 @@
             >
               <b-form-input v-model="edDateSelection" placeholder="YYYY-MM"></b-form-input>
             </b-form-group>
-            <b-button-group id="inventory-table-operate-btn" class="w-100 d-block">
+            <div id="inventory-table-operate-btn" class="w-100 d-block">
               <b-button variant="dark" @click="onExportCase2">下载</b-button>
               <b-button variant="dark" @click="onCancelExportCase2">取消</b-button>
-            </b-button-group>
+            </div>
           </b-card>
         </b-form>
       </b-form>
@@ -199,7 +199,7 @@
             label-cols-sm="3"
           >
             <v-suggest
-              :data="brandSelections"
+              :data="brandOptions"
               show-field="brand"
               v-model="brandSelection"
             ></v-suggest>
@@ -211,7 +211,7 @@
             label-cols-sm="3"
           >
             <v-suggest
-              :data="classification1Selections"
+              :data="classification1Options"
               show-field="classification-1"
               v-model="classification1Selection"
             ></v-suggest>
@@ -223,7 +223,7 @@
             label-cols-sm="3"
           >
             <v-suggest
-              :data="classification2Selections"
+              :data="classification2Options"
               show-field="classification-2"
               v-model="classification2Selection"
             ></v-suggest>
@@ -235,7 +235,7 @@
             label-cols-sm="3"
           >
             <v-suggest
-              :data="productSeriesSelections"
+              :data="productSeriesOptions"
               show-field="product-series"
               v-model="productSeriesSelection"
             ></v-suggest>
@@ -246,7 +246,7 @@
             label-align-sm="right"
             label-cols-sm="3"
           >
-            <b-form-select v-model="stopStatusSelection" :options="stopStatusSelections"></b-form-select>
+            <b-form-select v-model="stopStatusSelection" :options="stopStatusOptions"></b-form-select>
           </b-form-group>
           <b-form-group
             label="组合商品?"
@@ -254,7 +254,7 @@
             label-align-sm="right"
             label-cols-sm="3"
           >
-            <b-form-select v-model="isCombinedSelection" :options="isCombinedSelections"></b-form-select>
+            <b-form-select v-model="isCombinedSelection" :options="isCombinedOptions"></b-form-select>
           </b-form-group>
           <b-form-group
             label="参与统计?"
@@ -262,7 +262,7 @@
             label-align-sm="right"
             label-cols-sm="3"
           >
-            <b-form-select v-model="beAggregatedSelection" :options="beAggregatedSelections"></b-form-select>
+            <b-form-select v-model="beAggregatedSelection" :options="beAggregatedOptions"></b-form-select>
           </b-form-group>
           <b-form-group
             label="进口商品?"
@@ -270,7 +270,7 @@
             label-align-sm="right"
             label-cols-sm="3"
           >
-            <b-form-select v-model="isImportSelection" :options="isImportSelections"></b-form-select>
+            <b-form-select v-model="isImportSelection" :options="isImportOptions"></b-form-select>
           </b-form-group>
           <b-form-group
             label="供应商名称"
@@ -279,15 +279,15 @@
             label-cols-sm="3"
           >
             <v-suggest
-              :data="supplierNameSelections"
+              :data="supplierNameOptions"
               show-field="supplier-name"
               v-model="supplierNameSelection"
             ></v-suggest>
           </b-form-group>
-          <b-button-group id="inventory-table-operate-btn" class="w-100 d-block">
+          <div id="inventory-table-operate-btn" class="w-100 d-block">
             <b-button variant="dark" @click="onPreviewCase3">生成报表</b-button>
             <b-button variant="dark" @click="onCancelExportCase3">取消</b-button>
-          </b-button-group>
+          </div>
         </b-card>
       </b-form>
     </b-modal>
@@ -320,26 +320,100 @@
           </b-tr>
         </b-tbody>
       </b-table-simple>
-      <b-button-group id="inventory-table-operate-btn" class="w-100 d-block">
+      <div id="inventory-table-operate-btn" class="w-100 d-block">
         <b-button variant="dark" @click="onExportCase3">下载报表</b-button>
         <b-button variant="dark" @click="onCancelPreviewCase3">取消</b-button>
-      </b-button-group>
+      </div>
     </b-modal>
     <b-modal ref="exportFileCase4Modal" id="export-file-case4-modal" title="导出滞销品报表" hide-footer>
       <b-form @submit="onExportCase4" @reset="onCancelExportCase4">
-        <b-button-group id="inventory-table-operate-btn" class="w-100 d-block">
+        <div id="inventory-table-operate-btn" class="w-100 d-block">
           <b-button type="submit" variant="dark">导出</b-button>
           <b-button type="reset" variant="dark">取消</b-button>
-        </b-button-group>
+        </div>
       </b-form>
     </b-modal>
-    <b-modal ref="exportFileCase5Modal" id="export-file-case5-modal" title="导出进口产品采购单" hide-footer>
-      <b-form @submit="onExportCase5" @reset="onCancelExportCase5">
+    <b-modal ref="exportFileCase5Modal" id="export-file-case5-modal" title="导出采购辅助分析报表" hide-footer>
+      <b-form>
         <b-card bg-variant="light">
-          <b-button-group id="inventory-table-operate-btn" class="w-100 d-block">
-            <b-button type="submit" variant="dark">导出</b-button>
-            <b-button type="reset" variant="dark">取消</b-button>
-          </b-button-group>
+          <b-form-group
+            label="供应商"
+            label-size="sm"
+            label-align-sm="right"
+            label-cols-sm="5"
+          >
+            <b-form-select v-model="supplierNameSelection" :options="supplierNameSelections" :select-size="1"></b-form-select>
+          </b-form-group>
+          <b-form-group
+            label="时间段1（月数）"
+            label-size="sm"
+            label-align-sm="right"
+            label-cols-sm="5"
+          >
+            <b-form-input v-model="timeQuantum1" type="number" placeholder="6"></b-form-input>
+          </b-form-group>
+          <b-form-group
+            label="阈值1"
+            label-size="sm"
+            label-align-sm="right"
+            label-cols-sm="5"
+          >
+            <b-form-input v-model="threshold1" type="number" placeholder="2"></b-form-input>
+          </b-form-group>
+          <b-form-group
+            label="时间段2（月数）"
+            label-size="sm"
+            label-align-sm="right"
+            label-cols-sm="5"
+          >
+            <b-form-input v-model="timeQuantum2" type="number" placeholder="12"></b-form-input>
+          </b-form-group>
+          <b-form-group
+            label="阈值2"
+            label-size="sm"
+            label-align-sm="right"
+            label-cols-sm="5"
+          >
+            <b-form-input v-model="threshold2" type="number" placeholder="1"></b-form-input>
+          </b-form-group>
+          <b-form-group
+            label="拟定进货（可销月数）"
+            label-size="sm"
+            label-align-sm="right"
+            label-cols-sm="5"
+          >
+            <b-form-input v-model="projectedPurchase" type="number" placeholder="12"></b-form-input>
+          </b-form-group>
+          <b-form-group
+            label="断货折算"
+            label-size="sm"
+            label-align-sm="right"
+            label-cols-sm="5"
+          >
+            <b-form-radio-group v-model="reducedBtnOption" :options="reducedBtnOptions"></b-form-radio-group>
+          </b-form-group>
+          <b-form-group
+            label="STOP状态?"
+            label-size="sm"
+            label-align-sm="right"
+            label-cols-sm="5"
+          >
+            <b-form-select v-model="stopStatusSelection" :options="stopStatusOptions"></b-form-select>
+          </b-form-group>
+          <b-form-group
+            label="参与统计?"
+            label-size="sm"
+            label-align-sm="right"
+            label-cols-sm="5"
+          >
+            <b-form-select v-model="beAggregatedSelection" :options="beAggregatedOptions"></b-form-select>
+          </b-form-group>
+          <div id="inventory-table-operate-btn" class="w-100 d-block">
+            <b-button variant="dark" @click="onPreviewCase5Pattern1">筛选1</b-button>
+            <b-button variant="dark" @click="onPreviewCase5Pattern2">筛选2-同供其他</b-button>
+            <b-button variant="dark" @click="onExportCase5">下载报表</b-button>
+            <b-button variant="dark" @click="onCancelExportCase5">取消</b-button>
+          </div>
         </b-card>
       </b-form>
     </b-modal>
@@ -367,11 +441,11 @@
             </b-tr>
           </b-tbody>
         </b-table-simple>
-        <b-button-group id="inventory-table-operate-btn" class="w-100 d-block">
+        <div id="inventory-table-operate-btn" class="w-100 d-block">
           <b-button variant="dark" @click="onImportForCase6">导入</b-button>
           <b-button variant="dark" @click="onPreviewCase6">生成报表</b-button>
           <b-button variant="dark" @click="onCancleImportForCase6">取消</b-button>
-        </b-button-group>
+        </div>
       </b-form>
     </b-modal>
     <b-modal ref="previewCase6Modal" title="预览体积、重量计算汇总单" size="xl" hide-footer>
@@ -417,10 +491,10 @@
           </b-tr>
         </b-tbody>
       </b-table-simple>
-      <b-button-group id="inventory-table-operate-btn" class="w-100 d-block">
+      <div id="inventory-table-operate-btn" class="w-100 d-block">
         <b-button variant="dark" @click="onExportCase6">下载报表</b-button>
         <b-button variant="dark" @click="onCancelPreviewCase6">取消</b-button>
-      </b-button-group>
+      </div>
     </b-modal>
     <b-sidebar id="added-skus-sidebar" title="新增SKU清单" v-model="shouldOpenSidebar" right shadow>
       <div class="px-3 py-2">
@@ -431,10 +505,10 @@
             </b-tr>
           </b-tbody>
         </b-table-simple>
-        <b-button-group id="added-skus-table-operate-btn" class="w-100 d-block">
+        <div id="added-skus-table-operate-btn" class="w-100 d-block">
           <b-button variant="dark" @click="onDownloadAddedSKUs">下载</b-button>
           <b-button variant="dark" @click="onCancelDownloadAddedSKUs">取消</b-button>
-        </b-button-group>
+        </div>
       </div>
     </b-sidebar>
   </div>
@@ -496,34 +570,40 @@ export default {
       productCodeSelection: '',
       productNameSelection: '',
       specificationCodeSelection: '',
-      brandSelections: [],
+      brandOptions: [],
       brandSelection: '',
-      classification1Selections: [],
+      classification1Options: [],
       classification1Selection: '',
-      classification2Selections: [],
+      classification2Options: [],
       classification2Selection: '',
-      productSeriesSelections: [],
+      productSeriesOptions: [],
       productSeriesSelection: '',
-      stopStatusSelections: [
+      // TODO： 支持“全部”选项检索
+      stopStatusOptions: [
         { value: '在用', text: '在用' },
-        { value: '停用', text: '停用' }
+        { value: '停用', text: '停用' },
+        { value: '全部', text: '全部' }
       ],
       stopStatusSelection: '在用',
-      isCombinedSelections: [
+      isCombinedOptions: [
         { value: '是', text: '是' },
-        { value: '否', text: '否' }
+        { value: '否', text: '否' },
+        { value: '全部', text: '全部' }
       ],
       isCombinedSelection: '否',
-      beAggregatedSelections: [
+      beAggregatedOptions: [
         { value: '参与', text: '参与' },
-        { value: '不参与', text: '不参与' }
+        { value: '不参与', text: '不参与' },
+        { value: '全部', text: '全部' }
       ],
       beAggregatedSelection: '参与',
-      isImportSelections: [
+      isImportOptions: [
         { value: '进口品', text: '进口品' },
-        { value: '非进口品', text: '非进口品' }
+        { value: '非进口品', text: '非进口品' },
+        { value: '全部', text: '全部' }
       ],
       isImportSelection: '非进口品',
+      supplierNameOptions: [],
       supplierNameSelections: [],
       supplierNameSelection: '',
       previewCase3: {
@@ -543,6 +623,16 @@ export default {
         previewTable: [],
         previewSummaryTable: []
       },
+      timeQuantum1: '6',
+      threshold1: '2',
+      timeQuantum2: '12',
+      threshold2: '1',
+      projectedPurchase: '12',
+      reducedBtnOption: 'open',
+      reducedBtnOptions: [
+        { text: '开', value: 'open' },
+        { text: '关', value: 'close' }
+      ],
       inventories: [],
       shouldOpenSidebar: false,
       addedSkus: [],
@@ -559,17 +649,30 @@ export default {
     'v-suggest': Suggest
   },
   methods: {
-    listAllSelections () {
-      axios.get(this.serverBaseURL + '/api/v1/allselections')
+    listAllOptions () {
+      axios.get(this.serverBaseURL + '/api/v1/alloptions')
         .then((res) => {
-          this.brandSelections = res.data.brand_selections
-          console.log(this.brandSelections.length)
-          this.classification1Selections = res.data.classification_1_selections
-          console.log(this.classification1Selections.length)
-          this.classification2Selections = res.data.classification_2_selections
-          console.log(this.classification2Selections.length)
-          this.productSeriesSelections = res.data.product_series_selections
-          console.log(this.productSeriesSelections.length)
+          this.brandOptions = res.data.brand_options
+          console.log(this.brandOptions.length)
+          this.classification1Options = res.data.classification_1_options
+          console.log(this.classification1Options.length)
+          this.classification2Options = res.data.classification_2_options
+          console.log(this.classification2Options.length)
+          this.productSeriesOptions = res.data.product_series_options
+          console.log(this.productSeriesOptions.length)
+          this.supplierNameOptions = res.data.supplier_name_options
+          console.log(this.supplierNameOptions.length)
+        })
+        .catch((error) => {
+          // eslint-disable-next-line
+          console.log(error)
+          this.message = '内部服务错误!'
+          this.showMessage = true
+        })
+    },
+    listAllSupplierSelections () {
+      axios.get(this.serverBaseURL + '/api/v1/allselections/suppliers')
+        .then((res) => {
           this.supplierNameSelections = res.data.supplier_name_selections
           console.log(this.supplierNameSelections.length)
         })
@@ -620,6 +723,12 @@ export default {
       this.previewCase3.jitInventory = 0
       this.previewCase6.previewTable = []
       this.previewCase6.previewSummaryTable = []
+      this.timeQuantum1 = '6'
+      this.threshold1 = '2'
+      this.timeQuantum2 = '12'
+      this.threshold2 = '1'
+      this.projectedPurchase = '12'
+      this.reducedBtnOption = 'open'
     },
     importCSVFile (formData) {
       let config = {
@@ -800,21 +909,70 @@ export default {
       console.log('取消导出滞销品报表')
       this.initExportForm()
     },
-    // 进口产品采购单
+    // 采购辅助分析报表
+    previewReportFileCase5Way (url, payload) {
+      axios.post(this.serverBaseURL + url, payload)
+        .then((res) => {
+          if (res.data.status === 'success') {
+            // this.previewCase5.stDate = res.data.st_date
+            // this.$refs.previewCase5Modal.show()
+          } else {
+            this.message = '预览失败! 不存在指定的库存条目.'
+            this.showMessage = true
+          }
+        })
+        .catch((error) => {
+          // eslint-disable-next-line
+          console.log(error)
+          this.message = '预览失败!'
+          this.showMessage = true
+        })
+    },
+    onPreviewCase5Pattern1 (evt) {
+      evt.preventDefault()
+      const payload = {
+        supplier_name: this.supplierNameSelection,
+        time_quantum_1: this.timeQuantum1,
+        threshold_1: this.threshold1,
+        time_quantum_2: this.timeQuantum2,
+        threshold_2: this.threshold2,
+        projected_purchase: this.projectedPurchase,
+        reduced_btn_option: this.reducedBtnOption,
+        stop_status: this.stopStatusSelection,
+        be_aggregated: this.beAggregatedSelection
+      }
+      this.previewReportFileCase5Way('/api/v1/case5/preview?way=1', payload)
+    },
+    onPreviewCase5Pattern2 (evt) {
+      evt.preventDefault()
+      const payload = {
+        supplier_name: this.supplierNameSelection,
+        time_quantum_1: this.timeQuantum1,
+        threshold_1: this.threshold1,
+        time_quantum_2: this.timeQuantum2,
+        threshold_2: this.threshold2,
+        projected_purchase: this.projectedPurchase,
+        reduced_btn_option: this.reducedBtnOption,
+        stop_status: this.stopStatusSelection,
+        be_aggregated: this.beAggregatedSelection
+      }
+      this.previewReportFileCase5Way('/api/v1/case5/preview?way=2', payload)
+    },
+    onCancelPreviewCase5 (evt) {
+
+    },
     onExportCase5 (evt) {
-      // 确定导出进口产品采购单
+      // 确定导出采购辅助分析报表
       evt.preventDefault()
       this.$refs.exportFileCase5Modal.hide()
-      console.log('确定导出进口产品采购单')
       const payload = {}
       this.exportReportFileCase5(payload)
       this.initExportForm()
     },
     onCancelExportCase5 (evt) {
-      // 取消导出进口产品采购单
+      // 取消导出采购辅助分析报表
       evt.preventDefault()
       this.$refs.exportFileCase5Modal.hide()
-      console.log('取消导出进口产品采购单')
       this.initExportForm()
     },
     // 体积、重量计算汇总单
@@ -992,7 +1150,8 @@ export default {
   created () {
     console.log(process.env.NODE_ENV)
     console.log(process.env.SERVER_BASE_URL)
-    this.listAllSelections()
+    this.listAllOptions()
+    this.listAllSupplierSelections()
     this.listInventories()
   }
 }
