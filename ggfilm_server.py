@@ -825,9 +825,9 @@ def preview_report_file_case5():
             cache[specification_code]["supplier_name"] = ret[5]
             cache[specification_code]["inventory"] = ret[6]
             cache[specification_code]["weight"] = ret[7]
-            cache[specification_code]["weight_total"] = (ret[7] * ret[6]) / 1000
+            cache[specification_code]["weight_total"] = float("{:.3f}".format((ret[7] * ret[6]) / 1e3))
             cache[specification_code]["volume"] = ret[8] * ret[9] * ret[10]
-            cache[specification_code]["volume_total"] = (ret[8] * ret[9] * ret[10]) / 1000000
+            cache[specification_code]["volume_total"] = float("{:.3f}".format((ret[8] * ret[9] * ret[10] * ret[6]) / 1e6))
     if len(specification_code_list) > 0:
         for specification_code in specification_code_list:
             # TODO: 先不考虑进销存条目不足指定月数的情况
@@ -875,31 +875,31 @@ def preview_report_file_case5():
                             cache[specification_code]["inventory"])
                     else:
                         cache[specification_code]["inventory_divided_by_sale_qty_x_months"] = \
-                            cache[specification_code]["inventory"] / cache[specification_code]["sale_qty_x_months"]
+                            float("{:.3f}".format(cache[specification_code]["inventory"] / cache[specification_code]["sale_qty_x_months"]))
                     if cache[specification_code]["reduced_sale_qty_x_months"] == 0:
                         cache[specification_code]["inventory_divided_by_reduced_sale_qty_x_months"] = "{}/0".format(
                             cache[specification_code]["inventory"])
                     else:
                         cache[specification_code]["inventory_divided_by_reduced_sale_qty_x_months"] = \
-                            cache[specification_code]["inventory"] / cache[specification_code]["reduced_sale_qty_x_months"]
+                            float("{:.3f}".format(cache[specification_code]["inventory"] / cache[specification_code]["reduced_sale_qty_x_months"]))
                     if cache[specification_code]["sale_qty_y_months"] == 0:
                         cache[specification_code]["inventory_divided_by_sale_qty_y_months"] = "{}/0".format(
                             cache[specification_code]["inventory"])
                     else:
                         cache[specification_code]["inventory_divided_by_sale_qty_y_months"] = \
-                            cache[specification_code]["inventory"] / cache[specification_code]["sale_qty_y_months"]
+                            float("{:.3f}".format(cache[specification_code]["inventory"] / cache[specification_code]["sale_qty_y_months"]))
                     if cache[specification_code]["reduced_sale_qty_y_months"] == 0:
                         cache[specification_code]["inventory_divided_by_reduced_sale_qty_y_months"] = "{}/0".format(
                             cache[specification_code]["inventory"])
                     else:
                         cache[specification_code]["inventory_divided_by_reduced_sale_qty_y_months"] = \
-                            cache[specification_code]["inventory"] / cache[specification_code]["reduced_sale_qty_y_months"]
+                            float("{:.3f}".format(cache[specification_code]["inventory"] / cache[specification_code]["reduced_sale_qty_y_months"]))
                 if reduced_btn_option == "open":         
                     cache[specification_code]["projected_purchase"] = \
-                        ((cache[specification_code]["reduced_sale_qty_y_months"] / time_quantum_y) * 12) - cache[specification_code]["inventory"]
+                        int((cache[specification_code]["reduced_sale_qty_y_months"] / time_quantum_y) * 12) - cache[specification_code]["inventory"]
                 else:
                     cache[specification_code]["projected_purchase"] = \
-                        ((cache[specification_code]["sale_qty_y_months"] / time_quantum_y) * 12) - cache[specification_code]["inventory"]
+                        int((cache[specification_code]["sale_qty_y_months"] / time_quantum_y) * 12) - cache[specification_code]["inventory"]
 
         for _, v in cache.items():
             preview_table.append(v)
@@ -943,7 +943,7 @@ def upload_csv_file_for_case6():
 '''
 预览效果
 
-规格编码 | 商品名称 | 规格名称 | 数量 | 长度/cm | 宽度/cm | 高度/cm | 体积合计/cm³ | 重量/g | 重量合计/g
+规格编码 | 商品名称 | 规格名称 | 数量 | 长度/cm | 宽度/cm | 高度/cm | 体积合计/m³ | 重量/g | 重量合计/kg
 '''
 @ggfilm_server.route("/api/v1/case6/preview", methods=["POST"])
 def preview_report_file_case6():
@@ -965,9 +965,9 @@ def preview_report_file_case6():
             cache["product_length"] = rets[0][3]
             cache["product_width"] = rets[0][4]
             cache["product_height"] = rets[0][5]
-            cache["product_volume_total"] = rets[0][3] * rets[0][4] * rets[0][5] * int(item["quantity"])
+            cache["product_volume_total"] = float("{:.3f}".format(((rets[0][3] * rets[0][4] * rets[0][5] * int(item["quantity"])) / 1e6)))
             cache["product_weight"] = rets[0][2]
-            cache["product_weight_total"] = rets[0][2] * int(item["quantity"])
+            cache["product_weight_total"] = float("{:.3f}".format(((rets[0][2] * int(item["quantity"])) / 1e3)))
         else:
             cache["product_name"] = ""
             cache["specification_name"] = ""

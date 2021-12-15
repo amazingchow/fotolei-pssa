@@ -508,9 +508,9 @@
             <b-th scope="col">长度/cm</b-th>
             <b-th scope="col">宽度/cm</b-th>
             <b-th scope="col">高度/cm</b-th>
-            <b-th scope="col">体积合计/cm^3</b-th>
+            <b-th scope="col">体积合计/m³</b-th>
             <b-th scope="col">重量/g</b-th>
-            <b-th scope="col">重量合计/g</b-th>
+            <b-th scope="col">重量合计/kg</b-th>
           </b-tr>
         </b-thead>
         <b-tbody>
