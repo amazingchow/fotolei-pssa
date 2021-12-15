@@ -781,43 +781,31 @@ def preview_report_file_case5():
     specification_code_list = []
     preview_table = []
     if way == "1":
-        stmt = "SELECT product_code, brand, \
-            product_weight, product_length, product_width, product_height \
-            FROM ggfilm.products WHERE specification_code = '{}';".format(item["specification_code"])
-        rets = DBConnector.query(stmt)
-    elif way == "2":
-        stmt = "SELECT product_name, specification_name, \
-            product_weight, product_length, product_width, product_height \
-            FROM ggfilm.products WHERE specification_code = '{}';".format(item["specification_code"])
-        rets = DBConnector.query(stmt)
-
-    for item in demand_table:
-        stmt = "SELECT product_name, specification_name, \
-            product_weight, product_length, product_width, product_height \
-            FROM ggfilm.products WHERE specification_code = '{}';".format(item["specification_code"])
-        rets = DBConnector.query(stmt)
-        cache = {}
-        cache["specification_code"] = item["specification_code"]
-        cache["quantity"] = int(item["quantity"])
-        if type(rets) is list and len(rets) > 0:
-            cache["product_name"] = rets[0][0]
-            cache["specification_name"] = rets[0][1]
-            cache["product_length"] = rets[0][3]
-            cache["product_width"] = rets[0][4]
-            cache["product_height"] = rets[0][5]
-            cache["product_volume_total"] = rets[0][3] * rets[0][4] * rets[0][5] * int(item["quantity"])
-            cache["product_weight"] = rets[0][2]
-            cache["product_weight_total"] = rets[0][2] * int(item["quantity"])
+        stmt = ""
+        if len(supplier_name) > 0:
+            stmt = "SELECT specification_code, product_code, brand, product_name, specification_name, supplier_name, \
+                jit_inventory, product_weight, product_length, product_width, product_height \
+                FROM ggfilm.products WHERE supplier_name = '{}'".format(supplier_name)
+            if stop_status != "全部":
+                stmt = "{} AND stop_status = '{}'".format(stmt, stop_status)
+            if be_aggregated != "全部":
+                stmt = "{} AND be_aggregated = '{}'".format(stmt, stop_status)
         else:
-            cache["product_name"] = ""
-            cache["specification_name"] = ""
-            cache["product_length"] = 0
-            cache["product_width"] = 0
-            cache["product_height"] = 0
-            cache["product_volume_total"] = 0
-            cache["product_weight"] = 0
-            cache["product_weight_total"] = 0
-        preview_table.append(cache)
+            stmt = "SELECT specification_code, product_code, brand, product_name, specification_name, supplier_name, \
+                jit_inventory, product_weight, product_length, product_width, product_height \
+                FROM ggfilm.products"
+            if stop_status != "全部":
+                stmt = "{} WHERE stop_status = '{}'".format(stmt, stop_status)
+            if stop_status != "全部" and be_aggregated != "全部":
+                stmt = "{} AND be_aggregated = '{}'".format(stmt, stop_status)
+            elif stop_status == "全部" and be_aggregated != "全部":
+                stmt = "{} WHERE be_aggregated = '{}'".format(stmt, stop_status)
+        stmt = "{};".format(stmt)
+        rets = DBConnector.query(stmt)
+        if type(rets) is list and len(rets) > 0:
+            pass
+    elif way == "2":
+        pass
 
     response_object = {"status": "success"}
     response_object["preview_table"] = preview_table
