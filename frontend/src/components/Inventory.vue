@@ -599,6 +599,12 @@
   table-layout: fixed !important;
 }
 
+#preview-table tbody tr td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 #added-skus-table-operate-btn {
   text-align: right;
 }
