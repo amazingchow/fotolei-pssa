@@ -238,11 +238,11 @@ def list_products():
     page_limit = request.args.get("page.limit")
 
     stmt = "SELECT product_code, specification_code, product_name, specification_name, \
-        brand, classification_1, classification_2, product_series, stop_status, \
-        product_weight, product_length, product_width, product_height, \
-        is_combined, be_aggregated, is_import, \
-        supplier_name, purchase_name, jit_inventory \
-        FROM ggfilm.products ORDER BY 'id' DESC LIMIT {}, {};".format(
+brand, classification_1, classification_2, product_series, stop_status, \
+product_weight, product_length, product_width, product_height, \
+is_combined, be_aggregated, is_import, \
+supplier_name, purchase_name, jit_inventory \
+FROM ggfilm.products ORDER BY 'id' DESC LIMIT {}, {};".format(
         page_offset, page_limit)
     products = DBConnector.query(stmt)
 
@@ -263,11 +263,11 @@ def list_inventories():
     page_limit = request.args.get("page.limit")
 
     stmt = "SELECT product_code, product_name, specification_code, specification_name, \
-        st_inventory_qty, st_inventory_total, purchase_qty, purchase_total, \
-        purchase_then_return_qty, purchase_then_return_total, sale_qty, sale_total, \
-        sale_then_return_qty, sale_then_return_total, others_qty, others_total, \
-        ed_inventory_qty, ed_inventory_total, create_time \
-        FROM ggfilm.inventories ORDER BY 'id' DESC LIMIT {}, {};".format(
+st_inventory_qty, st_inventory_total, purchase_qty, purchase_total, \
+purchase_then_return_qty, purchase_then_return_total, sale_qty, sale_total, \
+sale_then_return_qty, sale_then_return_total, others_qty, others_total, \
+ed_inventory_qty, ed_inventory_total, create_time \
+FROM ggfilm.inventories ORDER BY 'id' DESC LIMIT {}, {};".format(
         page_offset, page_limit)
     inventories = DBConnector.query(stmt)
 
@@ -281,51 +281,51 @@ def list_inventories():
 
 
 # 导出所有可供选择的选项列表的接口
-@ggfilm_server.route("/api/v1/allselections", methods=["GET"])
-def list_all_selections():
+@ggfilm_server.route("/api/v1/alloptions", methods=["GET"])
+def list_all_options():
     response_object = {"status": "success"}
 
     stmt = "SELECT DISTINCT brand FROM ggfilm.products;"
-    brand_selections = DBConnector.query(stmt)
-    if (brand_selections) == 0:
-        response_object["brand_selections"] = []
+    brand_options = DBConnector.query(stmt)
+    if (brand_options) == 0:
+        response_object["brand_options"] = []
     else:
-        response_object["brand_selections"] = [{"id": i, "brand": brand[0]} for i, brand in enumerate(brand_selections)]
+        response_object["brand_options"] = [{"id": i, "brand": brand[0]} for i, brand in enumerate(brand_options)]
 
     stmt = "SELECT DISTINCT classification_1 FROM ggfilm.products;"
-    classification_1_selections = DBConnector.query(stmt)
-    if (classification_1_selections) == 0:
-        response_object["classification_1_selections"] = []
+    classification_1_options = DBConnector.query(stmt)
+    if (classification_1_options) == 0:
+        response_object["classification_1_options"] = []
     else:
-        response_object["classification_1_selections"] = [{"id": i, "classification-1": classification_1[0]} for i, classification_1 in enumerate(classification_1_selections)]
+        response_object["classification_1_options"] = [{"id": i, "classification-1": classification_1[0]} for i, classification_1 in enumerate(classification_1_options)]
 
     stmt = "SELECT DISTINCT classification_2 FROM ggfilm.products;"
-    classification_2_selections = DBConnector.query(stmt)
-    if (classification_2_selections) == 0:
-        response_object["classification_2_selections"] = []
+    classification_2_options = DBConnector.query(stmt)
+    if (classification_2_options) == 0:
+        response_object["classification_2_options"] = []
     else:
-        response_object["classification_2_selections"] = [{"id": i, "classification-2": classification_2[0]} for i, classification_2 in enumerate(classification_2_selections)]
+        response_object["classification_2_options"] = [{"id": i, "classification-2": classification_2[0]} for i, classification_2 in enumerate(classification_2_options)]
 
     stmt = "SELECT DISTINCT product_series FROM ggfilm.products;"
-    product_series_selections = DBConnector.query(stmt)
-    if (product_series_selections) == 0:
-        response_object["product_series_selections"] = []
+    product_series_options = DBConnector.query(stmt)
+    if (product_series_options) == 0:
+        response_object["product_series_options"] = []
     else:
-        response_object["product_series_selections"] = [{"id": i, "product-series": product_series[0]} for i, product_series in enumerate(product_series_selections)]
+        response_object["product_series_options"] = [{"id": i, "product-series": product_series[0]} for i, product_series in enumerate(product_series_options)]
 
     stmt = "SELECT DISTINCT supplier_name FROM ggfilm.products;"
-    supplier_name_selections = DBConnector.query(stmt)
-    if (supplier_name_selections) == 0:
-        response_object["supplier_name_selections"] = []
+    supplier_name_options = DBConnector.query(stmt)
+    if (supplier_name_options) == 0:
+        response_object["supplier_name_options"] = []
     else:
-        response_object["supplier_name_selections"] = [{"id": i, "supplier-name": supplier_name[0]} for i, supplier_name in enumerate(supplier_name_selections)]
+        response_object["supplier_name_options"] = [{"id": i, "supplier-name": supplier_name[0]} for i, supplier_name in enumerate(supplier_name_options)]
 
     return jsonify(response_object)
 
 
 # 导出所有可供选择的选项列表的接口
-@ggfilm_server.route("/api/v1/allselections/slist", methods=["GET"])
-def list_all_selections_for_slist():
+@ggfilm_server.route("/api/v1/allselections", methods=["GET"])
+def list_all_selections():
     response_object = {"status": "success"}
 
     stmt = "SELECT DISTINCT brand FROM ggfilm.products;"
@@ -386,6 +386,25 @@ def list_all_selections_for_slist():
     return jsonify(response_object)
 
 
+# 导出所有可供选择的供应商列表的接口
+@ggfilm_server.route("/api/v1/allselections/suppliers", methods=["GET"])
+def list_all_supplier_selections():
+    response_object = {"status": "success"}
+
+    stmt = "SELECT DISTINCT supplier_name FROM ggfilm.products;"
+    supplier_name_selections = DBConnector.query(stmt)
+    if (supplier_name_selections) == 0:
+        response_object["supplier_name_selections"] = []
+    else:
+        response_object["supplier_name_selections"] = [
+            {"value": supplier_name_selection[0], "text": supplier_name_selection[0]} \
+                for supplier_name_selection in supplier_name_selections \
+                    if len(supplier_name_selection[0].strip()) > 0
+        ]
+
+    return jsonify(response_object)
+
+
 # 导出销售报表（按分类汇总）的接口
 @ggfilm_server.route("/api/v1/case1/download", methods=["POST"])
 def export_report_file_case1():
@@ -393,6 +412,7 @@ def export_report_file_case1():
 
 
 # 预下载销售报表（按系列汇总）的接口
+# TODO: 相同产品系列的所有SKU的进销存数据做累加
 @ggfilm_server.route("/api/v1/case2/prepare", methods=["POST"])
 def prepare_report_file_case2():
     payload = request.get_json()
@@ -402,7 +422,7 @@ def prepare_report_file_case2():
     ed_date = payload.get("ed_date", "").strip()
 
     stmt = "SELECT specification_code, product_series, jit_inventory FROM ggfilm.products \
-        WHERE COALESCE(CHAR_LENGTH(product_series), 0) != 0;"
+WHERE COALESCE(CHAR_LENGTH(product_series), 0) != 0;"
     rets = DBConnector.query(stmt)
 
     if type(rets) is list and len(rets) > 0:
@@ -422,10 +442,10 @@ def prepare_report_file_case2():
                 specification_code = ret[0]
 
                 stmt = "SELECT * FROM ggfilm.inventories \
-                    WHERE specification_code = '{}' AND \
-                    create_time >= '{}' AND \
-                    create_time <= '{}' \
-                    ORDER BY create_time ASC;".format(
+WHERE specification_code = '{}' AND \
+create_time >= '{}' AND \
+create_time <= '{}' \
+ORDER BY create_time ASC;".format(
                         specification_code, st_date, ed_date
                     )
                 inner_rets = DBConnector.query(stmt)
@@ -522,14 +542,14 @@ def preview_report_file_case3():
     def inline():
         resp = {"status": "success"}
         stmt = "SELECT product_code, specification_code, \
-            product_name, specification_name, \
-            st_inventory_qty, purchase_qty, \
-            sale_qty, ed_inventory_qty, create_time \
-            FROM ggfilm.inventories \
-            WHERE specification_code = '{}' AND \
-            create_time >= '{}' AND \
-            create_time <= '{}' \
-            ORDER BY create_time ASC;".format(
+product_name, specification_name, \
+st_inventory_qty, purchase_qty, \
+sale_qty, ed_inventory_qty, create_time \
+FROM ggfilm.inventories \
+WHERE specification_code = '{}' AND \
+create_time >= '{}' AND \
+create_time <= '{}' \
+ORDER BY create_time ASC;".format(
                 specification_code, st_date, ed_date
             )
         rets = DBConnector.query(stmt)
@@ -644,10 +664,10 @@ def prepare_report_file_case3():
     cache["jit_inventory"] = rets[0][19]
 
     stmt = "SELECT * FROM ggfilm.inventories \
-        WHERE specification_code = '{}' AND \
-        create_time >= '{}' AND \
-        create_time <= '{}' \
-        ORDER BY create_time ASC;".format(
+WHERE specification_code = '{}' AND \
+create_time >= '{}' AND \
+create_time <= '{}' \
+ORDER BY create_time ASC;".format(
             specification_code, st_date, ed_date
         )
     rets = DBConnector.query(stmt)
@@ -735,10 +755,176 @@ def export_report_file_case4():
     return jsonify("导出滞销品报表")
 
 
-# 导出进口产品采购单的接口
-@ggfilm_server.route("/api/v1/case5/download", methods=["POST"])
-def export_report_file_case5():
-    return jsonify("导出进口产品采购单")
+# 预览采购辅助分析报表的接口
+'''
+预览效果
+
+商品编码 | 品牌 | 商品名称 | 规格名称 | 供应商 | X个月销量 | Y个月销量 | 库存量 | 库存/X个月销量 | 库存/Y个月销量 | 
+库存/X个月折算销量 | 库存/Y个月折算销量	| 拟定进货量 | 单个重量/g | 小计重量/kg | 单个体积/cm³ | 小计体积/m³
+'''
+@ggfilm_server.route("/api/v1/case5/preview", methods=["POST"])
+def preview_report_file_case5():
+    way = request.args.get("way", "1")
+    payload = request.get_json()
+    supplier_name = payload.get("supplier_name", "")
+    time_quantum_x = int(payload.get("time_quantum_x", "6"))
+    threshold_x = int(payload.get("threshold_x", "2"))
+    time_quantum_y = int(payload.get("time_quantum_y", "12"))
+    threshold_y = int(payload.get("threshold_y", "1"))
+    projected_purchase = int(payload.get("projected_purchase", "12"))
+    reduced_btn_option = payload.get("reduced_btn_option", "open")
+    stop_status = payload.get("stop_status", "全部")
+    be_aggregated = payload.get("be_aggregated", "全部")
+
+    # 1. “供应商”选项为空，则为全部供应商（包括没有供应商的商品条目）
+    # 2. way == 2时，不考虑“STOP状态”选项+“是否参与统计”选项
+    stmt = ""
+    if way == "1":
+        if len(supplier_name) > 0:
+            stmt = "SELECT specification_code, product_code, brand, product_name, specification_name, supplier_name, \
+jit_inventory, product_weight, product_length, product_width, product_height \
+FROM ggfilm.products WHERE supplier_name = '{}'".format(supplier_name)
+            if stop_status != "全部":
+                stmt = "{} AND stop_status = '{}'".format(stmt, stop_status)
+            if be_aggregated != "全部":
+                stmt = "{} AND be_aggregated = '{}'".format(stmt, be_aggregated)
+        else:
+            stmt = "SELECT specification_code, product_code, brand, product_name, specification_name, supplier_name, \
+jit_inventory, product_weight, product_length, product_width, product_height \
+FROM ggfilm.products"
+            if stop_status != "全部":
+                stmt = "{} WHERE stop_status = '{}'".format(stmt, stop_status)
+            if stop_status != "全部" and be_aggregated != "全部":
+                stmt = "{} AND be_aggregated = '{}'".format(stmt, be_aggregated)
+            elif stop_status == "全部" and be_aggregated != "全部":
+                stmt = "{} WHERE be_aggregated = '{}'".format(stmt, be_aggregated)
+        stmt = "{};".format(stmt)
+    elif way == "2":
+        if len(supplier_name) > 0:
+            stmt = "SELECT specification_code, product_code, brand, product_name, specification_name, supplier_name, \
+jit_inventory, product_weight, product_length, product_width, product_height \
+FROM ggfilm.products WHERE supplier_name = '{}';".format(supplier_name)
+        else:
+            stmt = "SELECT specification_code, product_code, brand, product_name, specification_name, supplier_name, \
+jit_inventory, product_weight, product_length, product_width, product_height \
+FROM ggfilm.products;"
+
+    preview_table = []
+    specification_code_list = []
+    cache = {}
+
+    rets = DBConnector.query(stmt)
+    if type(rets) is list and len(rets) > 0:
+        for ret in rets:
+            specification_code = ret[0]
+            specification_code_list.append(specification_code)
+            cache[specification_code] = {}
+            cache[specification_code]["product_code"] = ret[1]
+            cache[specification_code]["brand"] = ret[2]
+            cache[specification_code]["product_name"] = ret[3]
+            cache[specification_code]["specification_name"] = ret[4]
+            cache[specification_code]["supplier_name"] = ret[5]
+            cache[specification_code]["inventory"] = ret[6]
+            cache[specification_code]["weight"] = ret[7]
+            cache[specification_code]["weight_total"] = float("{:.3f}".format((ret[7] * ret[6]) / 1e3))
+            cache[specification_code]["volume"] = ret[8] * ret[9] * ret[10]
+            cache[specification_code]["volume_total"] = float("{:.3f}".format((ret[8] * ret[9] * ret[10] * ret[6]) / 1e6))
+    if len(specification_code_list) > 0:
+        for specification_code in specification_code_list:
+            # TODO: 先不考虑进销存条目不足指定月数的情况
+            stmt = "SELECT st_inventory_qty, ed_inventory_qty, sale_qty, purchase_qty \
+FROM ggfilm.inventories WHERE specification_code = '{}' \
+ORDER BY create_time DESC LIMIT {};".format(specification_code, time_quantum_y)
+            inner_rets = DBConnector.query(stmt)
+            if type(inner_rets) is list and len(inner_rets) > 0:
+                cache[specification_code]["sale_qty_x_months"] = 0
+                cache[specification_code]["sale_qty_y_months"] = 0
+                for inner_ret in inner_rets[time_quantum_y-time_quantum_x:]:
+                    cache[specification_code]["sale_qty_x_months"] += inner_ret[2]
+                for inner_ret in inner_rets:
+                    cache[specification_code]["sale_qty_y_months"] += inner_ret[2]
+                if reduced_btn_option == "open":
+                    reduced_months = 0
+                    for inner_ret in inner_rets[time_quantum_y-time_quantum_x:]:
+                        if inner_ret[0] == 0 and inner_ret[1] == 0:
+                            if inner_ret[3] <= 10 and inner_ret[3] <= inner_ret[2]:
+                                reduced_months += 1
+                            elif inner_ret[3] > 10 and inner_ret[3] > inner_ret[2]:
+                                reduced_months += 1
+
+                    cache[specification_code]["reduced_sale_qty_x_months"] = int(cache[specification_code]["sale_qty_x_months"] * (time_quantum_x / (time_quantum_x - reduced_months)))
+                    reduced_months = 0
+                    for inner_ret in inner_rets:
+                        if inner_ret[0] == 0 and inner_ret[1] == 0:
+                            reduced_months += 1
+                    cache[specification_code]["reduced_sale_qty_y_months"] = int(cache[specification_code]["sale_qty_y_months"] * (time_quantum_y / (time_quantum_y - reduced_months)))
+                else:
+                    cache[specification_code]["reduced_sale_qty_x_months"] = cache[specification_code]["sale_qty_x_months"]
+                    cache[specification_code]["reduced_sale_qty_y_months"] = cache[specification_code]["sale_qty_y_months"]
+                if cache[specification_code]["inventory"] == 0:
+                    cache[specification_code]["inventory_divided_by_sale_qty_x_months"] = "0/{}".format(
+                        cache[specification_code]["sale_qty_x_months"])
+                    cache[specification_code]["inventory_divided_by_reduced_sale_qty_x_months"] = "0/{}".format(
+                        cache[specification_code]["reduced_sale_qty_x_months"])
+                    cache[specification_code]["inventory_divided_by_sale_qty_y_months"] = "0/{}".format(
+                        cache[specification_code]["sale_qty_y_months"])
+                    cache[specification_code]["inventory_divided_by_reduced_sale_qty_y_months"] = "0/{}".format(
+                        cache[specification_code]["reduced_sale_qty_y_months"])
+                else:
+                    if cache[specification_code]["sale_qty_x_months"] == 0:
+                        cache[specification_code]["inventory_divided_by_sale_qty_x_months"] = "{}/0".format(
+                            cache[specification_code]["inventory"])
+                    else:
+                        cache[specification_code]["inventory_divided_by_sale_qty_x_months"] = \
+                            float("{:.3f}".format(cache[specification_code]["inventory"] / cache[specification_code]["sale_qty_x_months"]))
+                    if cache[specification_code]["reduced_sale_qty_x_months"] == 0:
+                        cache[specification_code]["inventory_divided_by_reduced_sale_qty_x_months"] = "{}/0".format(
+                            cache[specification_code]["inventory"])
+                    else:
+                        cache[specification_code]["inventory_divided_by_reduced_sale_qty_x_months"] = \
+                            float("{:.3f}".format(cache[specification_code]["inventory"] / cache[specification_code]["reduced_sale_qty_x_months"]))
+                    if cache[specification_code]["sale_qty_y_months"] == 0:
+                        cache[specification_code]["inventory_divided_by_sale_qty_y_months"] = "{}/0".format(
+                            cache[specification_code]["inventory"])
+                    else:
+                        cache[specification_code]["inventory_divided_by_sale_qty_y_months"] = \
+                            float("{:.3f}".format(cache[specification_code]["inventory"] / cache[specification_code]["sale_qty_y_months"]))
+                    if cache[specification_code]["reduced_sale_qty_y_months"] == 0:
+                        cache[specification_code]["inventory_divided_by_reduced_sale_qty_y_months"] = "{}/0".format(
+                            cache[specification_code]["inventory"])
+                    else:
+                        cache[specification_code]["inventory_divided_by_reduced_sale_qty_y_months"] = \
+                            float("{:.3f}".format(cache[specification_code]["inventory"] / cache[specification_code]["reduced_sale_qty_y_months"]))
+                if reduced_btn_option == "open":
+                    if type(cache[specification_code]["inventory_divided_by_reduced_sale_qty_x_months"]) is str or \
+                        (type(cache[specification_code]["inventory_divided_by_reduced_sale_qty_x_months"]) is float and \
+                            cache[specification_code]["inventory_divided_by_reduced_sale_qty_x_months"] <= threshold_x) or \
+                                type(cache[specification_code]["inventory_divided_by_reduced_sale_qty_y_months"]) is str or \
+                                    (type(cache[specification_code]["inventory_divided_by_reduced_sale_qty_y_months"]) is float and \
+                                        cache[specification_code]["inventory_divided_by_reduced_sale_qty_y_months"] <= threshold_y):
+                        cache[specification_code]["projected_purchase"] = \
+                            int((cache[specification_code]["reduced_sale_qty_y_months"] / time_quantum_y) * 12) - cache[specification_code]["inventory"]
+                    else:
+                        cache[specification_code]["projected_purchase"] = 0
+                else:
+                    if type(cache[specification_code]["inventory_divided_by_sale_qty_x_months"]) is str or \
+                        (type(cache[specification_code]["inventory_divided_by_sale_qty_x_months"]) is float and \
+                            cache[specification_code]["inventory_divided_by_sale_qty_x_months"] <= threshold_x) or \
+                                type(cache[specification_code]["inventory_divided_by_sale_qty_y_months"]) is str or \
+                                    (type(cache[specification_code]["inventory_divided_by_sale_qty_y_months"]) is float and \
+                                        cache[specification_code]["inventory_divided_by_sale_qty_y_months"] <= threshold_y):
+                        cache[specification_code]["projected_purchase"] = \
+                            int((cache[specification_code]["sale_qty_y_months"] / time_quantum_y) * 12) - cache[specification_code]["inventory"]
+                    else:
+                        cache[specification_code]["projected_purchase"] = 0
+
+        for _, v in cache.items():
+            preview_table.append(v)
+        response_object = {"status": "success"}
+        response_object["preview_table"] = preview_table
+    else:
+        response_object = {"status": "not found"}
+    return jsonify(response_object)
 
 
 # 导出体积、重量计算汇总单的接口
@@ -774,7 +960,7 @@ def upload_csv_file_for_case6():
 '''
 预览效果
 
-规格编码 | 商品名称 | 规格名称 | 数量 | 长度/cm | 宽度/cm | 高度/cm | 体积合计/cm^3 | 重量/g | 重量合计/g
+规格编码 | 商品名称 | 规格名称 | 数量 | 长度/cm | 宽度/cm | 高度/cm | 体积合计/m³ | 重量/g | 重量合计/kg
 '''
 @ggfilm_server.route("/api/v1/case6/preview", methods=["POST"])
 def preview_report_file_case6():
@@ -784,8 +970,8 @@ def preview_report_file_case6():
     preview_table = []
     for item in demand_table:
         stmt = "SELECT product_name, specification_name, \
-            product_weight, product_length, product_width, product_height \
-            FROM ggfilm.products WHERE specification_code = '{}';".format(item["specification_code"])
+product_weight, product_length, product_width, product_height \
+FROM ggfilm.products WHERE specification_code = '{}';".format(item["specification_code"])
         rets = DBConnector.query(stmt)
         cache = {}
         cache["specification_code"] = item["specification_code"]
@@ -796,9 +982,9 @@ def preview_report_file_case6():
             cache["product_length"] = rets[0][3]
             cache["product_width"] = rets[0][4]
             cache["product_height"] = rets[0][5]
-            cache["product_volume_total"] = rets[0][3] * rets[0][4] * rets[0][5] * int(item["quantity"])
+            cache["product_volume_total"] = float("{:.3f}".format(((rets[0][3] * rets[0][4] * rets[0][5] * int(item["quantity"])) / 1e6)))
             cache["product_weight"] = rets[0][2]
-            cache["product_weight_total"] = rets[0][2] * int(item["quantity"])
+            cache["product_weight_total"] = float("{:.3f}".format(((rets[0][2] * int(item["quantity"])) / 1e3)))
         else:
             cache["product_name"] = ""
             cache["specification_name"] = ""

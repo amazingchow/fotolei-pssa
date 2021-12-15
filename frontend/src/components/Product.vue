@@ -80,10 +80,10 @@
           </b-form-file>
         </b-form-group>
         <br/>
-        <b-button-group id="product-table-operate-btn" class="w-100 d-block">
+        <div id="product-table-operate-btn" class="w-100 d-block">
           <b-button type="submit" variant="dark">导入</b-button>
           <b-button type="reset" variant="dark">取消</b-button>
-        </b-button-group>
+        </div>
       </b-form>
     </b-modal>
     <b-modal ref="importJITInventoryCSVFileModal" id="jit-inventory-csv-file-modal" title="导入即时库存" hide-footer>
@@ -97,10 +97,10 @@
           </b-form-file>
         </b-form-group>
         <br/>
-        <b-button-group id="product-table-operate-btn" class="w-100 d-block">
+        <div id="product-table-operate-btn" class="w-100 d-block">
           <b-button type="submit" variant="dark">导入</b-button>
           <b-button type="reset" variant="dark">取消</b-button>
-        </b-button-group>
+        </div>
       </b-form>
     </b-modal>
     <b-sidebar id="added-skus-sidebar" title="新增SKU清单" v-model="shouldOpenSidebar" right shadow>
@@ -112,10 +112,10 @@
             </b-tr>
           </b-tbody>
         </b-table-simple>
-        <b-button-group id="added-skus-table-operate-btn" class="w-100 d-block">
+        <div id="added-skus-table-operate-btn" class="w-100 d-block">
           <b-button variant="dark" @click="onDownloadAddedSKUs">下载</b-button>
           <b-button variant="dark" @click="onCancelDownloadAddedSKUs">取消</b-button>
-        </b-button-group>
+        </div>
       </div>
     </b-sidebar>
   </div>
