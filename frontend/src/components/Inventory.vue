@@ -350,7 +350,7 @@
             label-align-sm="right"
             label-cols-sm="5"
           >
-            <b-form-input v-model="timeQuantum1" type="number" placeholder="6"></b-form-input>
+            <b-form-input v-model="timeQuantumX" type="number" placeholder="6"></b-form-input>
           </b-form-group>
           <b-form-group
             label="阈值1"
@@ -358,7 +358,7 @@
             label-align-sm="right"
             label-cols-sm="5"
           >
-            <b-form-input v-model="threshold1" type="number" placeholder="2"></b-form-input>
+            <b-form-input v-model="thresholdX" type="number" placeholder="2"></b-form-input>
           </b-form-group>
           <b-form-group
             label="时间段2（月数）"
@@ -366,7 +366,7 @@
             label-align-sm="right"
             label-cols-sm="5"
           >
-            <b-form-input v-model="timeQuantum2" type="number" placeholder="12"></b-form-input>
+            <b-form-input v-model="timeQuantumY" type="number" placeholder="12"></b-form-input>
           </b-form-group>
           <b-form-group
             label="阈值2"
@@ -374,7 +374,7 @@
             label-align-sm="right"
             label-cols-sm="5"
           >
-            <b-form-input v-model="threshold2" type="number" placeholder="1"></b-form-input>
+            <b-form-input v-model="thresholdY" type="number" placeholder="1"></b-form-input>
           </b-form-group>
           <b-form-group
             label="拟定进货（可销月数）"
@@ -411,11 +411,60 @@
           <div id="inventory-table-operate-btn" class="w-100 d-block">
             <b-button variant="dark" @click="onPreviewCase5Pattern1">筛选1</b-button>
             <b-button variant="dark" @click="onPreviewCase5Pattern2">筛选2-同供其他</b-button>
-            <b-button variant="dark" @click="onExportCase5">下载报表</b-button>
             <b-button variant="dark" @click="onCancelExportCase5">取消</b-button>
           </div>
         </b-card>
       </b-form>
+    </b-modal>
+    <b-modal ref="previewCase5Modal" title="预览采购辅助分析报表" size="xl" hide-footer>
+      <b-table-simple striped hover small id="preview-table">
+        <b-thead>
+          <b-tr>
+            <b-th scope="col">商品编码</b-th>
+            <b-th scope="col">品牌</b-th>
+            <b-th scope="col">商品名称</b-th>
+            <b-th scope="col">规格名称</b-th>
+            <b-th scope="col">供应商</b-th>
+            <b-th scope="col">X个月销量</b-th>
+            <b-th scope="col">Y个月销量</b-th>
+            <b-th scope="col">库存量</b-th>
+            <b-th scope="col">库存/X个月销量</b-th>
+            <b-th scope="col">库存/Y个月销量</b-th>
+            <b-th scope="col">库存/X个月折算销量</b-th>
+            <b-th scope="col">库存/Y个月折算销量</b-th>
+            <b-th scope="col">拟定进货量</b-th>
+            <b-th scope="col">单个重量/g</b-th>
+            <b-th scope="col">小计重量/kg</b-th>
+            <b-th scope="col">单个体积/cm³</b-th>
+            <b-th scope="col">小计体积/m³</b-th>
+          </b-tr>
+        </b-thead>
+        <b-tbody>
+          <b-tr v-for="(item, index) in previewCase5.previewTable" :key="index">
+            <b-td>{{ item.product_code }}</b-td>
+            <b-td>{{ item.brand }}</b-td>
+            <b-td>{{ item.product_name }}</b-td>
+            <b-td>{{ item.specification_name }}</b-td>
+            <b-td>{{ item.supplier_name }}</b-td>
+            <b-td>{{ item.sale_qty_x_months }}</b-td>
+            <b-td>{{ item.sale_qty_y_months }}</b-td>
+            <b-td>{{ item.inventory }}</b-td>
+            <b-td>{{ item.inventory_divided_by_sale_qty_x_months }}</b-td>
+            <b-td>{{ item.inventory_divided_by_sale_qty_y_months }}</b-td>
+            <b-td>{{ item.inventory_divided_by_reduced_sale_qty_x_months }}</b-td>
+            <b-td>{{ item.inventory_divided_by_reduced_sale_qty_y_months }}</b-td>
+            <b-td>{{ item.projected_purchase }}</b-td>
+            <b-td>{{ item.weight }}</b-td>
+            <b-td>{{ item.weight_total }}</b-td>
+            <b-td>{{ item.volume }}</b-td>
+            <b-td>{{ item.volume_total }}</b-td>
+          </b-tr>
+        </b-tbody>
+      </b-table-simple>
+      <div id="inventory-table-operate-btn" class="w-100 d-block">
+        <b-button variant="dark" @click="onExportCase5">下载报表</b-button>
+        <b-button variant="dark" @click="onCancelPreviewCase5">取消</b-button>
+      </div>
     </b-modal>
     <b-modal ref="exportFileCase6Modal" id="export-file-case6-modal" title="导出体积、重量计算汇总单" hide-footer>
       <b-form>
@@ -444,7 +493,7 @@
         <div id="inventory-table-operate-btn" class="w-100 d-block">
           <b-button variant="dark" @click="onImportForCase6">导入</b-button>
           <b-button variant="dark" @click="onPreviewCase6">生成报表</b-button>
-          <b-button variant="dark" @click="onCancleImportForCase6">取消</b-button>
+          <b-button variant="dark" @click="onCancelExportCase6">取消</b-button>
         </div>
       </b-form>
     </b-modal>
@@ -619,14 +668,17 @@ export default {
         edInventoryQty: 0,
         jitInventory: 0
       },
+      previewCase5: {
+        previewTable: []
+      },
       previewCase6: {
         previewTable: [],
         previewSummaryTable: []
       },
-      timeQuantum1: '6',
-      threshold1: '2',
-      timeQuantum2: '12',
-      threshold2: '1',
+      timeQuantumX: '6',
+      thresholdX: '2',
+      timeQuantumY: '12',
+      thresholdY: '1',
       projectedPurchase: '12',
       reducedBtnOption: 'open',
       reducedBtnOptions: [
@@ -721,12 +773,13 @@ export default {
       this.previewCase3.saleQty = 0
       this.previewCase3.edInventoryQty = 0
       this.previewCase3.jitInventory = 0
+      this.previewCase5.previewTable = []
       this.previewCase6.previewTable = []
       this.previewCase6.previewSummaryTable = []
-      this.timeQuantum1 = '6'
-      this.threshold1 = '2'
-      this.timeQuantum2 = '12'
-      this.threshold2 = '1'
+      this.timeQuantumX = '6'
+      this.thresholdX = '2'
+      this.timeQuantumY = '12'
+      this.thresholdY = '1'
       this.projectedPurchase = '12'
       this.reducedBtnOption = 'open'
     },
@@ -914,8 +967,8 @@ export default {
       axios.post(this.serverBaseURL + url, payload)
         .then((res) => {
           if (res.data.status === 'success') {
-            // this.previewCase5.stDate = res.data.st_date
-            // this.$refs.previewCase5Modal.show()
+            this.previewCase5.previewTable = res.data.preview_table
+            this.$refs.previewCase5Modal.show()
           } else {
             this.message = '预览失败! 不存在指定的库存条目.'
             this.showMessage = true
@@ -932,10 +985,10 @@ export default {
       evt.preventDefault()
       const payload = {
         supplier_name: this.supplierNameSelection,
-        time_quantum_1: this.timeQuantum1,
-        threshold_1: this.threshold1,
-        time_quantum_2: this.timeQuantum2,
-        threshold_2: this.threshold2,
+        time_quantum_x: this.timeQuantumX,
+        threshold_x: this.thresholdX,
+        time_quantum_y: this.timeQuantumY,
+        threshold_y: this.thresholdY,
         projected_purchase: this.projectedPurchase,
         reduced_btn_option: this.reducedBtnOption,
         stop_status: this.stopStatusSelection,
@@ -947,10 +1000,10 @@ export default {
       evt.preventDefault()
       const payload = {
         supplier_name: this.supplierNameSelection,
-        time_quantum_1: this.timeQuantum1,
-        threshold_1: this.threshold1,
-        time_quantum_2: this.timeQuantum2,
-        threshold_2: this.threshold2,
+        time_quantum_x: this.timeQuantumX,
+        threshold_x: this.thresholdX,
+        time_quantum_y: this.timeQuantumY,
+        threshold_y: this.thresholdY,
         projected_purchase: this.projectedPurchase,
         reduced_btn_option: this.reducedBtnOption,
         stop_status: this.stopStatusSelection,
@@ -959,7 +1012,9 @@ export default {
       this.previewReportFileCase5Way('/api/v1/case5/preview?way=2', payload)
     },
     onCancelPreviewCase5 (evt) {
-
+      evt.preventDefault()
+      this.$refs.previewCase5Modal.hide()
+      this.initExportForm()
     },
     onExportCase5 (evt) {
       // 确定导出采购辅助分析报表
@@ -982,7 +1037,7 @@ export default {
       formData.append('file', this.uploadCSVFileForCase6, this.uploadCSVFileForCase6.name)
       this.importCSVFileForCase6(formData)
     },
-    onCancleImportForCase6 (evt) {
+    onCancelExportCase6 (evt) {
       evt.preventDefault()
       this.$refs.exportFileCase6Modal.hide()
       this.uploadCSVFileForCase6 = null
@@ -1051,7 +1106,6 @@ export default {
       this.initExportForm()
     },
     onCancelPreviewCase6 (evt) {
-      // 取消下载体积、重量计算汇总单
       evt.preventDefault()
       this.$refs.previewCase6Modal.hide()
       this.initExportForm()

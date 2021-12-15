@@ -766,10 +766,10 @@ def preview_report_file_case5():
     way = request.args.get("way", "1")
     payload = request.get_json()
     supplier_name = payload.get("supplier_name", "")
-    time_quantum_1 = int(payload.get("time_quantum_1", "6"))
-    threshold_1 = int(payload.get("threshold_1", "2"))
-    time_quantum_2 = int(payload.get("time_quantum_2", "12"))
-    threshold_2 = int(payload.get("threshold_2", "1"))
+    time_quantum_x = int(payload.get("time_quantum_x", "6"))
+    threshold_x = int(payload.get("threshold_x", "2"))
+    time_quantum_y = int(payload.get("time_quantum_y", "12"))
+    threshold_y = int(payload.get("threshold_y", "1"))
     projected_purchase = int(payload.get("projected_purchase", "12"))
     reduced_btn_option = int(payload.get("reduced_btn_option", "open"))
     stop_status = int(payload.get("stop_status", "全部"))
@@ -777,11 +777,8 @@ def preview_report_file_case5():
 
     # 1. “供应商”选项为空，则为全部供应商（包括没有供应商的商品条目）
     # 2. way == 2时，不考虑“STOP状态”选项+“是否参与统计”选项
-    
-    specification_code_list = []
-    preview_table = []
+    stmt = ""
     if way == "1":
-        stmt = ""
         if len(supplier_name) > 0:
             stmt = "SELECT specification_code, product_code, brand, product_name, specification_name, supplier_name, \
                 jit_inventory, product_weight, product_length, product_width, product_height \
@@ -801,14 +798,115 @@ def preview_report_file_case5():
             elif stop_status == "全部" and be_aggregated != "全部":
                 stmt = "{} WHERE be_aggregated = '{}'".format(stmt, stop_status)
         stmt = "{};".format(stmt)
-        rets = DBConnector.query(stmt)
-        if type(rets) is list and len(rets) > 0:
-            pass
     elif way == "2":
-        pass
+        if len(supplier_name) > 0:
+            stmt = "SELECT specification_code, product_code, brand, product_name, specification_name, supplier_name, \
+                jit_inventory, product_weight, product_length, product_width, product_height \
+                FROM ggfilm.products WHERE supplier_name = '{}';".format(supplier_name)
+        else:
+            stmt = "SELECT specification_code, product_code, brand, product_name, specification_name, supplier_name, \
+                jit_inventory, product_weight, product_length, product_width, product_height \
+                FROM ggfilm.products;"
 
-    response_object = {"status": "success"}
-    response_object["preview_table"] = preview_table
+    preview_table = []
+    specification_code_list = []
+    cache = {}
+
+    rets = DBConnector.query(stmt)
+    if type(rets) is list and len(rets) > 0:
+        for ret in rets:
+            specification_code = ret[0]
+            specification_code_list.append(specification_code)
+            cache[specification_code] = {}
+            cache[specification_code]["product_code"] = ret[1]
+            cache[specification_code]["brand"] = ret[2]
+            cache[specification_code]["product_name"] = ret[3]
+            cache[specification_code]["specification_name"] = ret[4]
+            cache[specification_code]["supplier_name"] = ret[5]
+            cache[specification_code]["inventory"] = ret[6]
+            cache[specification_code]["weight"] = ret[7]
+            cache[specification_code]["weight_total"] = (ret[7] * ret[6]) / 1000
+            cache[specification_code]["volume"] = ret[8] * ret[9] * ret[10]
+            cache[specification_code]["volume_total"] = (ret[8] * ret[9] * ret[10]) / 1000000
+    if len(specification_code_list) > 0:
+        for specification_code in specification_code_list:
+            # TODO: 先不考虑进销存条目不足指定月数的情况
+            stmt = "SELECT st_inventory_qty, ed_inventory_qty, sale_qty, purchase_qty \
+                FROM ggfilm.inventories WHERE specification_code = '{}' \
+                ORDER BY create_time DESC LIMIT {};".format(specification_code, time_quantum_y)
+            inner_rets = DBConnector.query(stmt)
+            if type(inner_rets) is list and len(inner_rets) > 0:
+                cache[specification_code]["sale_qty_x_months"] = 0
+                cache[specification_code]["sale_qty_y_months"] = 0
+                for inner_ret in inner_rets[time_quantum_y-time_quantum_x:]:
+                    cache[specification_code]["sale_qty_x_months"] += inner_ret[2]
+                for inner_ret in inner_rets:
+                    cache[specification_code]["sale_qty_y_months"] += inner_ret[2]
+                if reduced_btn_option == "open":
+                    reduced_months = 0
+                    for inner_ret in inner_rets[time_quantum_y-time_quantum_x:]:
+                        if inner_ret[0] == 0 and inner_ret[1] == 0:
+                            if inner_ret[3] <= 10 and inner_ret[3] <= inner_ret[2]:
+                                reduced_months += 1
+                            elif inner_ret[3] > 10 and inner_ret[3] > inner_ret[2]:
+                                reduced_months += 1
+
+                    cache[specification_code]["reduced_sale_qty_x_months"] = int(cache[specification_code]["sale_qty_x_months"] * (time_quantum_x / (time_quantum_x - reduced_months)))
+                    reduced_months = 0
+                    for inner_ret in inner_rets:
+                        if inner_ret[0] == 0 and inner_ret[1] == 0:
+                            reduced_months += 1
+                    cache[specification_code]["reduced_sale_qty_y_months"] = int(cache[specification_code]["sale_qty_y_months"] * (time_quantum_y / (time_quantum_y - reduced_months)))
+                else:
+                    cache[specification_code]["reduced_sale_qty_x_months"] = cache[specification_code]["sale_qty_x_months"]
+                    cache[specification_code]["reduced_sale_qty_y_months"] = cache[specification_code]["sale_qty_y_months"]
+                if cache[specification_code]["inventory"] == 0:
+                    cache[specification_code]["inventory_divided_by_sale_qty_x_months"] = "0/{}".format(
+                        cache[specification_code]["sale_qty_x_months"])
+                    cache[specification_code]["inventory_divided_by_reduced_sale_qty_x_months"] = "0/{}".format(
+                        cache[specification_code]["reduced_sale_qty_x_months"])
+                    cache[specification_code]["inventory_divided_by_sale_qty_y_months"] = "0/{}".format(
+                        cache[specification_code]["sale_qty_y_months"])
+                    cache[specification_code]["inventory_divided_by_reduced_sale_qty_y_months"] = "0/{}".format(
+                        cache[specification_code]["reduced_sale_qty_y_months"])
+                else:
+                    if cache[specification_code]["sale_qty_x_months"] == 0:
+                        cache[specification_code]["inventory_divided_by_sale_qty_x_months"] = "{}/0".format(
+                            cache[specification_code]["inventory"])
+                    else:
+                        cache[specification_code]["inventory_divided_by_sale_qty_x_months"] = \
+                            cache[specification_code]["inventory"] / cache[specification_code]["sale_qty_x_months"]
+                    if cache[specification_code]["reduced_sale_qty_x_months"] == 0:
+                        cache[specification_code]["inventory_divided_by_reduced_sale_qty_x_months"] = "{}/0".format(
+                            cache[specification_code]["inventory"])
+                    else:
+                        cache[specification_code]["inventory_divided_by_reduced_sale_qty_x_months"] = \
+                            cache[specification_code]["inventory"] / cache[specification_code]["reduced_sale_qty_x_months"]
+                    if cache[specification_code]["sale_qty_y_months"] == 0:
+                        cache[specification_code]["inventory_divided_by_sale_qty_y_months"] = "{}/0".format(
+                            cache[specification_code]["inventory"])
+                    else:
+                        cache[specification_code]["inventory_divided_by_sale_qty_y_months"] = \
+                            cache[specification_code]["inventory"] / cache[specification_code]["sale_qty_y_months"]
+                    if cache[specification_code]["reduced_sale_qty_y_months"] == 0:
+                        cache[specification_code]["inventory_divided_by_reduced_sale_qty_y_months"] = "{}/0".format(
+                            cache[specification_code]["inventory"])
+                    else:
+                        cache[specification_code]["inventory_divided_by_reduced_sale_qty_y_months"] = \
+                            cache[specification_code]["inventory"] / cache[specification_code]["reduced_sale_qty_y_months"]
+                if reduced_btn_option == "open":         
+                    cache[specification_code]["projected_purchase"] = \
+                        ((cache[specification_code]["reduced_sale_qty_y_months"] / time_quantum_y) * 12) - cache[specification_code]["inventory"]
+                else:
+                    cache[specification_code]["projected_purchase"] = \
+                        ((cache[specification_code]["sale_qty_y_months"] / time_quantum_y) * 12) - cache[specification_code]["inventory"]
+
+        for _, v in cache.items():
+            preview_table.append(v)
+        response_object = {"status": "success"}
+        response_object["preview_table"] = preview_table
+    else:
+        response_object = {"status": "not found"}
     return jsonify(response_object)
 
 
