@@ -326,11 +326,137 @@
       </div>
     </b-modal>
     <b-modal ref="exportFileCase4Modal" id="export-file-case4-modal" title="导出滞销品报表" hide-footer>
-      <b-form @submit="onExportCase4" @reset="onCancelExportCase4">
-        <div id="inventory-table-operate-btn" class="w-100 d-block">
-          <b-button type="submit" variant="dark">导出</b-button>
-          <b-button type="reset" variant="dark">取消</b-button>
-        </div>
+      <b-form>
+        <b-card bg-variant="light">
+          <b-form-group
+            label="起始日期"
+            label-size="sm"
+            label-align-sm="right"
+            label-cols-sm="3"
+          >
+            <b-form-input v-model="stDateSelection" placeholder="YYYY-MM"></b-form-input>
+          </b-form-group>
+          <b-form-group
+            label="截止日期"
+            label-size="sm"
+            label-align-sm="right"
+            label-cols-sm="3"
+          >
+            <b-form-input v-model="edDateSelection" placeholder="YYYY-MM"></b-form-input>
+          </b-form-group>
+          <b-form-group
+            label="品牌"
+            label-size="sm"
+            label-align-sm="right"
+            label-cols-sm="3"
+          >
+            <v-suggest
+              :data="brandOptions"
+              show-field="brand"
+              v-model="brandSelection"
+            ></v-suggest>
+          </b-form-group>
+          <b-form-group
+            label="分类1"
+            label-size="sm"
+            label-align-sm="right"
+            label-cols-sm="3"
+          >
+            <v-suggest
+              :data="classification1Options"
+              show-field="classification-1"
+              v-model="classification1Selection"
+            ></v-suggest>
+          </b-form-group>
+          <b-form-group
+            label="分类2"
+            label-size="sm"
+            label-align-sm="right"
+            label-cols-sm="3"
+          >
+            <v-suggest
+              :data="classification2Options"
+              show-field="classification-2"
+              v-model="classification2Selection"
+            ></v-suggest>
+          </b-form-group>
+          <b-form-group
+            label="产品系列"
+            label-size="sm"
+            label-align-sm="right"
+            label-cols-sm="3"
+          >
+            <v-suggest
+              :data="productSeriesOptions"
+              show-field="product-series"
+              v-model="productSeriesSelection"
+            ></v-suggest>
+          </b-form-group>
+          <b-form-group
+            label="STOP状态?"
+            label-size="sm"
+            label-align-sm="right"
+            label-cols-sm="3"
+          >
+            <b-form-select v-model="stopStatusSelection" :options="stopStatusOptions"></b-form-select>
+          </b-form-group>
+          <b-form-group
+            label="组合商品?"
+            label-size="sm"
+            label-align-sm="right"
+            label-cols-sm="3"
+          >
+            <b-form-select v-model="isCombinedSelection" :options="isCombinedOptions"></b-form-select>
+          </b-form-group>
+          <b-form-group
+            label="参与统计?"
+            label-size="sm"
+            label-align-sm="right"
+            label-cols-sm="3"
+          >
+            <b-form-select v-model="beAggregatedSelection" :options="beAggregatedOptions"></b-form-select>
+          </b-form-group>
+          <b-form-group
+            label="进口商品?"
+            label-size="sm"
+            label-align-sm="right"
+            label-cols-sm="3"
+          >
+            <b-form-select v-model="isImportSelection" :options="isImportOptions"></b-form-select>
+          </b-form-group>
+          <b-form-group
+            label="供应商名称"
+            label-size="sm"
+            label-align-sm="right"
+            label-cols-sm="3"
+          >
+            <v-suggest
+              :data="supplierNameOptions"
+              show-field="supplier-name"
+              v-model="supplierNameSelection"
+            ></v-suggest>
+          </b-form-group>
+          <b-form-group
+            label="库销比阈值"
+            label-size="sm"
+            label-align-sm="right"
+            label-cols-sm="3"
+          >
+            <b-form-input v-model="thresholdSSR" type="number" placeholder="4"></b-form-input>
+          </b-form-group>
+          <b-form-group
+            label="断货折算"
+            label-size="sm"
+            label-align-sm="right"
+            label-cols-sm="3"
+          >
+            <b-form-radio-group v-model="reducedBtnOption" :options="reducedBtnOptions"></b-form-radio-group>
+          </b-form-group>
+          <div id="inventory-table-operate-btn" class="w-100 d-block">
+            <b-button variant="dark" @click="onPreviewCase4">预览报表</b-button>
+            <b-button variant="dark" @click="onCancelExportCase4">取消</b-button>
+          </div>
+        </b-card>
       </b-form>
     </b-modal>
     <b-modal ref="exportFileCase5Modal" id="export-file-case5-modal" title="导出采购辅助分析报表" hide-footer>
@@ -663,7 +789,7 @@ export default {
         { value: '非进口品', text: '非进口品' },
         { value: '全部', text: '全部' }
       ],
-      isImportSelection: '非进口品',
+      isImportSelection: '全部',
       supplierNameOptions: [],
       supplierNameSelections: [],
       supplierNameSelection: '',
@@ -697,6 +823,7 @@ export default {
         { text: '开', value: 'open' },
         { text: '关', value: 'close' }
       ],
+      thresholdSSR: '4',
       inventories: [],
       shouldOpenSidebar: false,
       addedSkus: [],
@@ -765,7 +892,7 @@ export default {
       this.stopStatusSelection = '在用'
       this.isCombinedSelection = '否'
       this.beAggregatedSelection = '参与'
-      this.isImportSelection = '非进口品'
+      this.isImportSelection = '全部'
       this.supplierNameSelection = ''
       this.previewCase3.stDate = ''
       this.previewCase3.edDate = ''
@@ -787,6 +914,7 @@ export default {
       this.thresholdY = '1'
       this.projectedPurchase = '12'
       this.reducedBtnOption = 'open'
+      this.thresholdSSR = '4'
     },
     importCSVFile (formData) {
       let config = {
@@ -956,6 +1084,48 @@ export default {
       const payload = {}
       this.exportReportFileCase4(payload)
       this.initExportForm()
+    },
+    previewReportFileCase4 (payload) {
+      axios.post(this.serverBaseURL + '/api/v1/case4/preview', payload)
+        .then((res) => {
+          if (res.data.status === 'success') {
+            // this.previewCase4.stDate = res.data.st_date
+            // this.$refs.previewCase4Modal.show()
+          } else {
+            this.message = '预览失败! 不存在指定的库存条目.'
+            this.showMessage = true
+          }
+        })
+        .catch((error) => {
+          // eslint-disable-next-line
+          console.log(error)
+          this.message = '预览失败!'
+          this.showMessage = true
+        })
+    },
+    onPreviewCase4 (evt) {
+      evt.preventDefault()
+      if ((this.stDateSelection === '') || (this.edDateSelection === '')) {
+        this.message = '起始日期/截止日期不能为空!'
+        this.showMessage = true
+      } else {
+        const payload = {
+          st_date: this.stDateSelection,
+          ed_date: this.edDateSelection,
+          brand: this.brandSelection,
+          classification_1: this.classification1Selection,
+          classification_2: this.classification2Selection,
+          product_series: this.productSeriesSelection,
+          stop_status: this.stopStatusSelection,
+          is_combined: this.isCombinedSelection,
+          be_aggregated: this.beAggregatedSelection,
+          is_import: this.isImportSelection,
+          supplier_name: this.supplierNameSelection,
+          threshold_ssr: this.thresholdSSR,
+          reduced_btn_option: this.reducedBtnOption
+        }
+        this.previewReportFileCase4(payload)
+      }
     },
     onCancelExportCase4 (evt) {
       // 取消导出滞销品报表

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import atexit
 import csv
+import datetime
 import hashlib
 import logging
 logging.basicConfig(level=logging.INFO, format="[%(asctime)s][%(levelname)s] %(message)s")
@@ -419,6 +420,9 @@ def prepare_report_file_case2():
     # 2. 按照“产品系列”进行分类汇总，没有系列名称的不参与汇总
     st_date = payload.get("st_date", "").strip()
     ed_date = payload.get("ed_date", "").strip()
+    if (st_date > ed_date):
+        response_object = {"status": "not found"}
+        return jsonify(response_object)
 
     stmt = "SELECT specification_code, product_series, jit_inventory FROM ggfilm.products \
 WHERE COALESCE(CHAR_LENGTH(product_series), 0) != 0;"
@@ -543,6 +547,7 @@ create_time <= '{}';".format(specification_code, st_date, ed_date)
 
 
 # 预览销售报表（按单个SKU汇总）的接口
+# TODO: fix me
 '''
 预览效果
 
@@ -562,6 +567,9 @@ def preview_report_file_case3():
     # 2.2. 如果specification_code（规格编码）为空，则先用其他非空条件筛选出规格编码，再用规格编码筛选出想要的数据
     st_date = payload.get("st_date", "").strip()
     ed_date = payload.get("ed_date", "").strip()
+    if (st_date > ed_date):
+        response_object = {"status": "not found"}
+        return jsonify(response_object)
 
     specification_code = payload.get("specification_code", "").strip()
 
@@ -617,10 +625,10 @@ ORDER BY create_time ASC;".format(
         classification_1 = payload.get("classification_1", "").strip()
         classification_2 = payload.get("classification_2", "").strip()
         product_series = payload.get("product_series", "").strip()
-        stop_status = payload.get("stop_status", "").strip()
-        is_combined = payload.get("is_combined", "").strip()
-        be_aggregated = payload.get("be_aggregated", "").strip()
-        is_import = payload.get("is_import", "").strip()
+        stop_status = payload.get("stop_status", "在用").strip()
+        is_combined = payload.get("is_combined", "否").strip()
+        be_aggregated = payload.get("be_aggregated", "参与").strip()
+        is_import = payload.get("is_import", "非进口品").strip()
         supplier_name = payload.get("supplier_name", "").strip()
 
         stmt = "SELECT specification_code FROM ggfilm.products WHERE "
@@ -637,13 +645,13 @@ ORDER BY create_time ASC;".format(
             selections.append("classification_2 = '{}'".format(classification_2))
         if len(product_series) > 0:
             selections.append("product_series = '{}'".format(product_series))
-        if len(stop_status) > 0:
+        if stop_status != '全部':
             selections.append("stop_status = '{}'".format(stop_status))
-        if len(is_combined) > 0:
+        if is_combined != '全部':
             selections.append("is_combined = '{}'".format(is_combined))
-        if len(be_aggregated) > 0:
+        if be_aggregated != '全部':
             selections.append("be_aggregated = '{}'".format(be_aggregated))
-        if len(is_import) > 0:
+        if is_import != '全部':
             selections.append("is_import = '{}'".format(is_import))
         if len(supplier_name) > 0:
             selections.append("supplier_name = '{}'".format(supplier_name))
@@ -665,9 +673,13 @@ def prepare_report_file_case3():
     payload = request.get_json()
     st_date = payload.get("st_date", "").strip()
     ed_date = payload.get("ed_date", "").strip()
+    if (st_date > ed_date):
+        response_object = {"status": "not found"}
+        return jsonify(response_object)
+
     specification_code = payload.get("specification_code", "").strip()
 
-    stmt = "SELECT * FROM ggfilm.products WHERE specification_code = '{}' LIMIT 1;".format(specification_code)
+    stmt = "SELECT * FROM ggfilm.products WHERE specification_code = '{}';".format(specification_code)
     rets = DBConnector.query(stmt)
     cache = {}
     cache["product_code"] = rets[0][1]
@@ -775,9 +787,106 @@ ORDER BY create_time ASC;".format(
     return jsonify(response_object)
 
 
-# 导出滞销品报表的接口
-@ggfilm_server.route("/api/v1/case4/download", methods=["POST"])
+# 预览滞销品报表的接口
+'''
+预览效果
+
+商品编码 | 规格编码	| 商品名称 | 规格名称 | 起始库存数量 | 采购数量	| 销售数量 | 截止库存数量 | 实时库存 | 库销比
+
+其中
+* 起始库存数量 = 时间段内第一个月的数量
+* 采购数量 = 时间段内每一个月的数量的累加
+* 销售数量 = 时间段内每一个月的数量的累加
+* 截止库存数量 = 时间段内最后一个月的数量
+'''
+@ggfilm_server.route("/api/v1/case4/preview", methods=["POST"])
 def export_report_file_case4():
+    payload = request.get_json()
+    # 1. 起始日期和截止日期用于过滤掉时间条件不符合的记录项
+    # 2. 先用其他非空条件筛选出规格编码，再用规格编码筛选出想要的数据
+    st_date = payload.get("st_date", "").strip()
+    ed_date = payload.get("ed_date", "").strip()
+    if (st_date > ed_date):
+        response_object = {"status": "not found"}
+        return jsonify(response_object)
+
+    st_datetime = datetime.datetime.strptime(st_date, "%Y-%m").date()
+    ed_datetime = datetime.datetime.strptime(ed_date, "%Y-%m").date()
+    time_quantum_x = 0
+    if ed_datetime.month - st_datetime.month < 0:
+        time_quantum_x = ed_datetime.month - st_datetime.month + 12
+    else:
+        time_quantum_x = ed_datetime.month - st_datetime.month
+
+    brand = payload.get("brand", "").strip()
+    classification_1 = payload.get("classification_1", "").strip()
+    classification_2 = payload.get("classification_2", "").strip()
+    product_series = payload.get("product_series", "").strip()
+    stop_status = payload.get("stop_status", "在用").strip()
+    is_combined = payload.get("is_combined", "否").strip()
+    be_aggregated = payload.get("be_aggregated", "参与").strip()
+    is_import = payload.get("is_import", "全部").strip()
+    supplier_name = payload.get("supplier_name", "").strip()
+    threshold_ssr = int(payload.get("threshold_ssr", "4"))
+    reduced_btn_option = payload.get("reduced_btn_option", "open")
+
+    stmt = "SELECT * FROM ggfilm.products WHERE "
+    selections = []
+    if len(brand) > 0:
+        selections.append("brand = '{}'".format(brand))
+    if len(classification_1) > 0:
+        selections.append("classification_1 = '{}'".format(classification_1))
+    if len(classification_2) > 0:
+        selections.append("classification_2 = '{}'".format(classification_2))
+    if len(product_series) > 0:
+        selections.append("product_series = '{}'".format(product_series))
+    if stop_status != '全部':
+        selections.append("stop_status = '{}'".format(stop_status))
+    if is_combined != '全部':
+        selections.append("is_combined = '{}'".format(is_combined))
+    if be_aggregated != '全部':
+        selections.append("be_aggregated = '{}'".format(be_aggregated))
+    if is_import != '全部':
+        selections.append("is_import = '{}'".format(is_import))
+    if len(supplier_name) > 0:
+        selections.append("supplier_name = '{}'".format(supplier_name))
+    stmt += " AND ".join(selections)
+    stmt += ";"
+
+    cache = {}
+    rets = DBConnector.query(stmt)
+    if type(rets) is list and len(rets) > 0:
+        for ret in rets:
+            specification_code = ret[3]
+            jit_inventory = ret[19]
+
+            stmt = "SELECT * FROM ggfilm.inventories \
+WHERE specification_code = '{}' AND \
+create_time >= '{}' AND \
+create_time <= '{}' \
+ORDER BY create_time ASC;".format(
+                    specification_code, st_date, ed_date
+                )
+            inner_rets = DBConnector.query(stmt)
+            if type(inner_rets) is list and len(inner_rets) > 0:          
+                sale_qty_x_months = 0
+                for inner_ret in inner_rets:
+                    sale_qty_x_months += inner_ret[11]
+                if reduced_btn_option == "open":
+                    reduced_months = 0
+                    for inner_ret in inner_rets:
+                        if inner_ret[5] == 0 and inner_ret[17] == 0:
+                            if inner_ret[7] <= 10 and inner_ret[7] <= inner_ret[11]:
+                                reduced_months += 1
+                            elif inner_ret[7] > 10 and inner_ret[7] > inner_ret[11]:
+                                reduced_months += 1
+                    sale_qty_x_months = int(sale_qty_x_months * (time_quantum_x / (time_quantum_x - reduced_months)))
+
+                    if (sale_qty_x_months > 0 and it_inventory / sale_qty_x_months > threshold_ssr) or \
+                        (sale_qty_x_months == 0 and it_inventory > 0):
+                        # 滞销了
+                        pass
+
     return jsonify("导出滞销品报表")
 
 
