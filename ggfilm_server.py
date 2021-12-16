@@ -826,9 +826,7 @@ FROM ggfilm.products;"
             cache[specification_code]["supplier_name"] = ret[5]
             cache[specification_code]["inventory"] = ret[6]
             cache[specification_code]["weight"] = ret[7]
-            cache[specification_code]["weight_total"] = float("{:.3f}".format((ret[7] * ret[6]) / 1e3))
             cache[specification_code]["volume"] = ret[8] * ret[9] * ret[10]
-            cache[specification_code]["volume_total"] = float("{:.3f}".format((ret[8] * ret[9] * ret[10] * ret[6]) / 1e6))
     if len(specification_code_list) > 0:
         for specification_code in specification_code_list:
             # TODO: 先不考虑进销存条目不足指定月数的情况
@@ -917,6 +915,8 @@ ORDER BY create_time DESC LIMIT {};".format(specification_code, time_quantum_y)
                             int((cache[specification_code]["sale_qty_y_months"] / time_quantum_y) * 12) - cache[specification_code]["inventory"]
                     else:
                         cache[specification_code]["projected_purchase"] = 0
+                cache[specification_code]["weight_total"] = float("{:.3f}".format((cache[specification_code]["weight"] * cache[specification_code]["projected_purchase"]) / 1e3))
+                cache[specification_code]["volume_total"] = float("{:.3f}".format((cache[specification_code]["volume"] * cache[specification_code]["projected_purchase"]) / 1e3))
 
         for _, v in cache.items():
             preview_table.append(v)
