@@ -717,15 +717,10 @@ export default {
       axios.get(this.serverBaseURL + '/api/v1/alloptions')
         .then((res) => {
           this.brandOptions = res.data.brand_options
-          console.log(this.brandOptions.length)
           this.classification1Options = res.data.classification_1_options
-          console.log(this.classification1Options.length)
           this.classification2Options = res.data.classification_2_options
-          console.log(this.classification2Options.length)
           this.productSeriesOptions = res.data.product_series_options
-          console.log(this.productSeriesOptions.length)
           this.supplierNameOptions = res.data.supplier_name_options
-          console.log(this.supplierNameOptions.length)
         })
         .catch((error) => {
           // eslint-disable-next-line
@@ -738,7 +733,6 @@ export default {
       axios.get(this.serverBaseURL + '/api/v1/allselections/suppliers')
         .then((res) => {
           this.supplierNameSelections = res.data.supplier_name_selections
-          console.log(this.supplierNameSelections.length)
         })
         .catch((error) => {
           // eslint-disable-next-line
@@ -760,8 +754,7 @@ export default {
         })
     },
     initExportForm () {
-      this.stDateSelection = ''
-      this.edDateSelection = ''
+      this.setDefaultDate()
       this.productCodeSelection = ''
       this.productNameSelection = ''
       this.specificationCodeSelection = ''
@@ -834,13 +827,13 @@ export default {
       formData.append('file', this.uploadCSVFile, this.uploadCSVFile.name)
       formData.append('import_date', this.customDateSelection)
       this.importCSVFile(formData)
-      this.customDateSelection = ''
+      this.setDefaultDate()
       this.uploadCSVFile = null
     },
     onCancel (evt) {
       evt.preventDefault()
       this.$refs.importCSVFileModal.hide()
-      this.customDateSelection = ''
+      this.setDefaultDate()
       this.uploadCSVFile = null
     },
     // 销售报表（按分类汇总）
@@ -848,7 +841,6 @@ export default {
       // 确定导出销售报表（按分类汇总）
       evt.preventDefault()
       this.$refs.exportFileCase1Modal.hide()
-      console.log('确定导出销售报表（按分类汇总）')
       const payload = {}
       this.exportReportFileCase1(payload)
       this.initExportForm()
@@ -857,7 +849,6 @@ export default {
       // 取消导出销售报表（按分类汇总）
       evt.preventDefault()
       this.$refs.exportFileCase1Modal.hide()
-      console.log('取消导出销售报表（按分类汇总）')
       this.initExportForm()
     },
     // 销售报表（按系列汇总）
@@ -962,7 +953,6 @@ export default {
       // 确定导出滞销品报表
       evt.preventDefault()
       this.$refs.exportFileCase4Modal.hide()
-      console.log('确定导出滞销品报表')
       const payload = {}
       this.exportReportFileCase4(payload)
       this.initExportForm()
@@ -971,7 +961,6 @@ export default {
       // 取消导出滞销品报表
       evt.preventDefault()
       this.$refs.exportFileCase4Modal.hide()
-      console.log('取消导出滞销品报表')
       this.initExportForm()
     },
     // 采购辅助分析报表
@@ -1214,6 +1203,47 @@ export default {
       evt.preventDefault()
       this.pageOffset += 20
       this.listInventories()
+    },
+    setDefaultDate () {
+      var today = new Date()
+      var year = today.getFullYear() * 1
+      var month = today.getMonth() * 1 + 1
+      // 为导入时间设置默认值
+      if (month >= 10) {
+        this.customDateSelection = year.toString() + '-' + month.toString()
+      } else {
+        this.customDateSelection = year.toString() + '-0' + month.toString()
+      }
+      // 为起始时间设置默认值
+      var stYear
+      var stMonth
+      if (month - 3 < 0) {
+        stYear = year - 1
+        stMonth = month - 3 + 12
+      } else {
+        stYear = year
+        stMonth = month - 3
+      }
+      if (stMonth >= 10) {
+        this.stDateSelection = stYear.toString() + '-' + stMonth.toString()
+      } else {
+        this.stDateSelection = stYear.toString() + '-0' + stMonth.toString()
+      }
+      // 为截止时间设置默认值
+      var edYear
+      var edMonth
+      if (month - 1 < 0) {
+        edYear = year - 1
+        edMonth = month - 1 + 12
+      } else {
+        edYear = year
+        edMonth = month - 1
+      }
+      if (edMonth >= 10) {
+        this.edDateSelection = edYear.toString() + '-' + edMonth.toString()
+      } else {
+        this.edDateSelection = edYear.toString() + '-0' + edMonth.toString()
+      }
     }
   },
   created () {
@@ -1222,6 +1252,7 @@ export default {
     this.listAllOptions()
     this.listAllSupplierSelections()
     this.listInventories()
+    this.setDefaultDate()
   }
 }
 </script>
