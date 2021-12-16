@@ -560,6 +560,12 @@
         </div>
       </div>
     </b-sidebar>
+    <b-modal ref="processingModal" hide-footer>
+      <div class="d-flex align-items-center">
+        <strong>处理中...</strong>
+        <b-spinner class="ml-auto"></b-spinner>
+      </div>
+    </b-modal>
   </div>
 </template>
 
@@ -1117,6 +1123,7 @@ export default {
       this.initExportForm()
     },
     prepareExportReportFile (url, payload) {
+      this.$refs.processingModal.show()
       axios.post(this.serverBaseURL + url, payload)
         .then((res) => {
           this.exportReportFile(res.data.server_send_queue_file, res.data.output_file)
@@ -1131,6 +1138,7 @@ export default {
     exportReportFile (queryFile, saveFile) {
       axios.get(this.serverBaseURL + '/api/v1/download/' + queryFile)
         .then((res) => {
+          this.$refs.processingModal.hide()
           const evt = document.createEvent('MouseEvents')
           var docUrl = document.createElement('a')
           docUrl.download = saveFile
@@ -1143,6 +1151,7 @@ export default {
           this.showMessage = true
         })
         .catch((error) => {
+          this.$refs.processingModal.hide()
           // eslint-disable-next-line
           console.log(error)
           this.message = '下载失败!'
