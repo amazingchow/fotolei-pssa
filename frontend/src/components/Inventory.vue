@@ -439,6 +439,42 @@
         </b-card>
       </b-form>
     </b-modal>
+    <b-modal ref="previewCase4Modal" title="预览滞销品报表" size="xl" hide-footer>
+      <b-table-simple striped hover small id="preview-table">
+        <b-thead>
+          <b-tr>
+            <b-th scope="col">商品编码</b-th>
+            <b-th scope="col">规格编码</b-th>
+            <b-th scope="col">商品名称</b-th>
+            <b-th scope="col">规格名称</b-th>
+            <b-th scope="col">起始库存数量</b-th>
+            <b-th scope="col">采购数量</b-th>
+            <b-th scope="col">销售数量</b-th>
+            <b-th scope="col">截止库存数量</b-th>
+            <b-th scope="col">实时可用库存</b-th>
+            <b-th scope="col">库销比</b-th>
+          </b-tr>
+        </b-thead>
+        <b-tbody>
+          <b-tr v-for="(item, index) in previewCase4.previewTable" :key="index">
+            <b-td>{{ item.product_code }}</b-td>
+            <b-td>{{ item.specification_code }}</b-td>
+            <b-td>{{ item.product_name }}</b-td>
+            <b-td>{{ item.specification_name }}</b-td>
+            <b-td>{{ item.st_inventory_qty }}</b-td>
+            <b-td>{{ item.purchase_qty }}</b-td>
+            <b-td>{{ item.sale_qty }}</b-td>
+            <b-td>{{ item.ed_inventory_qty }}</b-td>
+            <b-td>{{ item.jit_inventory }}</b-td>
+            <b-td>{{ item.ssr }}</b-td>
+          </b-tr>
+        </b-tbody>
+      </b-table-simple>
+      <div id="inventory-table-operate-btn" class="w-100 d-block">
+        <b-button variant="dark" @click="onExportCase4">下载报表</b-button>
+        <b-button variant="dark" @click="onCancelPreviewCase4">取消</b-button>
+      </div>
+    </b-modal>
     <b-modal ref="exportFileCase5Modal" id="export-file-case5-modal" title="导出采购辅助分析报表" hide-footer>
       <b-form>
         <b-card bg-variant="light">
@@ -786,6 +822,9 @@ export default {
         edInventoryQty: 0,
         jitInventory: 0
       },
+      previewCase4: {
+        previewTable: []
+      },
       previewCase5: {
         previewTable: []
       },
@@ -885,6 +924,7 @@ export default {
       this.previewCase3.saleQty = 0
       this.previewCase3.edInventoryQty = 0
       this.previewCase3.jitInventory = 0
+      this.previewCase4.previewTable = []
       this.previewCase5.previewTable = []
       this.previewCase6.previewTable = []
       this.previewCase6.previewSummaryTable = []
@@ -1069,8 +1109,8 @@ export default {
       axios.post(this.serverBaseURL + '/api/v1/case4/preview', payload)
         .then((res) => {
           if (res.data.status === 'success') {
-            // this.previewCase4.stDate = res.data.st_date
-            // this.$refs.previewCase4Modal.show()
+            this.previewCase4.previewTable = res.data.preview_table
+            this.$refs.previewCase4Modal.show()
           } else {
             this.message = '预览失败! 不存在指定的库存条目.'
             this.showMessage = true
@@ -1106,6 +1146,11 @@ export default {
         }
         this.previewReportFileCase4(payload)
       }
+    },
+    onCancelPreviewCase4 (evt) {
+      evt.preventDefault()
+      this.$refs.previewCase4Modal.hide()
+      this.initExportForm()
     },
     onCancelExportCase4 (evt) {
       // 取消导出滞销品报表

@@ -854,7 +854,8 @@ def export_report_file_case4():
     stmt += " AND ".join(selections)
     stmt += ";"
 
-    cache = {}
+    preview_table = []
+
     rets = DBConnector.query(stmt)
     if type(rets) is list and len(rets) > 0:
         for ret in rets:
@@ -881,14 +882,33 @@ ORDER BY create_time ASC;".format(
                                 reduced_months += 1
                             elif inner_ret[7] > 10 and inner_ret[7] > inner_ret[11]:
                                 reduced_months += 1
-                    sale_qty_x_months = int(sale_qty_x_months * (time_quantum_x / (time_quantum_x - reduced_months)))
+                    if time_quantum_x != reduced_months:
+                        sale_qty_x_months = int(sale_qty_x_months * (time_quantum_x / (time_quantum_x - reduced_months)))
 
-                    if (sale_qty_x_months > 0 and jit_inventory / sale_qty_x_months > threshold_ssr) or \
-                            (sale_qty_x_months == 0 and jit_inventory > 0):
-                        # 滞销了
-                        pass
-
-    return jsonify("导出滞销品报表")
+                if (sale_qty_x_months > 0 and (jit_inventory / sale_qty_x_months) > threshold_ssr) or \
+                        (sale_qty_x_months == 0 and jit_inventory > 0):
+                    # 滞销了
+                    cache = {}
+                    cache["product_code"] = inner_rets[0][1]
+                    cache["specification_code"] = inner_rets[0][3]
+                    cache["product_name"] = inner_rets[0][2]
+                    cache["specification_name"] = inner_rets[0][4]
+                    cache["st_inventory_qty"] = inner_rets[0][5]
+                    cache["purchase_qty"] = sum([inner_ret[7] for inner_ret in inner_rets])
+                    cache["sale_qty"] = sale_qty_x_months
+                    cache["ed_inventory_qty"] = inner_rets[len(inner_rets) - 1][17]
+                    cache["jit_inventory"] = jit_inventory
+                    if sale_qty_x_months == 0 and jit_inventory > 0:
+                        cache["ssr"] = "*"
+                    else:
+                        cache["ssr"] = float("{:.3f}".format(jit_inventory / sale_qty_x_months))
+                    preview_table.append(cache)
+        response_object = {"status": "success"}
+        response_object["preview_table"] = preview_table
+        return jsonify(response_object)
+    else:
+        response_object = {"status": "not found"}
+        return jsonify(response_object)
 
 
 # 预览采购辅助分析报表的接口
@@ -991,12 +1011,18 @@ ORDER BY create_time DESC LIMIT {};".format(specification_code, time_quantum_y)
                             elif inner_ret[3] > 10 and inner_ret[3] > inner_ret[2]:
                                 reduced_months += 1
 
-                    cache[specification_code]["reduced_sale_qty_x_months"] = int(cache[specification_code]["sale_qty_x_months"] * (time_quantum_x / (time_quantum_x - reduced_months)))
+                    if time_quantum_x != reduced_months:
+                        cache[specification_code]["reduced_sale_qty_x_months"] = int(cache[specification_code]["sale_qty_x_months"] * (time_quantum_x / (time_quantum_x - reduced_months)))
+                    else:
+                        cache[specification_code]["reduced_sale_qty_x_months"] = cache[specification_code]["sale_qty_x_months"]
                     reduced_months = 0
                     for inner_ret in inner_rets:
                         if inner_ret[0] == 0 and inner_ret[1] == 0:
                             reduced_months += 1
-                    cache[specification_code]["reduced_sale_qty_y_months"] = int(cache[specification_code]["sale_qty_y_months"] * (time_quantum_y / (time_quantum_y - reduced_months)))
+                    if time_quantum_y != reduced_months:
+                        cache[specification_code]["reduced_sale_qty_y_months"] = int(cache[specification_code]["sale_qty_y_months"] * (time_quantum_y / (time_quantum_y - reduced_months)))
+                    else:
+                        cache[specification_code]["reduced_sale_qty_y_months"] = cache[specification_code]["sale_qty_y_months"]
                 else:
                     cache[specification_code]["reduced_sale_qty_x_months"] = cache[specification_code]["sale_qty_x_months"]
                     cache[specification_code]["reduced_sale_qty_y_months"] = cache[specification_code]["sale_qty_y_months"]
