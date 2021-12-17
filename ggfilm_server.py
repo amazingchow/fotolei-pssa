@@ -263,10 +263,8 @@ def list_inventories():
     page_limit = request.args.get("page.limit")
 
     stmt = "SELECT specification_code, \
-st_inventory_qty, st_inventory_total, purchase_qty, purchase_total, \
-purchase_then_return_qty, purchase_then_return_total, sale_qty, sale_total, \
-sale_then_return_qty, sale_then_return_total, others_qty, others_total, \
-ed_inventory_qty, ed_inventory_total, create_time \
+st_inventory_qty, purchase_qty, purchase_then_return_qty, sale_qty, \
+sale_then_return_qty, others_qty, ed_inventory_qty, create_time \
 FROM ggfilm.inventories ORDER BY 'id' DESC LIMIT {}, {};".format(
         page_offset, page_limit)
     inventories = DBConnector.query(stmt)
@@ -976,12 +974,14 @@ FROM ggfilm.inventories WHERE specification_code = '{}' \
 ORDER BY create_time DESC LIMIT {};".format(specification_code, time_quantum_y)
             inner_rets = DBConnector.query(stmt)
             if type(inner_rets) is list and len(inner_rets) > 0:
+                # 计算X个月销量 + Y个月销量
                 cache[specification_code]["sale_qty_x_months"] = 0
                 cache[specification_code]["sale_qty_y_months"] = 0
                 for inner_ret in inner_rets[time_quantum_y - time_quantum_x:]:
                     cache[specification_code]["sale_qty_x_months"] += inner_ret[2]
                 for inner_ret in inner_rets:
                     cache[specification_code]["sale_qty_y_months"] += inner_ret[2]
+                # 计算X个月折算销量 + Y个月折算销量
                 if reduced_btn_option == "open":
                     reduced_months = 0
                     for inner_ret in inner_rets[time_quantum_y - time_quantum_x:]:
@@ -1000,6 +1000,7 @@ ORDER BY create_time DESC LIMIT {};".format(specification_code, time_quantum_y)
                 else:
                     cache[specification_code]["reduced_sale_qty_x_months"] = cache[specification_code]["sale_qty_x_months"]
                     cache[specification_code]["reduced_sale_qty_y_months"] = cache[specification_code]["sale_qty_y_months"]
+                # 计算库存/X个月销量 + 库存/Y个月销量 + 库存/X个月折算销量 + 库存/Y个月折算销量
                 if cache[specification_code]["inventory"] == 0:
                     cache[specification_code]["inventory_divided_by_sale_qty_x_months"] = "0/{}".format(
                         cache[specification_code]["sale_qty_x_months"])
@@ -1034,6 +1035,7 @@ ORDER BY create_time DESC LIMIT {};".format(specification_code, time_quantum_y)
                     else:
                         cache[specification_code]["inventory_divided_by_reduced_sale_qty_y_months"] = \
                             float("{:.3f}".format(cache[specification_code]["inventory"] / cache[specification_code]["reduced_sale_qty_y_months"]))
+                # 计算拟定进货量
                 if reduced_btn_option == "open":
                     if type(cache[specification_code]["inventory_divided_by_reduced_sale_qty_x_months"]) is str or \
                         (type(cache[specification_code]["inventory_divided_by_reduced_sale_qty_x_months"]) is float and \
@@ -1077,11 +1079,44 @@ ORDER BY create_time DESC LIMIT {};".format(specification_code, time_quantum_y)
                 cache[specification_code]["volume_total"] = float("{:.3f}".format((cache[specification_code]["volume"] * cache[specification_code]["projected_purchase"]) / 1e3))
 
         for _, v in cache.items():
-            preview_table.append(v)
+            if len(v.keys()) == 20:
+                preview_table.append(v)
         response_object = {"status": "success"}
         response_object["preview_table"] = preview_table
     else:
         response_object = {"status": "not found"}
+    return jsonify(response_object)
+
+
+# 预下载采购辅助分析报表的接口
+@ggfilm_server.route("/api/v1/case5/prepare", methods=["POST"])
+def prepare_report_file_case5():
+    payload = request.get_json()
+    preview_table = payload.get("preview_table", [])
+
+    ts = int(time.time())
+    csv_file_sha256 = generate_digest("采购辅助分析报表_{}.csv".format(ts))
+    csv_file = "{}/ggfilm-server/send_queue/{}".format(os.path.expanduser("~"), csv_file_sha256)
+    output_file = "采购辅助分析报表_{}.csv".format(ts)
+    with open(csv_file, "w", encoding='utf-8-sig') as fd:
+        csv_writer = csv.writer(fd, delimiter=",")
+        csv_writer.writerow([
+            "商品编码", "品牌", "商品名称", "规格名称", "供应商",
+            "X个月销量", "X个月折算销量", "Y个月销量", "Y个月折算销量",
+            "库存量", "库存/X个月销量", "库存/Y个月销量", "拟定进货量",
+            "单个重量/g", "小计重量/kg", "单个体积/cm³", "小计体积/m³"
+        ])
+        for item in preview_table:
+            csv_writer.writerow([
+                item["product_code"], item["brand"], item["product_name"], item["specification_name"], item["supplier_name"],
+                item["sale_qty_x_months"], item["reduced_sale_qty_x_months"], item["sale_qty_y_months"], item["reduced_sale_qty_y_months"],
+                item["inventory"], item["inventory_divided_by_sale_qty_x_months"], item["inventory_divided_by_sale_qty_y_months"], item["projected_purchase"],
+                item["weight"], item["weight_total"], item["volume"], item["volume_total"],
+            ])
+
+    response_object = {"status": "success"}
+    response_object["output_file"] = output_file
+    response_object["server_send_queue_file"] = csv_file_sha256
     return jsonify(response_object)
 
 
@@ -1192,7 +1227,7 @@ def prepare_report_file_case6():
         csv_writer = csv.writer(fd, delimiter=",")
         csv_writer.writerow([
             "规格编码", "商品名称", "规格名称", "数量",
-            "长度/cm", "宽度/cm", "高度/cm", "体积合计/cm^3", "重量/g", "重量合计/g",
+            "长度/cm", "宽度/cm", "高度/cm", "体积合计/m³", "重量/g", "重量合计/kg",
         ])
         for item in preview_table:
             csv_writer.writerow([

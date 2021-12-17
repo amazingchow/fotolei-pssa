@@ -41,24 +41,17 @@
               <b-th scope="col">导入日期</b-th>
               <b-th scope="col">规格编号</b-th>
               <b-th scope="col">起始库存数量</b-th>
-              <b-th scope="col">起始库存总额</b-th>
               <b-th scope="col">采购数量</b-th>
-              <b-th scope="col">采购总额</b-th>
               <b-th scope="col">采购退货数量</b-th>
-              <b-th scope="col">采购退货总额</b-th>
               <b-th scope="col">销售数量</b-th>
-              <b-th scope="col">销售总额</b-th>
               <b-th scope="col">销售退货数量</b-th>
-              <b-th scope="col">销售退货总额</b-th>
               <b-th scope="col">其他变更数量</b-th>
-              <b-th scope="col">其他变更总额</b-th>
               <b-th scope="col">截止库存数量</b-th>
-              <b-th scope="col">截止库存总额</b-th>
             </b-tr>
           </b-thead>
           <b-tbody>
             <b-tr v-for="(inventory, index) in inventories" :key="index">
-              <b-td>{{ inventory[15] }}</b-td>
+              <b-td>{{ inventory[8] }}</b-td>
               <b-td>{{ inventory[0] }}</b-td>
               <b-td>{{ inventory[1] }}</b-td>
               <b-td>{{ inventory[2] }}</b-td>
@@ -67,13 +60,6 @@
               <b-td>{{ inventory[5] }}</b-td>
               <b-td>{{ inventory[6] }}</b-td>
               <b-td>{{ inventory[7] }}</b-td>
-              <b-td>{{ inventory[8] }}</b-td>
-              <b-td>{{ inventory[9] }}</b-td>
-              <b-td>{{ inventory[10] }}</b-td>
-              <b-td>{{ inventory[11] }}</b-td>
-              <b-td>{{ inventory[12] }}</b-td>
-              <b-td>{{ inventory[13] }}</b-td>
-              <b-td>{{ inventory[14] }}</b-td>
             </b-tr>
           </b-tbody>
         </b-table-simple>
@@ -279,7 +265,7 @@
             ></v-suggest>
           </b-form-group>
           <div id="inventory-table-operate-btn" class="w-100 d-block">
-            <b-button variant="dark" @click="onPreviewCase3">生成报表</b-button>
+            <b-button variant="dark" @click="onPreviewCase3">下载报表</b-button>
             <b-button variant="dark" @click="onCancelExportCase3">取消</b-button>
           </div>
         </b-card>
@@ -612,7 +598,7 @@
         </b-table-simple>
         <div id="inventory-table-operate-btn" class="w-100 d-block">
           <b-button variant="dark" @click="onImportForCase6">导入</b-button>
-          <b-button variant="dark" @click="onPreviewCase6">生成报表</b-button>
+          <b-button variant="dark" @click="onPreviewCase6">预览报表</b-button>
           <b-button variant="dark" @click="onCancelExportCase6">取消</b-button>
         </div>
       </b-form>
@@ -1184,9 +1170,12 @@ export default {
     onExportCase5 (evt) {
       // 确定导出采购辅助分析报表
       evt.preventDefault()
+      this.$refs.previewCase5Modal.hide()
       this.$refs.exportFileCase5Modal.hide()
-      const payload = {}
-      this.exportReportFileCase5(payload)
+      const payload = {
+        preview_table: this.previewCase5.previewTable
+      }
+      this.prepareExportReportFile('/api/v1/case5/prepare', payload)
       this.initExportForm()
     },
     onCancelExportCase5 (evt) {
