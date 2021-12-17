@@ -893,10 +893,33 @@ ORDER BY create_time ASC;".format(
                     cache["specification_code"] = inner_rets[0][3]
                     cache["product_name"] = inner_rets[0][2]
                     cache["specification_name"] = inner_rets[0][4]
+                    cache["brand"] = ret[5]
+                    cache["classification_1"] = ret[6]
+                    cache["classification_2"] = ret[7]
+                    cache["product_series"] = ret[8]
+                    cache["stop_status"] = ret[9]
+                    cache["product_weight"] = ret[10]
+                    cache["product_length"] = ret[11]
+                    cache["product_width"] = ret[12]
+                    cache["product_height"] = ret[13]
+                    cache["is_combined"] = ret[14]
+                    cache["is_import"] = ret[16]
+                    cache["supplier_name"] = ret[17]
+                    cache["purchase_name"] = ret[18]
                     cache["st_inventory_qty"] = inner_rets[0][5]
+                    cache["st_inventory_total"] = inner_rets[0][6]
                     cache["purchase_qty"] = sum([inner_ret[7] for inner_ret in inner_rets])
+                    cache["purchase_total"] = sum([inner_ret[8] for inner_ret in inner_rets])
+                    cache["purchase_then_return_qty"] = sum([inner_ret[9] for inner_ret in inner_rets])
+                    cache["purchase_then_return_total"] = sum([inner_ret[10] for inner_ret in inner_rets])
                     cache["sale_qty"] = sale_qty_x_months
+                    cache["sale_total"] = sum([inner_ret[12] for inner_ret in inner_rets])
+                    cache["sale_then_return_qty"] = sum([inner_ret[13] for inner_ret in inner_rets])
+                    cache["sale_then_return_total"] = sum([inner_ret[14] for inner_ret in inner_rets])
+                    cache["others_qty"] = sum([inner_ret[15] for inner_ret in inner_rets])
+                    cache["others_total"] = sum([inner_ret[16] for inner_ret in inner_rets])
                     cache["ed_inventory_qty"] = inner_rets[len(inner_rets) - 1][17]
+                    cache["ed_inventory_total"] = inner_rets[len(inner_rets) - 1][18]
                     cache["jit_inventory"] = jit_inventory
                     if sale_qty_x_months == 0 and jit_inventory > 0:
                         cache["ssr"] = "*"
@@ -909,6 +932,46 @@ ORDER BY create_time ASC;".format(
     else:
         response_object = {"status": "not found"}
         return jsonify(response_object)
+
+
+# 预下载滞销品报表的接口
+@ggfilm_server.route("/api/v1/case4/prepare", methods=["POST"])
+def prepare_report_file_case4():
+    payload = request.get_json()
+    preview_table = payload.get("preview_table", [])
+
+    ts = int(time.time())
+    csv_file_sha256 = generate_digest("滞销品报表_{}.csv".format(ts))
+    csv_file = "{}/ggfilm-server/send_queue/{}".format(os.path.expanduser("~"), csv_file_sha256)
+    output_file = "滞销品报表_{}.csv".format(ts)
+    with open(csv_file, "w", encoding='utf-8-sig') as fd:
+        csv_writer = csv.writer(fd, delimiter=",")
+        csv_writer.writerow([
+            "商品编码", "规格编码", "商品名称", "规格名称",
+            "品牌", "分类1", "分类2", "产品系列",
+            "STOP状态", "重量/g", "长度/cm", "宽度/cm", "高度/cm",
+            "组合商品", "进口产品", "供应商名称", "采购名称",
+            "起始库存数量", "起始库存总额", "采购数量", "采购总额",
+            "采购退货数量", "采购退货总额", "销售数量", "销售总额",
+            "销售退货数量", "销售退货总额", "其他变更数量", "其他变更总额",
+            "截止库存数量", "截止库存总额", "实时可用库存", "库销比",
+        ])
+        for item in preview_table:
+            csv_writer.writerow([
+                item["product_code"], item["specification_code"], item["product_name"], item["specification_name"],
+                item["brand"], item["classification_1"], item["classification_2"], item["product_series"],
+                item["stop_status"], item["product_weight"], item["product_length"], item["product_width"], item["product_height"],
+                item["is_combined"], item["is_import"], item["supplier_name"], item["purchase_name"],
+                item["st_inventory_qty"], item["st_inventory_total"], item["purchase_qty"], item["purchase_total"],
+                item["purchase_then_return_qty"], item["purchase_then_return_total"], item["sale_qty"], item["sale_total"],
+                item["sale_then_return_qty"], item["sale_then_return_total"], item["others_qty"], item["others_total"],
+                item["ed_inventory_qty"], item["ed_inventory_total"], item["jit_inventory"], item["ssr"],
+            ])
+
+    response_object = {"status": "success"}
+    response_object["output_file"] = output_file
+    response_object["server_send_queue_file"] = csv_file_sha256
+    return jsonify(response_object)
 
 
 # 预览采购辅助分析报表的接口

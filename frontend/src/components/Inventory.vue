@@ -1100,9 +1100,12 @@ export default {
     onExportCase4 (evt) {
       // 确定导出滞销品报表
       evt.preventDefault()
+      this.$refs.previewCase4Modal.hide()
       this.$refs.exportFileCase4Modal.hide()
-      const payload = {}
-      this.exportReportFileCase4(payload)
+      const payload = {
+        preview_table: this.previewCase4.previewTable
+      }
+      this.prepareExportReportFile('/api/v1/case4/prepare', payload)
       this.initExportForm()
     },
     previewReportFileCase4 (payload) {
