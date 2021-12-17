@@ -11,11 +11,11 @@ import shutil
 import sys
 import time
 from collections import defaultdict
+sys.path.append(os.path.abspath("./db"))
 from db.mysqlcli import MySQLConnector
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 
-sys.path.append(os.path.abspath("./db"))
 
 logging.basicConfig(level=logging.INFO, format="[%(asctime)s][%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)

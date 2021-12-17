@@ -910,17 +910,17 @@ export default {
       this.reducedBtnOption = 'open'
       this.thresholdSSR = '4'
     },
-    importCSVFile (formData) {
+    importCSVFile (formData, date) {
       let config = {
         header: {
           'Content-Type': 'multipart/form-data'
         }
       }
-      axios.post(this.serverBaseURL + '/api/v1/inventories/upload', formData, config)
+      axios.post(this.serverBaseURL + '/api/v1/inventories/upload', formData, config, date)
         .then((res) => {
           if (res.data.status === 'success') {
             this.listInventories()
-            this.message = '导入成功!'
+            this.message = date + '数据导入成功!'
             this.showMessage = true
           } else if (res.data.status === 'repetition') {
             this.message = '导入失败! 数据表格重复导入！'
@@ -948,7 +948,7 @@ export default {
       let formData = new FormData()
       formData.append('file', this.uploadCSVFile, this.uploadCSVFile.name)
       formData.append('import_date', this.customDateSelection)
-      this.importCSVFile(formData)
+      this.importCSVFile(formData, this.customDateSelection)
       this.setDefaultDate()
       this.uploadCSVFile = null
     },
