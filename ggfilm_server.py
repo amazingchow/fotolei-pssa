@@ -4,19 +4,23 @@ import csv
 import datetime
 import hashlib
 import logging
-logging.basicConfig(level=logging.INFO, format="[%(asctime)s][%(levelname)s] %(message)s")
-logger = logging.getLogger(__name__)
 import pendulum
 import os
-import sys
-sys.path.append(os.path.abspath("./db"))
 import shelve
 import shutil
+import sys
 import time
-
 from collections import defaultdict
-SKU_LOOKUP_TABLE = defaultdict(bool)
 from db.mysqlcli import MySQLConnector
+from flask import Flask, jsonify, request, send_from_directory
+from flask_cors import CORS
+
+sys.path.append(os.path.abspath("./db"))
+
+logging.basicConfig(level=logging.INFO, format="[%(asctime)s][%(levelname)s] %(message)s")
+logger = logging.getLogger(__name__)
+
+SKU_LOOKUP_TABLE = defaultdict(bool)
 DBConnector = MySQLConnector.instance()
 DBConnector.init_conn("ggfilm")
 _stmt = "SELECT specification_code FROM ggfilm.products;"
@@ -25,9 +29,6 @@ if type(_rets) is list and len(_rets) > 0:
     for ret in _rets:
         SKU_LOOKUP_TABLE[ret[0]] = True
     logger.info("Insert {} SKUs into SKU_LOOKUP_TABLE!!!".format(len(SKU_LOOKUP_TABLE)))
-
-from flask import Flask, jsonify, request, send_from_directory
-from flask_cors import CORS
 
 ggfilm_server = Flask(__name__)
 ggfilm_server.config.from_object(__name__)
@@ -427,7 +428,7 @@ WHERE COALESCE(CHAR_LENGTH(product_series), 0) != 0;"
     rets = DBConnector.query(stmt)
 
     if type(rets) is list and len(rets) > 0:
-        lookup_table = {} # product_series -> [(specification_code, jit_inventory)]
+        lookup_table = {}  # product_series -> [(specification_code, jit_inventory)]
         for ret in rets:
             if ret[1] in lookup_table.keys():
                 lookup_table[ret[1]].append((ret[0], ret[2]))
@@ -457,7 +458,7 @@ WHERE COALESCE(CHAR_LENGTH(product_series), 0) != 0;"
                 specification_code = vv[0]
                 jit_inventory = vv[1]
                 cache[product_series]["jit_inventory"] += jit_inventory
-                
+
                 stmt = "SELECT * FROM ggfilm.inventories \
 WHERE specification_code = '{}' AND \
 create_time >= '{}' AND \
@@ -534,7 +535,7 @@ create_time <= '{}';".format(specification_code, st_date, ed_date)
                     v["ed_inventory_qty"], v["ed_inventory_total"],
                     v["jit_inventory"],
                 ])
-        
+
         response_object = {"status": "success"}
         response_object["output_file"] = output_file
         response_object["server_send_queue_file"] = csv_file_sha256
@@ -557,6 +558,8 @@ create_time <= '{}';".format(specification_code, st_date, ed_date)
 * 销售数量 = 时间段内每一个月的数量的累加
 * 截止库存数量 = 时间段内最后一个月的数量
 '''
+
+
 @ggfilm_server.route("/api/v1/case3/preview", methods=["POST"])
 def preview_report_file_case3():
     payload = request.get_json()
@@ -582,8 +585,8 @@ WHERE specification_code = '{}' AND \
 create_time >= '{}' AND \
 create_time <= '{}' \
 ORDER BY create_time ASC;".format(
-                specification_code, st_date, ed_date
-            )
+            specification_code, st_date, ed_date
+        )
         rets = DBConnector.query(stmt)
         if type(rets) is list and len(rets) > 0:
             resp["st_date"] = st_date
@@ -704,8 +707,8 @@ WHERE specification_code = '{}' AND \
 create_time >= '{}' AND \
 create_time <= '{}' \
 ORDER BY create_time ASC;".format(
-            specification_code, st_date, ed_date
-        )
+        specification_code, st_date, ed_date
+    )
     rets = DBConnector.query(stmt)
     cache["st_inventory_qty"] = rets[0][5]
     cache["st_inventory_total"] = rets[0][6]
@@ -797,6 +800,8 @@ ORDER BY create_time ASC;".format(
 * 销售数量 = 时间段内每一个月的数量的累加
 * 截止库存数量 = 时间段内最后一个月的数量
 '''
+
+
 @ggfilm_server.route("/api/v1/case4/preview", methods=["POST"])
 def export_report_file_case4():
     payload = request.get_json()
@@ -863,10 +868,10 @@ WHERE specification_code = '{}' AND \
 create_time >= '{}' AND \
 create_time <= '{}' \
 ORDER BY create_time ASC;".format(
-                    specification_code, st_date, ed_date
-                )
+                specification_code, st_date, ed_date
+            )
             inner_rets = DBConnector.query(stmt)
-            if type(inner_rets) is list and len(inner_rets) > 0:          
+            if type(inner_rets) is list and len(inner_rets) > 0:
                 sale_qty_x_months = 0
                 for inner_ret in inner_rets:
                     sale_qty_x_months += inner_ret[11]
@@ -880,8 +885,8 @@ ORDER BY create_time ASC;".format(
                                 reduced_months += 1
                     sale_qty_x_months = int(sale_qty_x_months * (time_quantum_x / (time_quantum_x - reduced_months)))
 
-                    if (sale_qty_x_months > 0 and it_inventory / sale_qty_x_months > threshold_ssr) or \
-                        (sale_qty_x_months == 0 and it_inventory > 0):
+                    if (sale_qty_x_months > 0 and jit_inventory / sale_qty_x_months > threshold_ssr) or \
+                            (sale_qty_x_months == 0 and jit_inventory > 0):
                         # 滞销了
                         pass
 
@@ -892,9 +897,11 @@ ORDER BY create_time ASC;".format(
 '''
 预览效果
 
-商品编码 | 品牌 | 商品名称 | 规格名称 | 供应商 | X个月销量 | Y个月销量 | 库存量 | 库存/X个月销量 | 库存/Y个月销量 | 
+商品编码 | 品牌 | 商品名称 | 规格名称 | 供应商 | X个月销量 | Y个月销量 | 库存量 | 库存/X个月销量 | 库存/Y个月销量 |
 库存/X个月折算销量 | 库存/Y个月折算销量	| 拟定进货量 | 单个重量/g | 小计重量/kg | 单个体积/cm³ | 小计体积/m³
 '''
+
+
 @ggfilm_server.route("/api/v1/case5/preview", methods=["POST"])
 def preview_report_file_case5():
     way = request.args.get("way", "1")
@@ -971,13 +978,13 @@ ORDER BY create_time DESC LIMIT {};".format(specification_code, time_quantum_y)
             if type(inner_rets) is list and len(inner_rets) > 0:
                 cache[specification_code]["sale_qty_x_months"] = 0
                 cache[specification_code]["sale_qty_y_months"] = 0
-                for inner_ret in inner_rets[time_quantum_y-time_quantum_x:]:
+                for inner_ret in inner_rets[time_quantum_y - time_quantum_x:]:
                     cache[specification_code]["sale_qty_x_months"] += inner_ret[2]
                 for inner_ret in inner_rets:
                     cache[specification_code]["sale_qty_y_months"] += inner_ret[2]
                 if reduced_btn_option == "open":
                     reduced_months = 0
-                    for inner_ret in inner_rets[time_quantum_y-time_quantum_x:]:
+                    for inner_ret in inner_rets[time_quantum_y - time_quantum_x:]:
                         if inner_ret[0] == 0 and inner_ret[1] == 0:
                             if inner_ret[3] <= 10 and inner_ret[3] <= inner_ret[2]:
                                 reduced_months += 1
@@ -1096,7 +1103,7 @@ def upload_csv_file_for_case6():
             if line > 0:
                 demand_table.append(
                     {
-                        "specification_code": row[0].strip(), 
+                        "specification_code": row[0].strip(),
                         "quantity": row[1].strip()
                     }
                 )
@@ -1113,6 +1120,8 @@ def upload_csv_file_for_case6():
 
 规格编码 | 商品名称 | 规格名称 | 数量 | 长度/cm | 宽度/cm | 高度/cm | 体积合计/m³ | 重量/g | 重量合计/kg
 '''
+
+
 @ggfilm_server.route("/api/v1/case6/preview", methods=["POST"])
 def preview_report_file_case6():
     payload = request.get_json()
@@ -1209,7 +1218,7 @@ def export_report_file_case3(filename):
     return send_from_directory(directory="{}/ggfilm-server/send_queue".format(os.path.expanduser("~")), path=filename)
 
 
-def generate_file_digest(f:str):
+def generate_file_digest(f: str):
     sha256_hash = hashlib.sha256()
     with open(f, "rb") as fin:
         for byte_block in iter(lambda: fin.read(4096), b""):
@@ -1217,11 +1226,11 @@ def generate_file_digest(f:str):
     return sha256_hash.hexdigest()
 
 
-def generate_digest(s:str):
+def generate_digest(s: str):
     return hashlib.sha256(s.encode("utf-8")).hexdigest()
 
 
-def do_data_schema_validation_for_input_products(csv_file:str):
+def do_data_schema_validation_for_input_products(csv_file: str):
     data_schema = [
         "商品编码", "规格编码", "商品名称", "规格名称",
         "品牌", "分类1", "分类2", "产品系列", "STOP状态",
@@ -1246,7 +1255,7 @@ def do_data_schema_validation_for_input_products(csv_file:str):
     return is_valid
 
 
-def do_intelligent_calibration_for_input_products(csv_file:str):
+def do_intelligent_calibration_for_input_products(csv_file: str):
     # 1. 表格里面存在中文逗号，程序需要做下智能矫正
     fr = open(csv_file, "r", encoding='utf-8-sig')
     fw = open(csv_file + ".tmp", "w", encoding='utf-8-sig')
@@ -1293,7 +1302,7 @@ def do_intelligent_calibration_for_input_products(csv_file:str):
     shutil.move(csv_file + ".tmp", csv_file)
 
 
-def do_data_schema_validation_for_input_inventories(csv_file:str):
+def do_data_schema_validation_for_input_inventories(csv_file: str):
     data_schema = [
         "商品编码", "商品名称", "规格编码", "规格名称",
         "起始库存数量", "起始库存总额", "采购数量", "采购总额",
@@ -1316,7 +1325,7 @@ def do_data_schema_validation_for_input_inventories(csv_file:str):
     return is_valid
 
 
-def do_intelligent_calibration_for_input_inventories(csv_file:str):
+def do_intelligent_calibration_for_input_inventories(csv_file: str):
     # 表格里面某些数据行存在多余的逗号，程序需要做下智能矫正
     fr = open(csv_file, "r", encoding='utf-8-sig')
     csv_reader = csv.reader(fr, delimiter=",")
@@ -1339,7 +1348,7 @@ def do_intelligent_calibration_for_input_inventories(csv_file:str):
     shutil.move(csv_file + ".tmp", csv_file)
 
 
-def add_date_for_input_inventories(csv_file:str, import_date:str):
+def add_date_for_input_inventories(csv_file: str, import_date: str):
     fr = open(csv_file, "r", encoding='utf-8-sig')
     csv_reader = csv.reader(fr, delimiter=",")
     fw = open(csv_file + ".tmp", "w", encoding='utf-8-sig')
@@ -1360,5 +1369,6 @@ def add_date_for_input_inventories(csv_file:str, import_date:str):
 
 def all_done():
     DBConnector.release_conn()
+
 
 atexit.register(all_done)

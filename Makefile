@@ -1,3 +1,7 @@
+check:
+	@pyflakes ggfilm_server.py
+	@pycodestyle ggfilm_server.py --ignore=E501,W504,E502,E131
+
 .PHONY: init
 init:
 	@./init_server.sh
