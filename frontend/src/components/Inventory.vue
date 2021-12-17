@@ -39,29 +39,19 @@
           <b-thead>
             <b-tr>
               <b-th scope="col">导入日期</b-th>
-              <b-th scope="col">商品编号</b-th>
-              <b-th scope="col">商品名称</b-th>
               <b-th scope="col">规格编号</b-th>
-              <b-th scope="col">规格名称</b-th>
               <b-th scope="col">起始库存数量</b-th>
-              <b-th scope="col">起始库存总额</b-th>
               <b-th scope="col">采购数量</b-th>
-              <b-th scope="col">采购总额</b-th>
               <b-th scope="col">采购退货数量</b-th>
-              <b-th scope="col">采购退货总额</b-th>
               <b-th scope="col">销售数量</b-th>
-              <b-th scope="col">销售总额</b-th>
               <b-th scope="col">销售退货数量</b-th>
-              <b-th scope="col">销售退货总额</b-th>
               <b-th scope="col">其他变更数量</b-th>
-              <b-th scope="col">其他变更总额</b-th>
               <b-th scope="col">截止库存数量</b-th>
-              <b-th scope="col">截止库存总额</b-th>
             </b-tr>
           </b-thead>
           <b-tbody>
             <b-tr v-for="(inventory, index) in inventories" :key="index">
-              <b-td>{{ inventory[18] }}</b-td>
+              <b-td>{{ inventory[8] }}</b-td>
               <b-td>{{ inventory[0] }}</b-td>
               <b-td>{{ inventory[1] }}</b-td>
               <b-td>{{ inventory[2] }}</b-td>
@@ -70,16 +60,6 @@
               <b-td>{{ inventory[5] }}</b-td>
               <b-td>{{ inventory[6] }}</b-td>
               <b-td>{{ inventory[7] }}</b-td>
-              <b-td>{{ inventory[8] }}</b-td>
-              <b-td>{{ inventory[9] }}</b-td>
-              <b-td>{{ inventory[10] }}</b-td>
-              <b-td>{{ inventory[11] }}</b-td>
-              <b-td>{{ inventory[12] }}</b-td>
-              <b-td>{{ inventory[13] }}</b-td>
-              <b-td>{{ inventory[14] }}</b-td>
-              <b-td>{{ inventory[15] }}</b-td>
-              <b-td>{{ inventory[16] }}</b-td>
-              <b-td>{{ inventory[17] }}</b-td>
             </b-tr>
           </b-tbody>
         </b-table-simple>
@@ -285,7 +265,7 @@
             ></v-suggest>
           </b-form-group>
           <div id="inventory-table-operate-btn" class="w-100 d-block">
-            <b-button variant="dark" @click="onPreviewCase3">生成报表</b-button>
+            <b-button variant="dark" @click="onPreviewCase3">下载报表</b-button>
             <b-button variant="dark" @click="onCancelExportCase3">取消</b-button>
           </div>
         </b-card>
@@ -303,7 +283,7 @@
             <b-th scope="col">采购数量</b-th>
             <b-th scope="col">销售数量</b-th>
             <b-th scope="col">截止库存数量</b-th>
-            <b-th scope="col">实时库存</b-th>
+            <b-th scope="col">实时可用库存</b-th>
           </b-tr>
         </b-thead>
         <b-tbody>
@@ -326,12 +306,174 @@
       </div>
     </b-modal>
     <b-modal ref="exportFileCase4Modal" id="export-file-case4-modal" title="导出滞销品报表" hide-footer>
-      <b-form @submit="onExportCase4" @reset="onCancelExportCase4">
-        <div id="inventory-table-operate-btn" class="w-100 d-block">
-          <b-button type="submit" variant="dark">导出</b-button>
-          <b-button type="reset" variant="dark">取消</b-button>
-        </div>
+      <b-form>
+        <b-card bg-variant="light">
+          <b-form-group
+            label="起始日期"
+            label-size="sm"
+            label-align-sm="right"
+            label-cols-sm="3"
+          >
+            <b-form-input v-model="stDateSelection" placeholder="YYYY-MM"></b-form-input>
+          </b-form-group>
+          <b-form-group
+            label="截止日期"
+            label-size="sm"
+            label-align-sm="right"
+            label-cols-sm="3"
+          >
+            <b-form-input v-model="edDateSelection" placeholder="YYYY-MM"></b-form-input>
+          </b-form-group>
+          <b-form-group
+            label="品牌"
+            label-size="sm"
+            label-align-sm="right"
+            label-cols-sm="3"
+          >
+            <v-suggest
+              :data="brandOptions"
+              show-field="brand"
+              v-model="brandSelection"
+            ></v-suggest>
+          </b-form-group>
+          <b-form-group
+            label="分类1"
+            label-size="sm"
+            label-align-sm="right"
+            label-cols-sm="3"
+          >
+            <v-suggest
+              :data="classification1Options"
+              show-field="classification-1"
+              v-model="classification1Selection"
+            ></v-suggest>
+          </b-form-group>
+          <b-form-group
+            label="分类2"
+            label-size="sm"
+            label-align-sm="right"
+            label-cols-sm="3"
+          >
+            <v-suggest
+              :data="classification2Options"
+              show-field="classification-2"
+              v-model="classification2Selection"
+            ></v-suggest>
+          </b-form-group>
+          <b-form-group
+            label="产品系列"
+            label-size="sm"
+            label-align-sm="right"
+            label-cols-sm="3"
+          >
+            <v-suggest
+              :data="productSeriesOptions"
+              show-field="product-series"
+              v-model="productSeriesSelection"
+            ></v-suggest>
+          </b-form-group>
+          <b-form-group
+            label="STOP状态?"
+            label-size="sm"
+            label-align-sm="right"
+            label-cols-sm="3"
+          >
+            <b-form-select v-model="stopStatusSelection" :options="stopStatusOptions"></b-form-select>
+          </b-form-group>
+          <b-form-group
+            label="组合商品?"
+            label-size="sm"
+            label-align-sm="right"
+            label-cols-sm="3"
+          >
+            <b-form-select v-model="isCombinedSelection" :options="isCombinedOptions"></b-form-select>
+          </b-form-group>
+          <b-form-group
+            label="参与统计?"
+            label-size="sm"
+            label-align-sm="right"
+            label-cols-sm="3"
+          >
+            <b-form-select v-model="beAggregatedSelection" :options="beAggregatedOptions"></b-form-select>
+          </b-form-group>
+          <b-form-group
+            label="进口商品?"
+            label-size="sm"
+            label-align-sm="right"
+            label-cols-sm="3"
+          >
+            <b-form-select v-model="isImportSelection" :options="isImportOptions"></b-form-select>
+          </b-form-group>
+          <b-form-group
+            label="供应商名称"
+            label-size="sm"
+            label-align-sm="right"
+            label-cols-sm="3"
+          >
+            <v-suggest
+              :data="supplierNameOptions"
+              show-field="supplier-name"
+              v-model="supplierNameSelection"
+            ></v-suggest>
+          </b-form-group>
+          <b-form-group
+            label="库销比阈值"
+            label-size="sm"
+            label-align-sm="right"
+            label-cols-sm="3"
+          >
+            <b-form-input v-model="thresholdSSR" type="number" placeholder="4"></b-form-input>
+          </b-form-group>
+          <b-form-group
+            label="断货折算"
+            label-size="sm"
+            label-align-sm="right"
+            label-cols-sm="3"
+          >
+            <b-form-radio-group v-model="reducedBtnOption" :options="reducedBtnOptions"></b-form-radio-group>
+          </b-form-group>
+          <div id="inventory-table-operate-btn" class="w-100 d-block">
+            <b-button variant="dark" @click="onPreviewCase4">预览报表</b-button>
+            <b-button variant="dark" @click="onCancelExportCase4">取消</b-button>
+          </div>
+        </b-card>
       </b-form>
+    </b-modal>
+    <b-modal ref="previewCase4Modal" title="预览滞销品报表" size="xl" hide-footer>
+      <b-table-simple striped hover small id="preview-table">
+        <b-thead>
+          <b-tr>
+            <b-th scope="col">商品编码</b-th>
+            <b-th scope="col">规格编码</b-th>
+            <b-th scope="col">商品名称</b-th>
+            <b-th scope="col">规格名称</b-th>
+            <b-th scope="col">起始库存数量</b-th>
+            <b-th scope="col">采购数量</b-th>
+            <b-th scope="col">销售数量</b-th>
+            <b-th scope="col">截止库存数量</b-th>
+            <b-th scope="col">实时可用库存</b-th>
+            <b-th scope="col">库销比</b-th>
+          </b-tr>
+        </b-thead>
+        <b-tbody>
+          <b-tr v-for="(item, index) in previewCase4.previewTable" :key="index">
+            <b-td>{{ item.product_code }}</b-td>
+            <b-td>{{ item.specification_code }}</b-td>
+            <b-td>{{ item.product_name }}</b-td>
+            <b-td>{{ item.specification_name }}</b-td>
+            <b-td>{{ item.st_inventory_qty }}</b-td>
+            <b-td>{{ item.purchase_qty }}</b-td>
+            <b-td>{{ item.sale_qty }}</b-td>
+            <b-td>{{ item.ed_inventory_qty }}</b-td>
+            <b-td>{{ item.jit_inventory }}</b-td>
+            <b-td>{{ item.ssr }}</b-td>
+          </b-tr>
+        </b-tbody>
+      </b-table-simple>
+      <div id="inventory-table-operate-btn" class="w-100 d-block">
+        <b-button variant="dark" @click="onExportCase4">下载报表</b-button>
+        <b-button variant="dark" @click="onCancelPreviewCase4">取消</b-button>
+      </div>
     </b-modal>
     <b-modal ref="exportFileCase5Modal" id="export-file-case5-modal" title="导出采购辅助分析报表" hide-footer>
       <b-form>
@@ -492,7 +634,7 @@
         </b-table-simple>
         <div id="inventory-table-operate-btn" class="w-100 d-block">
           <b-button variant="dark" @click="onImportForCase6">导入</b-button>
-          <b-button variant="dark" @click="onPreviewCase6">生成报表</b-button>
+          <b-button variant="dark" @click="onPreviewCase6">预览报表</b-button>
           <b-button variant="dark" @click="onCancelExportCase6">取消</b-button>
         </div>
       </b-form>
@@ -560,6 +702,12 @@
         </div>
       </div>
     </b-sidebar>
+    <b-modal ref="processingModal" hide-footer>
+      <div class="d-flex align-items-center">
+        <strong>处理中...</strong>
+        <b-spinner class="ml-auto"></b-spinner>
+      </div>
+    </b-modal>
   </div>
 </template>
 
@@ -657,7 +805,7 @@ export default {
         { value: '非进口品', text: '非进口品' },
         { value: '全部', text: '全部' }
       ],
-      isImportSelection: '非进口品',
+      isImportSelection: '全部',
       supplierNameOptions: [],
       supplierNameSelections: [],
       supplierNameSelection: '',
@@ -673,6 +821,9 @@ export default {
         saleQty: 0,
         edInventoryQty: 0,
         jitInventory: 0
+      },
+      previewCase4: {
+        previewTable: []
       },
       previewCase5: {
         previewTable: []
@@ -691,6 +842,7 @@ export default {
         { text: '开', value: 'open' },
         { text: '关', value: 'close' }
       ],
+      thresholdSSR: '4',
       inventories: [],
       shouldOpenSidebar: false,
       addedSkus: [],
@@ -711,15 +863,10 @@ export default {
       axios.get(this.serverBaseURL + '/api/v1/alloptions')
         .then((res) => {
           this.brandOptions = res.data.brand_options
-          console.log(this.brandOptions.length)
           this.classification1Options = res.data.classification_1_options
-          console.log(this.classification1Options.length)
           this.classification2Options = res.data.classification_2_options
-          console.log(this.classification2Options.length)
           this.productSeriesOptions = res.data.product_series_options
-          console.log(this.productSeriesOptions.length)
           this.supplierNameOptions = res.data.supplier_name_options
-          console.log(this.supplierNameOptions.length)
         })
         .catch((error) => {
           // eslint-disable-next-line
@@ -732,7 +879,6 @@ export default {
       axios.get(this.serverBaseURL + '/api/v1/allselections/suppliers')
         .then((res) => {
           this.supplierNameSelections = res.data.supplier_name_selections
-          console.log(this.supplierNameSelections.length)
         })
         .catch((error) => {
           // eslint-disable-next-line
@@ -754,8 +900,7 @@ export default {
         })
     },
     initExportForm () {
-      this.stDateSelection = ''
-      this.edDateSelection = ''
+      this.setDefaultDate()
       this.productCodeSelection = ''
       this.productNameSelection = ''
       this.specificationCodeSelection = ''
@@ -766,7 +911,7 @@ export default {
       this.stopStatusSelection = '在用'
       this.isCombinedSelection = '否'
       this.beAggregatedSelection = '参与'
-      this.isImportSelection = '非进口品'
+      this.isImportSelection = '全部'
       this.supplierNameSelection = ''
       this.previewCase3.stDate = ''
       this.previewCase3.edDate = ''
@@ -779,6 +924,7 @@ export default {
       this.previewCase3.saleQty = 0
       this.previewCase3.edInventoryQty = 0
       this.previewCase3.jitInventory = 0
+      this.previewCase4.previewTable = []
       this.previewCase5.previewTable = []
       this.previewCase6.previewTable = []
       this.previewCase6.previewSummaryTable = []
@@ -788,18 +934,19 @@ export default {
       this.thresholdY = '1'
       this.projectedPurchase = '12'
       this.reducedBtnOption = 'open'
+      this.thresholdSSR = '4'
     },
-    importCSVFile (formData) {
+    importCSVFile (formData, date) {
       let config = {
         header: {
           'Content-Type': 'multipart/form-data'
         }
       }
-      axios.post(this.serverBaseURL + '/api/v1/inventories/upload', formData, config)
+      axios.post(this.serverBaseURL + '/api/v1/inventories/upload', formData, config, date)
         .then((res) => {
           if (res.data.status === 'success') {
             this.listInventories()
-            this.message = '导入成功!'
+            this.message = date + '数据导入成功!'
             this.showMessage = true
           } else if (res.data.status === 'repetition') {
             this.message = '导入失败! 数据表格重复导入！'
@@ -827,14 +974,14 @@ export default {
       let formData = new FormData()
       formData.append('file', this.uploadCSVFile, this.uploadCSVFile.name)
       formData.append('import_date', this.customDateSelection)
-      this.importCSVFile(formData)
-      this.customDateSelection = ''
+      this.importCSVFile(formData, this.customDateSelection)
+      this.setDefaultDate()
       this.uploadCSVFile = null
     },
     onCancel (evt) {
       evt.preventDefault()
       this.$refs.importCSVFileModal.hide()
-      this.customDateSelection = ''
+      this.setDefaultDate()
       this.uploadCSVFile = null
     },
     // 销售报表（按分类汇总）
@@ -842,7 +989,6 @@ export default {
       // 确定导出销售报表（按分类汇总）
       evt.preventDefault()
       this.$refs.exportFileCase1Modal.hide()
-      console.log('确定导出销售报表（按分类汇总）')
       const payload = {}
       this.exportReportFileCase1(payload)
       this.initExportForm()
@@ -851,7 +997,6 @@ export default {
       // 取消导出销售报表（按分类汇总）
       evt.preventDefault()
       this.$refs.exportFileCase1Modal.hide()
-      console.log('取消导出销售报表（按分类汇总）')
       this.initExportForm()
     },
     // 销售报表（按系列汇总）
@@ -955,17 +1100,65 @@ export default {
     onExportCase4 (evt) {
       // 确定导出滞销品报表
       evt.preventDefault()
+      this.$refs.previewCase4Modal.hide()
       this.$refs.exportFileCase4Modal.hide()
-      console.log('确定导出滞销品报表')
-      const payload = {}
-      this.exportReportFileCase4(payload)
+      const payload = {
+        preview_table: this.previewCase4.previewTable
+      }
+      this.prepareExportReportFile('/api/v1/case4/prepare', payload)
+      this.initExportForm()
+    },
+    previewReportFileCase4 (payload) {
+      axios.post(this.serverBaseURL + '/api/v1/case4/preview', payload)
+        .then((res) => {
+          if (res.data.status === 'success') {
+            this.previewCase4.previewTable = res.data.preview_table
+            this.$refs.previewCase4Modal.show()
+          } else {
+            this.message = '预览失败! 不存在指定的库存条目.'
+            this.showMessage = true
+          }
+        })
+        .catch((error) => {
+          // eslint-disable-next-line
+          console.log(error)
+          this.message = '预览失败!'
+          this.showMessage = true
+        })
+    },
+    onPreviewCase4 (evt) {
+      evt.preventDefault()
+      if ((this.stDateSelection === '') || (this.edDateSelection === '')) {
+        this.message = '起始日期/截止日期不能为空!'
+        this.showMessage = true
+      } else {
+        const payload = {
+          st_date: this.stDateSelection,
+          ed_date: this.edDateSelection,
+          brand: this.brandSelection,
+          classification_1: this.classification1Selection,
+          classification_2: this.classification2Selection,
+          product_series: this.productSeriesSelection,
+          stop_status: this.stopStatusSelection,
+          is_combined: this.isCombinedSelection,
+          be_aggregated: this.beAggregatedSelection,
+          is_import: this.isImportSelection,
+          supplier_name: this.supplierNameSelection,
+          threshold_ssr: this.thresholdSSR,
+          reduced_btn_option: this.reducedBtnOption
+        }
+        this.previewReportFileCase4(payload)
+      }
+    },
+    onCancelPreviewCase4 (evt) {
+      evt.preventDefault()
+      this.$refs.previewCase4Modal.hide()
       this.initExportForm()
     },
     onCancelExportCase4 (evt) {
       // 取消导出滞销品报表
       evt.preventDefault()
       this.$refs.exportFileCase4Modal.hide()
-      console.log('取消导出滞销品报表')
       this.initExportForm()
     },
     // 采购辅助分析报表
@@ -1025,9 +1218,12 @@ export default {
     onExportCase5 (evt) {
       // 确定导出采购辅助分析报表
       evt.preventDefault()
+      this.$refs.previewCase5Modal.hide()
       this.$refs.exportFileCase5Modal.hide()
-      const payload = {}
-      this.exportReportFileCase5(payload)
+      const payload = {
+        preview_table: this.previewCase5.previewTable
+      }
+      this.prepareExportReportFile('/api/v1/case5/prepare', payload)
       this.initExportForm()
     },
     onCancelExportCase5 (evt) {
@@ -1117,6 +1313,7 @@ export default {
       this.initExportForm()
     },
     prepareExportReportFile (url, payload) {
+      this.$refs.processingModal.show()
       axios.post(this.serverBaseURL + url, payload)
         .then((res) => {
           this.exportReportFile(res.data.server_send_queue_file, res.data.output_file)
@@ -1131,6 +1328,7 @@ export default {
     exportReportFile (queryFile, saveFile) {
       axios.get(this.serverBaseURL + '/api/v1/download/' + queryFile)
         .then((res) => {
+          this.$refs.processingModal.hide()
           const evt = document.createEvent('MouseEvents')
           var docUrl = document.createElement('a')
           docUrl.download = saveFile
@@ -1143,6 +1341,7 @@ export default {
           this.showMessage = true
         })
         .catch((error) => {
+          this.$refs.processingModal.hide()
           // eslint-disable-next-line
           console.log(error)
           this.message = '下载失败!'
@@ -1205,6 +1404,47 @@ export default {
       evt.preventDefault()
       this.pageOffset += 20
       this.listInventories()
+    },
+    setDefaultDate () {
+      var today = new Date()
+      var year = today.getFullYear() * 1
+      var month = today.getMonth() * 1 + 1
+      // 为导入时间设置默认值
+      if (month >= 10) {
+        this.customDateSelection = year.toString() + '-' + month.toString()
+      } else {
+        this.customDateSelection = year.toString() + '-0' + month.toString()
+      }
+      // 为起始时间设置默认值
+      var stYear
+      var stMonth
+      if (month - 3 < 0) {
+        stYear = year - 1
+        stMonth = month - 3 + 12
+      } else {
+        stYear = year
+        stMonth = month - 3
+      }
+      if (stMonth >= 10) {
+        this.stDateSelection = stYear.toString() + '-' + stMonth.toString()
+      } else {
+        this.stDateSelection = stYear.toString() + '-0' + stMonth.toString()
+      }
+      // 为截止时间设置默认值
+      var edYear
+      var edMonth
+      if (month - 1 < 0) {
+        edYear = year - 1
+        edMonth = month - 1 + 12
+      } else {
+        edYear = year
+        edMonth = month - 1
+      }
+      if (edMonth >= 10) {
+        this.edDateSelection = edYear.toString() + '-' + edMonth.toString()
+      } else {
+        this.edDateSelection = edYear.toString() + '-0' + edMonth.toString()
+      }
     }
   },
   created () {
@@ -1213,6 +1453,7 @@ export default {
     this.listAllOptions()
     this.listAllSupplierSelections()
     this.listInventories()
+    this.setDefaultDate()
   }
 }
 </script>
