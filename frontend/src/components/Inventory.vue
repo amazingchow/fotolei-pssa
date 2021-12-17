@@ -303,7 +303,7 @@
             <b-th scope="col">采购数量</b-th>
             <b-th scope="col">销售数量</b-th>
             <b-th scope="col">截止库存数量</b-th>
-            <b-th scope="col">实时库存</b-th>
+            <b-th scope="col">实时可用库存</b-th>
           </b-tr>
         </b-thead>
         <b-tbody>
