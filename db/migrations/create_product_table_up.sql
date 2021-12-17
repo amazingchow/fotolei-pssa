@@ -18,7 +18,8 @@ CREATE TABLE IF NOT EXISTS ggfilm.products (
     is_import          VARCHAR(32) ,          /* 是否是进口产品 */
     supplier_name      VARCHAR(128),          /* 供应商名称 */
     purchase_name      VARCHAR(128),          /* 采购名称 */
-    jit_inventory      INT,                   /* 即时库存 */
+    jit_inventory      INT,                   /* 实时可用库存 */
+    moq                INT,                   /* 最小订货单元 */
     PRIMARY KEY (id),
     KEY (product_code, specification_code)
 ) ENGINE=InnoDB;

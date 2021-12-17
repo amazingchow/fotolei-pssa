@@ -22,16 +22,12 @@
               <b-th scope="col">分类2</b-th>
               <b-th scope="col">产品系列</b-th>
               <b-th scope="col">STOP状态?</b-th>
-              <b-th scope="col">重量/g</b-th>
-              <b-th scope="col">长度/cm</b-th>
-              <b-th scope="col">宽度/cm</b-th>
-              <b-th scope="col">高度/cm</b-th>
               <b-th scope="col">组合商品?</b-th>
-              <b-th scope="col">参与统计?</b-th>
               <b-th scope="col">进口商品?</b-th>
               <b-th scope="col">供应商名称</b-th>
               <b-th scope="col">采购名称</b-th>
-              <b-th scope="col">即时库存</b-th>
+              <b-th scope="col">实时可用库存</b-th>
+              <b-th scope="col">MOQ</b-th>
             </b-tr>
           </b-thead>
           <b-tbody>
@@ -51,15 +47,11 @@
               <b-td>{{ product[12] }}</b-td>
               <b-td>{{ product[13] }}</b-td>
               <b-td>{{ product[14] }}</b-td>
-              <b-td>{{ product[15] }}</b-td>
-              <b-td>{{ product[16] }}</b-td>
-              <b-td>{{ product[17] }}</b-td>
-              <b-td>{{ product[18] }}</b-td>
             </b-tr>
           </b-tbody>
           <b-tfoot id="product-table-footer">
             <b-tr>
-              <b-td colspan="19" variant="secondary">总共录入<b>{{ productsTotal }}</b>条记录, 当前展示<b>20</b>条记录</b-td>
+              <b-td colspan="15" variant="secondary">总共录入<b>{{ productsTotal }}</b>条记录, 当前展示<b>20</b>条记录</b-td>
             </b-tr>
           </b-tfoot>
         </b-table-simple>

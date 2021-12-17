@@ -54,7 +54,7 @@ def upload_products():
     if not do_data_schema_validation_for_input_products(csv_file):
         response_object = {"status": "invalid input data schema"}
     else:
-        RepetitionLookupTable = shelve.open("repetiation_ = {} # .db", flag='c', writeback=False)
+        RepetitionLookupTable = shelve.open("repetiation_lookup_table.db", flag='c', writeback=False)
         file_digest = generate_file_digest(csv_file)
         if not RepetitionLookupTable.get(file_digest, False):
             RepetitionLookupTable[file_digest] = True
@@ -71,8 +71,8 @@ def upload_products():
                 "(product_code, specification_code, product_name, specification_name, " +
                 "brand, classification_1, classification_2, product_series, stop_status, " +
                 "product_weight, product_length, product_width, product_height, " +
-                "is_combined, be_aggregated, is_import, " +
-                "supplier_name, purchase_name, jit_inventory);"
+                "is_combined, be_aggregated, is_import, supplier_name, " +
+                "purchase_name, jit_inventory, moq);"
             )
 
             stmt = "SELECT specification_code FROM ggfilm.products;"
@@ -169,7 +169,7 @@ def upload_inventories():
     if not do_data_schema_validation_for_input_inventories(csv_file):
         response_object = {"status": "invalid input data schema"}
     else:
-        RepetitionLookupTable = shelve.open("repetiation_ = {} # .db", flag='c', writeback=False)
+        RepetitionLookupTable = shelve.open("repetiation_lookup_table.db", flag='c', writeback=False)
         file_digest = generate_file_digest(csv_file)
         if not RepetitionLookupTable.get(file_digest, False):
             not_inserted_sku_list = []
@@ -240,9 +240,7 @@ def list_products():
 
     stmt = "SELECT product_code, specification_code, product_name, specification_name, \
 brand, classification_1, classification_2, product_series, stop_status, \
-product_weight, product_length, product_width, product_height, \
-is_combined, be_aggregated, is_import, \
-supplier_name, purchase_name, jit_inventory \
+is_combined, is_import, supplier_name, purchase_name, jit_inventory, moq \
 FROM ggfilm.products ORDER BY 'id' DESC LIMIT {}, {};".format(
         page_offset, page_limit)
     products = DBConnector.query(stmt)
@@ -263,7 +261,7 @@ def list_inventories():
     page_offset = request.args.get("page.offset")
     page_limit = request.args.get("page.limit")
 
-    stmt = "SELECT product_code, product_name, specification_code, specification_name, \
+    stmt = "SELECT specification_code, \
 st_inventory_qty, st_inventory_total, purchase_qty, purchase_total, \
 purchase_then_return_qty, purchase_then_return_total, sale_qty, sale_total, \
 sale_then_return_qty, sale_then_return_total, others_qty, others_total, \
@@ -917,7 +915,7 @@ def preview_report_file_case5():
     if way == "1":
         if len(supplier_name) > 0:
             stmt = "SELECT specification_code, product_code, brand, product_name, specification_name, supplier_name, \
-jit_inventory, product_weight, product_length, product_width, product_height \
+jit_inventory, product_weight, product_length, product_width, product_height, moq \
 FROM ggfilm.products WHERE supplier_name = '{}'".format(supplier_name)
             if stop_status != "全部":
                 stmt = "{} AND stop_status = '{}'".format(stmt, stop_status)
@@ -925,7 +923,7 @@ FROM ggfilm.products WHERE supplier_name = '{}'".format(supplier_name)
                 stmt = "{} AND be_aggregated = '{}'".format(stmt, be_aggregated)
         else:
             stmt = "SELECT specification_code, product_code, brand, product_name, specification_name, supplier_name, \
-jit_inventory, product_weight, product_length, product_width, product_height \
+jit_inventory, product_weight, product_length, product_width, product_height, moq \
 FROM ggfilm.products"
             if stop_status != "全部":
                 stmt = "{} WHERE stop_status = '{}'".format(stmt, stop_status)
@@ -937,11 +935,11 @@ FROM ggfilm.products"
     elif way == "2":
         if len(supplier_name) > 0:
             stmt = "SELECT specification_code, product_code, brand, product_name, specification_name, supplier_name, \
-jit_inventory, product_weight, product_length, product_width, product_height \
+jit_inventory, product_weight, product_length, product_width, product_height, moq \
 FROM ggfilm.products WHERE supplier_name = '{}';".format(supplier_name)
         else:
             stmt = "SELECT specification_code, product_code, brand, product_name, specification_name, supplier_name, \
-jit_inventory, product_weight, product_length, product_width, product_height \
+jit_inventory, product_weight, product_length, product_width, product_height, moq \
 FROM ggfilm.products;"
 
     preview_table = []
@@ -962,6 +960,7 @@ FROM ggfilm.products;"
             cache[specification_code]["inventory"] = ret[6]
             cache[specification_code]["weight"] = ret[7]
             cache[specification_code]["volume"] = ret[8] * ret[9] * ret[10]
+            cache[specification_code]["moq"] = ret[11]
     if len(specification_code_list) > 0:
         for specification_code in specification_code_list:
             # TODO: 先不考虑进销存条目不足指定月数的情况
@@ -1050,6 +1049,23 @@ ORDER BY create_time DESC LIMIT {};".format(specification_code, time_quantum_y)
                             int((cache[specification_code]["sale_qty_y_months"] / time_quantum_y) * 12) - cache[specification_code]["inventory"]
                     else:
                         cache[specification_code]["projected_purchase"] = 0
+                if cache[specification_code]["projected_purchase"] > 0 and cache[specification_code]["moq"] > 1:
+                    '''
+                    比如： MOQ是8，拟定进货量算出来是22，那么是算16还是算24（MOQ的倍数，8，16，24，）？
+                    以20%为基准，（22 - 16） / 8 ≥ 20%，那么向上取是24
+                    比如： MOQ是8，拟定进货量算出来是17，那么是算16还是算24（MOQ的倍数，8，16，24，）？
+                    以20%为基准，（17 - 16） / 8 ＜ 20%，那么向下取是16
+                    '''
+                    x = cache[specification_code]["projected_purchase"]
+                    y = cache[specification_code]["moq"]
+                    if x <= y:
+                        x = y
+                    else:
+                        if (x - x % y) / y >= 0.2:
+                            x = (x - x % y) + y
+                        else:
+                            x = x - x % y
+                    cache[specification_code]["projected_purchase"] = x
                 cache[specification_code]["weight_total"] = float("{:.3f}".format((cache[specification_code]["weight"] * cache[specification_code]["projected_purchase"]) / 1e3))
                 cache[specification_code]["volume_total"] = float("{:.3f}".format((cache[specification_code]["volume"] * cache[specification_code]["projected_purchase"]) / 1e3))
 
@@ -1210,8 +1226,8 @@ def do_data_schema_validation_for_input_products(csv_file:str):
         "商品编码", "规格编码", "商品名称", "规格名称",
         "品牌", "分类1", "分类2", "产品系列", "STOP状态",
         "重量", "长度CM", "宽度CM", "高度CM",
-        "组合商品", "参与统计", "进口产品",
-        "供应商名称", "采购名称", "实时可用库存"
+        "组合商品", "参与统计", "进口产品", "供应商名称",
+        "采购名称", "实时可用库存", "最小订货单元",
     ]
     is_valid = True
     # 详情见 https://stackoverflow.com/questions/17912307/u-ufeff-in-python-string
