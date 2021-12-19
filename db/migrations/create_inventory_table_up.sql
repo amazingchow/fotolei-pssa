@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS ggfilm.inventories (
     ed_inventory_qty           INT,                    /* 截止库存数量 */
     ed_inventory_total         INT,                    /* 截止库存总额 */
     create_time                VARCHAR(10),            /* 年月的格式 */
-    sale_unit_price            INT,                    /* 销售单价 */
+    sale_unit_price            FLOAT,                  /* 销售单价 */
     PRIMARY KEY (id),
     KEY (product_code, specification_code)
 ) ENGINE=InnoDB;
