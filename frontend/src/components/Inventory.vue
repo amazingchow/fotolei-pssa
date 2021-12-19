@@ -149,7 +149,7 @@
             <b-form-input v-model="edDateSelection" placeholder="YYYY-MM"></b-form-input>
           </b-form-group>
           <b-form-group
-            label="商品编码"
+            label="商品编号"
             label-size="sm"
             label-align-sm="right"
             label-cols-sm="3"
@@ -165,7 +165,7 @@
             <b-form-input v-model="productNameSelection"></b-form-input>
           </b-form-group>
           <b-form-group
-            label="规格编码"
+            label="规格编号"
             label-size="sm"
             label-align-sm="right"
             label-cols-sm="3"
@@ -443,8 +443,8 @@
       <b-table-simple striped hover small id="preview-table">
         <b-thead>
           <b-tr>
-            <b-th scope="col">商品编码</b-th>
-            <b-th scope="col">规格编码</b-th>
+            <b-th scope="col">商品编号</b-th>
+            <b-th scope="col">规格编号</b-th>
             <b-th scope="col">商品名称</b-th>
             <b-th scope="col">规格名称</b-th>
             <b-th scope="col">起始库存数量</b-th>
@@ -562,7 +562,7 @@
       <b-table-simple striped hover small id="preview-table">
         <b-thead>
           <b-tr>
-            <b-th scope="col">商品编码</b-th>
+            <b-th scope="col">商品编号</b-th>
             <b-th scope="col">品牌</b-th>
             <b-th scope="col">商品名称</b-th>
             <b-th scope="col">规格名称</b-th>
@@ -643,7 +643,7 @@
       <b-table-simple striped hover small id="preview-table">
         <b-thead>
           <b-tr>
-            <b-th scope="col">规格编码</b-th>
+            <b-th scope="col">规格编号</b-th>
             <b-th scope="col">商品名称</b-th>
             <b-th scope="col">规格名称</b-th>
             <b-th scope="col">数量</b-th>

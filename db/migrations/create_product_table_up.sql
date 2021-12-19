@@ -1,8 +1,8 @@
 CREATE TABLE IF NOT EXISTS ggfilm.products (
     id                 INT          NOT NULL AUTO_INCREMENT,
-    product_code       VARCHAR(64)  NOT NULL, /* 商品编码 */
+    product_code       VARCHAR(64)  NOT NULL, /* 商品编号 */
     product_name       VARCHAR(128) NOT NULL, /* 商品名称 */
-    specification_code VARCHAR(64)  NOT NULL, /* 规格编码 */
+    specification_code VARCHAR(64)  NOT NULL, /* 规格编号 */
     specification_name VARCHAR(128),          /* 规格名称 */
     brand              VARCHAR(64),           /* 品牌 */
     classification_1   VARCHAR(64),           /* 分类1 */
@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS ggfilm.products (
     product_height     INT,                   /* 高度/cm */
     is_combined        VARCHAR(32) ,          /* 是否是组合商品 */
     be_aggregated      VARCHAR(32) ,          /* 是否参与统计 */
-    is_import          VARCHAR(32) ,          /* 是否是进口产品 */
+    is_import          VARCHAR(32) ,          /* 是否是进口商品 */
     supplier_name      VARCHAR(128),          /* 供应商名称 */
     purchase_name      VARCHAR(128),          /* 采购名称 */
     jit_inventory      INT,                   /* 实时可用库存 */
