@@ -1,8 +1,8 @@
 CREATE TABLE IF NOT EXISTS ggfilm.products (
     id                 INT          NOT NULL AUTO_INCREMENT,
-    product_code       VARCHAR(64)  NOT NULL, /* 商品编号 */
+    product_code       VARCHAR(64)  NOT NULL, /* 商品编码 */
     product_name       VARCHAR(128) NOT NULL, /* 商品名称 */
-    specification_code VARCHAR(64)  NOT NULL, /* 规格编号 */
+    specification_code VARCHAR(64)  NOT NULL, /* 规格编码 */
     specification_name VARCHAR(128),          /* 规格名称 */
     brand              VARCHAR(64),           /* 品牌 */
     classification_1   VARCHAR(64),           /* 分类1 */

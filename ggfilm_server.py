@@ -210,6 +210,13 @@ def upload_inventories():
                     "ed_inventory_qty, ed_inventory_total);"
                 )
 
+                with open(csv_file, "r", encoding='utf-8-sig') as fd:
+                    csv_reader = csv.reader(fd, delimiter=",")
+                    for _ in csv_reader:
+                        pass
+                    stmt = "INSERT INTO ggfilm.inventory_summary (total) VALUES (%s);"
+                    DBConnector.insert(stmt, (csv_reader.line_num - 1,))
+
                 response_object = {"status": "success"}
         else:
             response_object = {"status": "repetition"}
@@ -217,7 +224,7 @@ def upload_inventories():
     return jsonify(response_object)
 
 
-# 获取总商品量的接口
+# 获取总商品条目量的接口
 @ggfilm_server.route("/api/v1/products/total", methods=["GET"])
 def get_products_total():
     stmt = "SELECT SUM(total) FROM ggfilm.product_summary;"
@@ -226,11 +233,11 @@ def get_products_total():
     if type(ret) is list and len(ret) > 0:
         response_object["products_total"] = ret[0][0]
     else:
-        response_object["products_total"] = "0"
+        response_object["products_total"] = 0
     return jsonify(response_object)
 
 
-# 获取所有商品的接口, 带有翻页功能
+# 获取所有商品条目的接口, 带有翻页功能
 @ggfilm_server.route("/api/v1/products", methods=["GET"])
 def list_products():
     page_offset = request.args.get("page.offset")
@@ -252,7 +259,20 @@ FROM ggfilm.products ORDER BY 'id' DESC LIMIT {}, {};".format(
     return jsonify(response_object)
 
 
-# 获取所有库存的接口, 带有翻页功能
+# 获取总库存条目量的接口
+@ggfilm_server.route("/api/v1/inventories/total", methods=["GET"])
+def get_inventories_total():
+    stmt = "SELECT SUM(total) FROM ggfilm.inventory_summary;"
+    ret = DBConnector.query(stmt)
+    response_object = {"status": "success"}
+    if type(ret) is list and len(ret) > 0:
+        response_object["inventories_total"] = ret[0][0]
+    else:
+        response_object["inventories_total"] = 0
+    return jsonify(response_object)
+
+
+# 获取所有库存条目的接口, 带有翻页功能
 @ggfilm_server.route("/api/v1/inventories", methods=["GET"])
 def list_inventories():
     page_offset = request.args.get("page.offset")
@@ -543,7 +563,7 @@ create_time <= '{}';".format(specification_code, st_date, ed_date)
 '''
 预览效果
 
-商品编号 | 规格编号	| 商品名称 | 规格名称 | 起始库存数量 | 采购数量	| 销售数量 | 截止库存数量 | 实时可用库存
+商品编码 | 规格编码	| 商品名称 | 规格名称 | 起始库存数量 | 采购数量	| 销售数量 | 截止库存数量 | 实时可用库存
 
 其中
 * 起始库存数量 = 时间段内第一个月的数量
@@ -556,8 +576,8 @@ create_time <= '{}';".format(specification_code, st_date, ed_date)
 def preview_report_file_case3():
     payload = request.get_json()
     # 1. 起始日期和截止日期用于过滤掉时间条件不符合的记录项
-    # 2.1. 如果specification_code（规格编号）不为空，直接用规格编号筛选出想要的数据
-    # 2.2. 如果specification_code（规格编号）为空，则先用其他非空条件筛选出规格编号，再用规格编号筛选出想要的数据
+    # 2.1. 如果specification_code（规格编码）不为空，直接用规格编码筛选出想要的数据
+    # 2.2. 如果specification_code（规格编码）为空，则先用其他非空条件筛选出规格编码，再用规格编码筛选出想要的数据
     st_date = payload.get("st_date", "").strip()
     ed_date = payload.get("ed_date", "").strip()
     if (st_date > ed_date):
@@ -754,7 +774,7 @@ ORDER BY create_time ASC;".format(
     with open(csv_file, "w", encoding='utf-8-sig') as fd:
         csv_writer = csv.writer(fd, delimiter=",")
         csv_writer.writerow([
-            "商品编号", "规格编号", "商品名称", "规格名称",
+            "商品编码", "规格编码", "商品名称", "规格名称",
             "品牌", "分类1", "分类2", "产品系列",
             "STOP状态", "重量/g", "长度/cm", "宽度/cm", "高度/cm",
             "组合商品", "进口商品", "供应商名称", "采购名称",
@@ -783,7 +803,7 @@ ORDER BY create_time ASC;".format(
 '''
 预览效果
 
-商品编号 | 规格编号	| 商品名称 | 规格名称 | 起始库存数量 | 采购数量	| 销售数量 | 截止库存数量 | 实时可用库存 | 库销比
+商品编码 | 规格编码	| 商品名称 | 规格名称 | 起始库存数量 | 采购数量	| 销售数量 | 截止库存数量 | 实时可用库存 | 库销比
 
 其中
 * 起始库存数量 = 时间段内第一个月的数量
@@ -796,7 +816,7 @@ ORDER BY create_time ASC;".format(
 def export_report_file_case4():
     payload = request.get_json()
     # 1. 起始日期和截止日期用于过滤掉时间条件不符合的记录项
-    # 2. 先用其他非空条件筛选出规格编号，再用规格编号筛选出想要的数据
+    # 2. 先用其他非空条件筛选出规格编码，再用规格编码筛选出想要的数据
     st_date = payload.get("st_date", "").strip()
     ed_date = payload.get("ed_date", "").strip()
     if (st_date > ed_date):
@@ -939,7 +959,7 @@ def prepare_report_file_case4():
     with open(csv_file, "w", encoding='utf-8-sig') as fd:
         csv_writer = csv.writer(fd, delimiter=",")
         csv_writer.writerow([
-            "商品编号", "规格编号", "商品名称", "规格名称",
+            "商品编码", "规格编码", "商品名称", "规格名称",
             "品牌", "分类1", "分类2", "产品系列",
             "STOP状态", "重量/g", "长度/cm", "宽度/cm", "高度/cm",
             "组合商品", "进口商品", "供应商名称", "采购名称",
@@ -969,7 +989,7 @@ def prepare_report_file_case4():
 '''
 预览效果
 
-商品编号 | 品牌 | 商品名称 | 规格名称 | 供应商 | X个月销量 | Y个月销量 | 库存量 | 库存/X个月销量 | 库存/Y个月销量 |
+商品编码 | 品牌 | 商品名称 | 规格名称 | 供应商 | X个月销量 | Y个月销量 | 库存量 | 库存/X个月销量 | 库存/Y个月销量 |
 库存/X个月折算销量 | 库存/Y个月折算销量	| 拟定进货量 | 单个重量/g | 小计重量/kg | 单个体积/cm³ | 小计体积/m³
 '''
 # 预览"采购辅助分析报表"的接口
@@ -1180,7 +1200,7 @@ def prepare_report_file_case5():
     with open(csv_file, "w", encoding='utf-8-sig') as fd:
         csv_writer = csv.writer(fd, delimiter=",")
         csv_writer.writerow([
-            "商品编号", "品牌", "商品名称", "规格名称", "供应商",
+            "商品编码", "品牌", "商品名称", "规格名称", "供应商",
             "X个月销量", "X个月折算销量", "Y个月销量", "Y个月折算销量",
             "库存量", "库存/X个月销量", "库存/Y个月销量", "拟定进货量",
             "单个重量/g", "小计重量/kg", "单个体积/cm³", "小计体积/m³"
@@ -1231,7 +1251,7 @@ def upload_csv_file_for_case6():
 '''
 预览效果
 
-规格编号 | 商品名称 | 规格名称 | 数量 | 长度/cm | 宽度/cm | 高度/cm | 体积合计/m³ | 重量/g | 重量合计/kg
+规格编码 | 商品名称 | 规格名称 | 数量 | 长度/cm | 宽度/cm | 高度/cm | 体积合计/m³ | 重量/g | 重量合计/kg
 '''
 # 预览"体积、重量计算汇总单"的接口
 @ggfilm_server.route("/api/v1/case6/preview", methods=["POST"])
@@ -1297,7 +1317,7 @@ def prepare_report_file_case6():
     with open(csv_file, "w", encoding='utf-8-sig') as fd:
         csv_writer = csv.writer(fd, delimiter=",")
         csv_writer.writerow([
-            "规格编号", "商品名称", "规格名称", "数量",
+            "规格编码", "商品名称", "规格名称", "数量",
             "长度/cm", "宽度/cm", "高度/cm", "体积合计/m³", "重量/g", "重量合计/kg",
         ])
         for item in preview_table:
@@ -1338,7 +1358,7 @@ def generate_digest(s: str):
 
 def do_data_schema_validation_for_input_products(csv_file: str):
     data_schema = [
-        "商品编号", "规格编号", "商品名称", "规格名称",
+        "商品编码", "规格编码", "商品名称", "规格名称",
         "品牌", "分类1", "分类2", "产品系列", "STOP状态",
         "重量/g", "长度/cm", "宽度/cm", "高度/cm",
         "组合商品", "参与统计", "进口商品", "供应商名称",
@@ -1421,7 +1441,7 @@ def do_intelligent_calibration_for_input_products(csv_file: str):
 
 def do_data_schema_validation_for_input_inventories(csv_file: str):
     data_schema = [
-        "商品编号", "商品名称", "规格编号", "规格名称",
+        "商品编码", "商品名称", "规格编码", "规格名称",
         "起始库存数量", "起始库存总额", "采购数量", "采购总额",
         "采购退货数量", "采购退货总额", "销售数量", "销售总额",
         "销售退货数量", "销售退货总额", "其他变更数量", "其他变更总额",

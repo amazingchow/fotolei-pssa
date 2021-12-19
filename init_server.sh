@@ -19,3 +19,7 @@ sleep 2
 docker exec -i ${docker_container_id} /bin/bash -c 'mysql -uroot -p"Pwd123!@" < /migrations/create_product_summary_table_up.sql'
 sleep 2
 docker exec -i ${docker_container_id} /bin/bash -c 'mysql -uroot -p"Pwd123!@" < /migrations/create_inventory_table_up.sql'
+sleep 2
+docker exec -i ${docker_container_id} /bin/bash -c 'mysql -uroot -p"Pwd123!@" < /migrations/create_inventory_summary_table_up.sql'
+sleep 2
+docker exec -i ${docker_container_id} /bin/bash -c 'mysql -uroot -p"Pwd123!@" < /migrations/create_oplog_up.sql'

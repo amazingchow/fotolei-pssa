@@ -13,8 +13,8 @@
         <b-table-simple striped hover small id="product-table">
           <b-thead>
             <b-tr>
-              <b-th scope="col">商品编号</b-th>
-              <b-th scope="col">规格编号</b-th>
+              <b-th scope="col">商品编码</b-th>
+              <b-th scope="col">规格编码</b-th>
               <b-th scope="col">商品名称</b-th>
               <b-th scope="col">规格名称</b-th>
               <b-th scope="col">品牌</b-th>

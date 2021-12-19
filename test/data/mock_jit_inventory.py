@@ -11,7 +11,7 @@ if __name__ == "__main__":
             jit_inventory[row[2]] = (row[2], row[16])
             # csv_writer.writerow(new_row)
         # else:
-        #     csv_writer.writerow(["规格编号", "实际库存"])
+        #     csv_writer.writerow(["规格编码", "实际库存"])
         line += 1
     fr.close()
 
@@ -31,7 +31,7 @@ if __name__ == "__main__":
                 new_row[1] = 100
             csv_writer.writerow(new_row)
         else:
-            csv_writer.writerow(["规格编号", "实际库存"])
+            csv_writer.writerow(["规格编码", "实际库存"])
         line += 1
 
     fw.close()
