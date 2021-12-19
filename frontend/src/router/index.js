@@ -2,6 +2,7 @@ import Vue from 'vue'
 import VueRouter from 'vue-router'
 
 import Inventory from '@/components/Inventory'
+import OpLog from '@/components/OpLog'
 import Product from '@/components/Product'
 import SelectionList from '@/components/SelectionList'
 
@@ -12,6 +13,11 @@ const routes = [
     path: '/',
     name: 'Inventory',
     component: Inventory
+  },
+  {
+    path: '/oplog',
+    name: 'OpLog',
+    component: OpLog
   },
   {
     path: '/product',

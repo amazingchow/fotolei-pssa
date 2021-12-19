@@ -6,6 +6,7 @@
           <b-nav-item href="/product">商品明细库</b-nav-item>
           <b-nav-item href="/">库存明细库</b-nav-item>
           <b-nav-item href="/slist">搜索项列表</b-nav-item>
+          <b-nav-item href="/oplog">操作日志</b-nav-item>
         </b-navbar-nav>
       </b-navbar>
     </div>

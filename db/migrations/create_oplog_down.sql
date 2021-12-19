@@ -1,1 +1,1 @@
-DROP DATABASE IF EXISTS ggfilm.operation_log;
+DROP DATABASE IF EXISTS ggfilm.operation_logs;

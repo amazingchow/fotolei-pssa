@@ -88,6 +88,9 @@ def upload_products():
                     pass
                 stmt = "INSERT INTO ggfilm.product_summary (total) VALUES (%s);"
                 DBConnector.insert(stmt, (csv_reader.line_num - 1,))
+            
+            stmt = "INSERT INTO ggfilm.operation_logs (oplog) VALUES (%s);"
+            DBConnector.insert(stmt, ("导入{}".format(csv_files[0].filename),))
 
             response_object = {"status": "success"}
         else:
@@ -121,6 +124,9 @@ def upload_jit_inventory_data():
 
     stmt = "UPDATE ggfilm.products SET jit_inventory = %s WHERE specification_code = %s;"
     DBConnector.batch_update(stmt, sku_inventory_tuple_list)
+
+    stmt = "INSERT INTO ggfilm.operation_logs (oplog) VALUES (%s);"
+    DBConnector.insert(stmt, ("导入{}".format(csv_files[0].filename),))
 
     response_object = {"status": "success"}
     if len(not_inserted_sku_list) > 0:
@@ -216,6 +222,9 @@ def upload_inventories():
                         pass
                     stmt = "INSERT INTO ggfilm.inventory_summary (total) VALUES (%s);"
                     DBConnector.insert(stmt, (csv_reader.line_num - 1,))
+
+                stmt = "INSERT INTO ggfilm.operation_logs (oplog) VALUES (%s);"
+                DBConnector.insert(stmt, ("导入{}".format(csv_files[0].filename),))
 
                 response_object = {"status": "success"}
         else:
@@ -416,6 +425,22 @@ def list_all_supplier_selections():
                     if len(supplier_name_selection[0].strip()) > 0
         ]
 
+    return jsonify(response_object)
+
+
+# 获取最近20条操作日志的接口
+@ggfilm_server.route("/api/v1/oplogs", methods=["GET"])
+def get_oplogs():
+    stmt = "SELECT oplog, DATE_FORMAT(create_time, '%Y-%m-%d %H-%i-%s') FROM ggfilm.operation_logs ORDER BY create_time DESC LIMIT 20;"
+    rets = DBConnector.query(stmt)
+    response_object = {"status": "success"}
+    response_object["oplogs"] = []
+    if type(rets) is list and len(rets) > 0:
+        for ret in rets:
+            cache = {}
+            cache["oplog"] = ret[0]
+            cache["create_time"] = ret[1]
+            response_object["oplogs"].append(cache)
     return jsonify(response_object)
 
 
