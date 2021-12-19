@@ -36,13 +36,12 @@ CORS(ggfilm_server, resources={r"/api/*": {"origins": "*"}})
 
 
 # 探活接口
-# curl -X GET -L http://127.0.0.1:5000/api/v1/keepalive
 @ggfilm_server.route("/api/v1/keepalive", methods=["GET"])
 def keepalive():
     return jsonify("alive")
 
 
-# 载入商品数据报表的接口
+# 载入"商品数据报表"的接口
 @ggfilm_server.route("/api/v1/products/upload", methods=["POST"])
 def upload_products():
     csv_files = request.files.getlist("file")
@@ -55,7 +54,7 @@ def upload_products():
     if not do_data_schema_validation_for_input_products(csv_file):
         response_object = {"status": "invalid input data schema"}
     else:
-        RepetitionLookupTable = shelve.open("repetiation_lookup_table.db", flag='c', writeback=False)
+        RepetitionLookupTable = shelve.open("repetiation_lookup_table", flag='c', writeback=False)
         file_digest = generate_file_digest(csv_file)
         if not RepetitionLookupTable.get(file_digest, False):
             RepetitionLookupTable[file_digest] = True
@@ -89,6 +88,9 @@ def upload_products():
                     pass
                 stmt = "INSERT INTO ggfilm.product_summary (total) VALUES (%s);"
                 DBConnector.insert(stmt, (csv_reader.line_num - 1,))
+            
+            stmt = "INSERT INTO ggfilm.operation_logs (oplog) VALUES (%s);"
+            DBConnector.insert(stmt, ("导入{}".format(csv_files[0].filename),))
 
             response_object = {"status": "success"}
         else:
@@ -97,7 +99,7 @@ def upload_products():
     return jsonify(response_object)
 
 
-# 载入即时库存报表的接口
+# 载入"实时可用库存报表"的接口
 @ggfilm_server.route("/api/v1/jitinventory/upload", methods=["POST"])
 def upload_jit_inventory_data():
     csv_files = request.files.getlist("file")
@@ -123,6 +125,9 @@ def upload_jit_inventory_data():
     stmt = "UPDATE ggfilm.products SET jit_inventory = %s WHERE specification_code = %s;"
     DBConnector.batch_update(stmt, sku_inventory_tuple_list)
 
+    stmt = "INSERT INTO ggfilm.operation_logs (oplog) VALUES (%s);"
+    DBConnector.insert(stmt, ("导入{}".format(csv_files[0].filename),))
+
     response_object = {"status": "success"}
     if len(not_inserted_sku_list) > 0:
         logger.info("There are {} SKUs not inserted".format(len(not_inserted_sku_list)))
@@ -133,7 +138,7 @@ def upload_jit_inventory_data():
     return jsonify(response_object)
 
 
-# 预下载新增SKU数据表的接口
+# 预下载"新增SKU数据表"的接口
 @ggfilm_server.route("/api/v1/addedskus/prepare", methods=["POST"])
 def prepare_added_skus():
     payload = request.get_json()
@@ -156,7 +161,7 @@ def prepare_added_skus():
     return jsonify(response_object)
 
 
-# 载入库存数据报表的接口
+# 载入"库存数据报表"的接口
 @ggfilm_server.route("/api/v1/inventories/upload", methods=["POST"])
 def upload_inventories():
     csv_files = request.files.getlist("file")
@@ -170,7 +175,7 @@ def upload_inventories():
     if not do_data_schema_validation_for_input_inventories(csv_file):
         response_object = {"status": "invalid input data schema"}
     else:
-        RepetitionLookupTable = shelve.open("repetiation_lookup_table.db", flag='c', writeback=False)
+        RepetitionLookupTable = shelve.open("repetiation_lookup_table", flag='c', writeback=False)
         file_digest = generate_file_digest(csv_file)
         if not RepetitionLookupTable.get(file_digest, False):
             not_inserted_sku_list = []
@@ -211,6 +216,16 @@ def upload_inventories():
                     "ed_inventory_qty, ed_inventory_total);"
                 )
 
+                with open(csv_file, "r", encoding='utf-8-sig') as fd:
+                    csv_reader = csv.reader(fd, delimiter=",")
+                    for _ in csv_reader:
+                        pass
+                    stmt = "INSERT INTO ggfilm.inventory_summary (total) VALUES (%s);"
+                    DBConnector.insert(stmt, (csv_reader.line_num - 1,))
+
+                stmt = "INSERT INTO ggfilm.operation_logs (oplog) VALUES (%s);"
+                DBConnector.insert(stmt, ("导入{}".format(csv_files[0].filename),))
+
                 response_object = {"status": "success"}
         else:
             response_object = {"status": "repetition"}
@@ -218,8 +233,7 @@ def upload_inventories():
     return jsonify(response_object)
 
 
-# 获取总商品量的接口
-# curl -X GET -L http://127.0.0.1:5000/api/v1/products/total
+# 获取总商品条目量的接口
 @ggfilm_server.route("/api/v1/products/total", methods=["GET"])
 def get_products_total():
     stmt = "SELECT SUM(total) FROM ggfilm.product_summary;"
@@ -228,12 +242,11 @@ def get_products_total():
     if type(ret) is list and len(ret) > 0:
         response_object["products_total"] = ret[0][0]
     else:
-        response_object["products_total"] = "0"
+        response_object["products_total"] = 0
     return jsonify(response_object)
 
 
-# 获取所有商品的接口, 带有翻页功能
-# curl -X GET -L http://127.0.0.1:5000/api/v1/products?page.offset=0&page.limit=20
+# 获取所有商品条目的接口, 带有翻页功能
 @ggfilm_server.route("/api/v1/products", methods=["GET"])
 def list_products():
     page_offset = request.args.get("page.offset")
@@ -255,8 +268,20 @@ FROM ggfilm.products ORDER BY 'id' DESC LIMIT {}, {};".format(
     return jsonify(response_object)
 
 
-# 获取所有库存的接口, 带有翻页功能
-# curl -X GET -L http://127.0.0.1:5000/api/v1/inventories?page.offset=0&page.limit=20
+# 获取总库存条目量的接口
+@ggfilm_server.route("/api/v1/inventories/total", methods=["GET"])
+def get_inventories_total():
+    stmt = "SELECT SUM(total) FROM ggfilm.inventory_summary;"
+    ret = DBConnector.query(stmt)
+    response_object = {"status": "success"}
+    if type(ret) is list and len(ret) > 0:
+        response_object["inventories_total"] = ret[0][0]
+    else:
+        response_object["inventories_total"] = 0
+    return jsonify(response_object)
+
+
+# 获取所有库存条目的接口, 带有翻页功能
 @ggfilm_server.route("/api/v1/inventories", methods=["GET"])
 def list_inventories():
     page_offset = request.args.get("page.offset")
@@ -403,13 +428,29 @@ def list_all_supplier_selections():
     return jsonify(response_object)
 
 
+# 获取最近20条操作日志的接口
+@ggfilm_server.route("/api/v1/oplogs", methods=["GET"])
+def get_oplogs():
+    stmt = "SELECT oplog, DATE_FORMAT(create_time, '%Y-%m-%d %H-%i-%s') FROM ggfilm.operation_logs ORDER BY create_time DESC LIMIT 20;"
+    rets = DBConnector.query(stmt)
+    response_object = {"status": "success"}
+    response_object["oplogs"] = []
+    if type(rets) is list and len(rets) > 0:
+        for ret in rets:
+            cache = {}
+            cache["oplog"] = ret[0]
+            cache["create_time"] = ret[1]
+            response_object["oplogs"].append(cache)
+    return jsonify(response_object)
+
+
 # 导出销售报表（按分类汇总）的接口
 @ggfilm_server.route("/api/v1/case1/download", methods=["POST"])
 def export_report_file_case1():
     return jsonify("导出销售报表（按分类汇总）")
 
 
-# 预下载销售报表（按系列汇总）的接口
+# 预下载"销售报表（按系列汇总）"的接口
 @ggfilm_server.route("/api/v1/case2/prepare", methods=["POST"])
 def prepare_report_file_case2():
     payload = request.get_json()
@@ -543,7 +584,6 @@ create_time <= '{}';".format(specification_code, st_date, ed_date)
         return jsonify(response_object)
 
 
-# 预览销售报表（按单个SKU汇总）的接口
 # TODO: fix me
 '''
 预览效果
@@ -556,8 +596,7 @@ create_time <= '{}';".format(specification_code, st_date, ed_date)
 * 销售数量 = 时间段内每一个月的数量的累加
 * 截止库存数量 = 时间段内最后一个月的数量
 '''
-
-
+# 预览"销售报表（按单个SKU汇总）"的接口
 @ggfilm_server.route("/api/v1/case3/preview", methods=["POST"])
 def preview_report_file_case3():
     payload = request.get_json()
@@ -666,7 +705,7 @@ ORDER BY create_time ASC;".format(
             return jsonify(response_object)
 
 
-# 预导出销售报表（按单个SKU汇总）的接口
+# 预下载"销售报表（按单个SKU汇总）"的接口
 @ggfilm_server.route("/api/v1/case3/prepare", methods=["POST"])
 def prepare_report_file_case3():
     payload = request.get_json()
@@ -763,7 +802,7 @@ ORDER BY create_time ASC;".format(
             "商品编码", "规格编码", "商品名称", "规格名称",
             "品牌", "分类1", "分类2", "产品系列",
             "STOP状态", "重量/g", "长度/cm", "宽度/cm", "高度/cm",
-            "组合商品", "进口产品", "供应商名称", "采购名称",
+            "组合商品", "进口商品", "供应商名称", "采购名称",
             "起始库存数量", "起始库存总额", "采购数量", "采购总额",
             "采购退货数量", "采购退货总额", "销售数量", "销售总额",
             "销售退货数量", "销售退货总额", "其他变更数量", "其他变更总额",
@@ -786,7 +825,6 @@ ORDER BY create_time ASC;".format(
     return jsonify(response_object)
 
 
-# 预览滞销品报表的接口
 '''
 预览效果
 
@@ -798,8 +836,7 @@ ORDER BY create_time ASC;".format(
 * 销售数量 = 时间段内每一个月的数量的累加
 * 截止库存数量 = 时间段内最后一个月的数量
 '''
-
-
+# 预览"滞销品报表"的接口
 @ggfilm_server.route("/api/v1/case4/preview", methods=["POST"])
 def export_report_file_case4():
     payload = request.get_json()
@@ -934,7 +971,7 @@ ORDER BY create_time ASC;".format(
         return jsonify(response_object)
 
 
-# 预下载滞销品报表的接口
+# 预下载"滞销品报表"的接口
 @ggfilm_server.route("/api/v1/case4/prepare", methods=["POST"])
 def prepare_report_file_case4():
     payload = request.get_json()
@@ -950,7 +987,7 @@ def prepare_report_file_case4():
             "商品编码", "规格编码", "商品名称", "规格名称",
             "品牌", "分类1", "分类2", "产品系列",
             "STOP状态", "重量/g", "长度/cm", "宽度/cm", "高度/cm",
-            "组合商品", "进口产品", "供应商名称", "采购名称",
+            "组合商品", "进口商品", "供应商名称", "采购名称",
             "起始库存数量", "起始库存总额", "采购数量", "采购总额",
             "采购退货数量", "采购退货总额", "销售数量", "销售总额",
             "销售退货数量", "销售退货总额", "其他变更数量", "其他变更总额",
@@ -974,15 +1011,13 @@ def prepare_report_file_case4():
     return jsonify(response_object)
 
 
-# 预览采购辅助分析报表的接口
 '''
 预览效果
 
 商品编码 | 品牌 | 商品名称 | 规格名称 | 供应商 | X个月销量 | Y个月销量 | 库存量 | 库存/X个月销量 | 库存/Y个月销量 |
 库存/X个月折算销量 | 库存/Y个月折算销量	| 拟定进货量 | 单个重量/g | 小计重量/kg | 单个体积/cm³ | 小计体积/m³
 '''
-
-
+# 预览"采购辅助分析报表"的接口
 @ggfilm_server.route("/api/v1/case5/preview", methods=["POST"])
 def preview_report_file_case5():
     way = request.args.get("way", "1")
@@ -1177,7 +1212,7 @@ ORDER BY create_time DESC LIMIT {};".format(specification_code, time_quantum_y)
     return jsonify(response_object)
 
 
-# 预下载采购辅助分析报表的接口
+# 预下载"采购辅助分析报表"的接口
 @ggfilm_server.route("/api/v1/case5/prepare", methods=["POST"])
 def prepare_report_file_case5():
     payload = request.get_json()
@@ -1209,7 +1244,7 @@ def prepare_report_file_case5():
     return jsonify(response_object)
 
 
-# 导出体积、重量计算汇总单的接口
+# 载入用于计算体积、重量的需求表的接口
 @ggfilm_server.route("/api/v1/case6/upload", methods=["POST"])
 def upload_csv_file_for_case6():
     csv_files = request.files.getlist("file")
@@ -1238,14 +1273,12 @@ def upload_csv_file_for_case6():
     return jsonify(response_object)
 
 
-# 预览体积、重量计算汇总单的接口
 '''
 预览效果
 
 规格编码 | 商品名称 | 规格名称 | 数量 | 长度/cm | 宽度/cm | 高度/cm | 体积合计/m³ | 重量/g | 重量合计/kg
 '''
-
-
+# 预览"体积、重量计算汇总单"的接口
 @ggfilm_server.route("/api/v1/case6/preview", methods=["POST"])
 def preview_report_file_case6():
     payload = request.get_json()
@@ -1295,13 +1328,7 @@ FROM ggfilm.products WHERE specification_code = '{}';".format(item["specificatio
     return jsonify(response_object)
 
 
-# 导出体积、重量计算汇总单的接口
-@ggfilm_server.route("/api/v1/case6/download", methods=["POST"])
-def export_report_file_case6():
-    return jsonify("导出体积、重量计算汇总单")
-
-
-# 预下载体积、重量计算汇总单的接口
+# 预下载"体积、重量计算汇总单"的接口
 @ggfilm_server.route("/api/v1/case6/prepare", methods=["POST"])
 def prepare_report_file_case6():
     payload = request.get_json()
@@ -1358,8 +1385,8 @@ def do_data_schema_validation_for_input_products(csv_file: str):
     data_schema = [
         "商品编码", "规格编码", "商品名称", "规格名称",
         "品牌", "分类1", "分类2", "产品系列", "STOP状态",
-        "重量", "长度CM", "宽度CM", "高度CM",
-        "组合商品", "参与统计", "进口产品", "供应商名称",
+        "重量/g", "长度/cm", "宽度/cm", "高度/cm",
+        "组合商品", "参与统计", "进口商品", "供应商名称",
         "采购名称", "实时可用库存", "最小订货单元",
     ]
     is_valid = True
@@ -1392,7 +1419,8 @@ def do_intelligent_calibration_for_input_products(csv_file: str):
 
     # 2.1. 表格里面存在很多空行（但是有占位符），程序需要做下智能矫正
     # 2.2. 表格里面存在很多只有逗号的行，程序需要做下智能矫正
-    # 2.3. “品牌”，“分类1”，“分类2”，“产品系列”，“STOP状态”，“组合商品”，“参与统计”，“进口商品”，“供应商名称”，“采购名称”存在“0”这种输入，程序需要做下智能矫正
+    # 2.3. “品牌”，“分类1”，“分类2”，“产品系列”，“供应商名称”，“采购名称”存在“0”这种输入，程序需要做下智能矫正
+    # 2.4. “STOP状态”，“组合商品”，“参与统计”，“进口商品”存在“0”或”1“这种输入，程序需要做下智能矫正
     fr = open(csv_file, "r", encoding='utf-8-sig')
     csv_reader = csv.reader(fr, delimiter=",")
     fw = open(csv_file + ".tmp", "w", encoding='utf-8-sig')
@@ -1410,15 +1438,25 @@ def do_intelligent_calibration_for_input_products(csv_file: str):
                 if len(item) > 0:
                     all_empty = False
             if not all_empty:
-                for i in [4, 5, 6, 7, 8, 16, 17]:
+                for i in [4, 5, 6, 7, 16, 17]:
                     if new_row[i] == "0":
                         new_row[i] = ""
-                if new_row[13] == "0":
+                if len(new_row[8]) == 0 or new_row[8] == "0":
+                    new_row[8] == "停用"
+                elif new_row[8] == "1":
+                    new_row[8] == "在用"
+                if len(new_row[13]) == 0 or new_row[13] == "0":
                     new_row[13] == "否"
-                if new_row[14] == "0":
+                elif new_row[13] == "1":
+                    new_row[13] == "是"
+                if len(new_row[14]) == 0 or new_row[14] == "0":
                     new_row[14] == "不参与"
-                if new_row[15] == "0":
+                elif new_row[14] == "1":
+                    new_row[14] == "参与"
+                if len(new_row[15]) == 0 or new_row[15] == "0":
                     new_row[15] == "非进口品"
+                elif new_row[15] == "1":
+                    new_row[15] == "进口品"
                 csv_writer.writerow(new_row)
         line += 1
     fw.close()

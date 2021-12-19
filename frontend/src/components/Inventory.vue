@@ -39,7 +39,7 @@
           <b-thead>
             <b-tr>
               <b-th scope="col">导入日期</b-th>
-              <b-th scope="col">规格编号</b-th>
+              <b-th scope="col">规格编码</b-th>
               <b-th scope="col">起始库存数量</b-th>
               <b-th scope="col">采购数量</b-th>
               <b-th scope="col">采购退货数量</b-th>
@@ -62,10 +62,15 @@
               <b-td>{{ inventory[7] }}</b-td>
             </b-tr>
           </b-tbody>
+          <b-tfoot id="inventory-table-footer">
+            <b-tr>
+              <b-td colspan="9" variant="secondary">总共录入<b>{{ inventoriesTotal }}</b>条记录, 当前展示<b>20</b>条记录</b-td>
+            </b-tr>
+          </b-tfoot>
         </b-table-simple>
         <div id="pagination-btn-area">
           <button class="btn btn-success btn-sm" :disabled="pageOffset==0" v-on:click="onPrevPage">前一页</button>
-          <button class="btn btn-success btn-sm" v-on:click="onNextPage">后一页</button>
+          <button class="btn btn-success btn-sm" :disabled="pageOffset==pageOffsetMax" v-on:click="onNextPage">后一页</button>
         </div>
       </div>
     </div>
@@ -275,8 +280,8 @@
       <b-table-simple striped hover small id="preview-table">
         <b-thead>
           <b-tr>
-            <b-th scope="col">商品编号</b-th>
-            <b-th scope="col">规格编号</b-th>
+            <b-th scope="col">商品编码</b-th>
+            <b-th scope="col">规格编码</b-th>
             <b-th scope="col">商品名称</b-th>
             <b-th scope="col">规格名称</b-th>
             <b-th scope="col">起始库存数量</b-th>
@@ -621,7 +626,7 @@
         <b-table-simple striped hover small id="preview-table">
           <b-thead>
             <b-tr>
-              <b-th scope="col">规格编号</b-th>
+              <b-th scope="col">规格编码</b-th>
               <b-th scope="col">商品数量</b-th>
             </b-tr>
           </b-thead>
@@ -844,9 +849,11 @@ export default {
       ],
       thresholdSSR: '4',
       inventories: [],
+      inventoriesTotal: 0,
       shouldOpenSidebar: false,
       addedSkus: [],
       pageOffset: 0,
+      pageOffsetMax: 0,
       uploadCSVFile: null,
       uploadCSVFileForCase6: null,
       demandTable: [],
@@ -891,6 +898,19 @@ export default {
       axios.get(this.serverBaseURL + `/api/v1/inventories?page.offset=${this.pageOffset}&page.limit=20`)
         .then((res) => {
           this.inventories = res.data.inventories
+        })
+        .catch((error) => {
+          // eslint-disable-next-line
+          console.log(error)
+          this.message = '内部服务错误!'
+          this.showMessage = true
+        })
+    },
+    getInventoriesTotal () {
+      axios.get(this.serverBaseURL + '/api/v1/inventories/total')
+        .then((res) => {
+          this.inventoriesTotal = parseInt(res.data.inventories_total)
+          this.pageOffsetMax = this.inventoriesTotal - this.inventoriesTotal % 20
         })
         .catch((error) => {
           // eslint-disable-next-line
@@ -946,6 +966,7 @@ export default {
         .then((res) => {
           if (res.data.status === 'success') {
             this.listInventories()
+            this.getInventoriesTotal()
             this.message = date + '数据导入成功!'
             this.showMessage = true
           } else if (res.data.status === 'repetition') {
@@ -1453,6 +1474,7 @@ export default {
     this.listAllOptions()
     this.listAllSupplierSelections()
     this.listInventories()
+    this.getInventoriesTotal()
     this.setDefaultDate()
   }
 }
