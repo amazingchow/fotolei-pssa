@@ -36,13 +36,12 @@ CORS(ggfilm_server, resources={r"/api/*": {"origins": "*"}})
 
 
 # 探活接口
-# curl -X GET -L http://127.0.0.1:5000/api/v1/keepalive
 @ggfilm_server.route("/api/v1/keepalive", methods=["GET"])
 def keepalive():
     return jsonify("alive")
 
 
-# 载入商品数据报表的接口
+# 载入"商品数据报表"的接口
 @ggfilm_server.route("/api/v1/products/upload", methods=["POST"])
 def upload_products():
     csv_files = request.files.getlist("file")
@@ -97,7 +96,7 @@ def upload_products():
     return jsonify(response_object)
 
 
-# 载入即时库存报表的接口
+# 载入"实时可用库存报表"的接口
 @ggfilm_server.route("/api/v1/jitinventory/upload", methods=["POST"])
 def upload_jit_inventory_data():
     csv_files = request.files.getlist("file")
@@ -133,7 +132,7 @@ def upload_jit_inventory_data():
     return jsonify(response_object)
 
 
-# 预下载新增SKU数据表的接口
+# 预下载"新增SKU数据表"的接口
 @ggfilm_server.route("/api/v1/addedskus/prepare", methods=["POST"])
 def prepare_added_skus():
     payload = request.get_json()
@@ -156,7 +155,7 @@ def prepare_added_skus():
     return jsonify(response_object)
 
 
-# 载入库存数据报表的接口
+# 载入"库存数据报表"的接口
 @ggfilm_server.route("/api/v1/inventories/upload", methods=["POST"])
 def upload_inventories():
     csv_files = request.files.getlist("file")
@@ -219,7 +218,6 @@ def upload_inventories():
 
 
 # 获取总商品量的接口
-# curl -X GET -L http://127.0.0.1:5000/api/v1/products/total
 @ggfilm_server.route("/api/v1/products/total", methods=["GET"])
 def get_products_total():
     stmt = "SELECT SUM(total) FROM ggfilm.product_summary;"
@@ -233,7 +231,6 @@ def get_products_total():
 
 
 # 获取所有商品的接口, 带有翻页功能
-# curl -X GET -L http://127.0.0.1:5000/api/v1/products?page.offset=0&page.limit=20
 @ggfilm_server.route("/api/v1/products", methods=["GET"])
 def list_products():
     page_offset = request.args.get("page.offset")
@@ -256,7 +253,6 @@ FROM ggfilm.products ORDER BY 'id' DESC LIMIT {}, {};".format(
 
 
 # 获取所有库存的接口, 带有翻页功能
-# curl -X GET -L http://127.0.0.1:5000/api/v1/inventories?page.offset=0&page.limit=20
 @ggfilm_server.route("/api/v1/inventories", methods=["GET"])
 def list_inventories():
     page_offset = request.args.get("page.offset")
@@ -409,7 +405,7 @@ def export_report_file_case1():
     return jsonify("导出销售报表（按分类汇总）")
 
 
-# 预下载销售报表（按系列汇总）的接口
+# 预下载"销售报表（按系列汇总）"的接口
 @ggfilm_server.route("/api/v1/case2/prepare", methods=["POST"])
 def prepare_report_file_case2():
     payload = request.get_json()
@@ -543,7 +539,6 @@ create_time <= '{}';".format(specification_code, st_date, ed_date)
         return jsonify(response_object)
 
 
-# 预览销售报表（按单个SKU汇总）的接口
 # TODO: fix me
 '''
 预览效果
@@ -556,8 +551,7 @@ create_time <= '{}';".format(specification_code, st_date, ed_date)
 * 销售数量 = 时间段内每一个月的数量的累加
 * 截止库存数量 = 时间段内最后一个月的数量
 '''
-
-
+# 预览"销售报表（按单个SKU汇总）"的接口
 @ggfilm_server.route("/api/v1/case3/preview", methods=["POST"])
 def preview_report_file_case3():
     payload = request.get_json()
@@ -666,7 +660,7 @@ ORDER BY create_time ASC;".format(
             return jsonify(response_object)
 
 
-# 预导出销售报表（按单个SKU汇总）的接口
+# 预下载"销售报表（按单个SKU汇总）"的接口
 @ggfilm_server.route("/api/v1/case3/prepare", methods=["POST"])
 def prepare_report_file_case3():
     payload = request.get_json()
@@ -786,7 +780,6 @@ ORDER BY create_time ASC;".format(
     return jsonify(response_object)
 
 
-# 预览滞销品报表的接口
 '''
 预览效果
 
@@ -798,8 +791,7 @@ ORDER BY create_time ASC;".format(
 * 销售数量 = 时间段内每一个月的数量的累加
 * 截止库存数量 = 时间段内最后一个月的数量
 '''
-
-
+# 预览"滞销品报表"的接口
 @ggfilm_server.route("/api/v1/case4/preview", methods=["POST"])
 def export_report_file_case4():
     payload = request.get_json()
@@ -934,7 +926,7 @@ ORDER BY create_time ASC;".format(
         return jsonify(response_object)
 
 
-# 预下载滞销品报表的接口
+# 预下载"滞销品报表"的接口
 @ggfilm_server.route("/api/v1/case4/prepare", methods=["POST"])
 def prepare_report_file_case4():
     payload = request.get_json()
@@ -974,15 +966,13 @@ def prepare_report_file_case4():
     return jsonify(response_object)
 
 
-# 预览采购辅助分析报表的接口
 '''
 预览效果
 
 商品编号 | 品牌 | 商品名称 | 规格名称 | 供应商 | X个月销量 | Y个月销量 | 库存量 | 库存/X个月销量 | 库存/Y个月销量 |
 库存/X个月折算销量 | 库存/Y个月折算销量	| 拟定进货量 | 单个重量/g | 小计重量/kg | 单个体积/cm³ | 小计体积/m³
 '''
-
-
+# 预览"采购辅助分析报表"的接口
 @ggfilm_server.route("/api/v1/case5/preview", methods=["POST"])
 def preview_report_file_case5():
     way = request.args.get("way", "1")
@@ -1177,7 +1167,7 @@ ORDER BY create_time DESC LIMIT {};".format(specification_code, time_quantum_y)
     return jsonify(response_object)
 
 
-# 预下载采购辅助分析报表的接口
+# 预下载"采购辅助分析报表"的接口
 @ggfilm_server.route("/api/v1/case5/prepare", methods=["POST"])
 def prepare_report_file_case5():
     payload = request.get_json()
@@ -1209,7 +1199,7 @@ def prepare_report_file_case5():
     return jsonify(response_object)
 
 
-# 导出体积、重量计算汇总单的接口
+# 载入用于计算体积、重量的需求表的接口
 @ggfilm_server.route("/api/v1/case6/upload", methods=["POST"])
 def upload_csv_file_for_case6():
     csv_files = request.files.getlist("file")
@@ -1238,14 +1228,12 @@ def upload_csv_file_for_case6():
     return jsonify(response_object)
 
 
-# 预览体积、重量计算汇总单的接口
 '''
 预览效果
 
 规格编号 | 商品名称 | 规格名称 | 数量 | 长度/cm | 宽度/cm | 高度/cm | 体积合计/m³ | 重量/g | 重量合计/kg
 '''
-
-
+# 预览"体积、重量计算汇总单"的接口
 @ggfilm_server.route("/api/v1/case6/preview", methods=["POST"])
 def preview_report_file_case6():
     payload = request.get_json()
@@ -1295,13 +1283,7 @@ FROM ggfilm.products WHERE specification_code = '{}';".format(item["specificatio
     return jsonify(response_object)
 
 
-# 导出体积、重量计算汇总单的接口
-@ggfilm_server.route("/api/v1/case6/download", methods=["POST"])
-def export_report_file_case6():
-    return jsonify("导出体积、重量计算汇总单")
-
-
-# 预下载体积、重量计算汇总单的接口
+# 预下载"体积、重量计算汇总单"的接口
 @ggfilm_server.route("/api/v1/case6/prepare", methods=["POST"])
 def prepare_report_file_case6():
     payload = request.get_json()
