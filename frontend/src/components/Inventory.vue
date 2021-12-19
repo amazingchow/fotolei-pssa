@@ -47,6 +47,7 @@
               <b-th scope="col">销售退货数量</b-th>
               <b-th scope="col">其他变更数量</b-th>
               <b-th scope="col">截止库存数量</b-th>
+              <b-th scope="col">销售单价</b-th>
             </b-tr>
           </b-thead>
           <b-tbody>
@@ -60,11 +61,12 @@
               <b-td>{{ inventory[5] }}</b-td>
               <b-td>{{ inventory[6] }}</b-td>
               <b-td>{{ inventory[7] }}</b-td>
+              <b-td>{{ inventory[9] }}</b-td>
             </b-tr>
           </b-tbody>
           <b-tfoot id="inventory-table-footer">
             <b-tr>
-              <b-td colspan="9" variant="secondary">总共录入<b>{{ inventoriesTotal }}</b>条记录, 当前展示<b>20</b>条记录</b-td>
+              <b-td colspan="10" variant="secondary">总共录入<b>{{ inventoriesTotal }}</b>条记录, 当前展示<b>20</b>条记录</b-td>
             </b-tr>
           </b-tfoot>
         </b-table-simple>

@@ -213,7 +213,7 @@ def upload_inventories():
                     "st_inventory_qty, st_inventory_total, purchase_qty, purchase_total, " +
                     "purchase_then_return_qty, purchase_then_return_total, sale_qty, sale_total, " +
                     "sale_then_return_qty, sale_then_return_total, others_qty, others_total, " +
-                    "ed_inventory_qty, ed_inventory_total);"
+                    "ed_inventory_qty, ed_inventory_total, sale_unit_price);"
                 )
 
                 with open(csv_file, "r", encoding='utf-8-sig') as fd:
@@ -289,7 +289,7 @@ def list_inventories():
 
     stmt = "SELECT specification_code, \
 st_inventory_qty, purchase_qty, purchase_then_return_qty, sale_qty, \
-sale_then_return_qty, others_qty, ed_inventory_qty, create_time \
+sale_then_return_qty, others_qty, ed_inventory_qty, create_time, sale_unit_price \
 FROM ggfilm.inventories ORDER BY 'id' DESC LIMIT {}, {};".format(
         page_offset, page_limit)
     inventories = DBConnector.query(stmt)
@@ -1470,7 +1470,7 @@ def do_data_schema_validation_for_input_inventories(csv_file: str):
         "起始库存数量", "起始库存总额", "采购数量", "采购总额",
         "采购退货数量", "采购退货总额", "销售数量", "销售总额",
         "销售退货数量", "销售退货总额", "其他变更数量", "其他变更总额",
-        "截止库存数量", "截止库存总额",
+        "截止库存数量", "截止库存总额", "销售单价",
     ]
     is_valid = True
     with open(csv_file, "r", encoding='utf-8-sig') as fd:
@@ -1498,11 +1498,11 @@ def do_intelligent_calibration_for_input_inventories(csv_file: str):
         if line == 0:
             csv_writer.writerow(row)
         else:
-            if len(row) < 18:
-                while len(row) < 18:
+            if len(row) < 19:
+                while len(row) < 19:
                     row.append("0")
-            elif len(row) > 18:
-                row = row[:18]
+            elif len(row) > 19:
+                row = row[:19]
             csv_writer.writerow(row)
         line += 1
     fw.close()
