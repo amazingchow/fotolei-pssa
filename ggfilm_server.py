@@ -1168,7 +1168,7 @@ ORDER BY create_time DESC LIMIT {};".format(specification_code, time_quantum_y)
                                     (type(cache[specification_code]["inventory_divided_by_reduced_sale_qty_y_months"]) is float and \
                                         cache[specification_code]["inventory_divided_by_reduced_sale_qty_y_months"] <= threshold_y):
                         cache[specification_code]["projected_purchase"] = \
-                            int((cache[specification_code]["reduced_sale_qty_y_months"] / time_quantum_y) * 12) - cache[specification_code]["inventory"]
+                            int((cache[specification_code]["reduced_sale_qty_y_months"] / time_quantum_y) * projected_purchase) - cache[specification_code]["inventory"]
                     else:
                         cache[specification_code]["projected_purchase"] = 0
                 else:
@@ -1179,7 +1179,7 @@ ORDER BY create_time DESC LIMIT {};".format(specification_code, time_quantum_y)
                                     (type(cache[specification_code]["inventory_divided_by_sale_qty_y_months"]) is float and \
                                         cache[specification_code]["inventory_divided_by_sale_qty_y_months"] <= threshold_y):
                         cache[specification_code]["projected_purchase"] = \
-                            int((cache[specification_code]["sale_qty_y_months"] / time_quantum_y) * 12) - cache[specification_code]["inventory"]
+                            int((cache[specification_code]["sale_qty_y_months"] / time_quantum_y) * projected_purchase) - cache[specification_code]["inventory"]
                     else:
                         cache[specification_code]["projected_purchase"] = 0
                 if cache[specification_code]["projected_purchase"] > 0 and cache[specification_code]["moq"] > 1:
