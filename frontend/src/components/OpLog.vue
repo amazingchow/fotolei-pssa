@@ -4,8 +4,6 @@
       <div class="col-sm-3">
       </div>
       <div class="col-sm-6">
-        <h1>操作日志</h1>
-        <hr>
         <b-card bg-variant="light">
           <b-table-simple striped hover small id="inventory-table">
             <b-thead>

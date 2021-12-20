@@ -4,8 +4,6 @@
       <div class="col-sm-3">
       </div>
       <div class="col-sm-6">
-        <h1>搜索项列表</h1>
-        <hr>
         <b-card bg-variant="light">
           <b-form-group
             label="品牌"

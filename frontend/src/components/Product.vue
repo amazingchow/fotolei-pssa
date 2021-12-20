@@ -2,8 +2,6 @@
   <div class="container-fluid">
     <div class="row">
       <div class="col-sm-12">
-        <h1>商品明细库</h1>
-        <hr>
         <alert :message=message v-if="showMessage"></alert>
         <div id="import-and-export-btn-area">
           <button type="button" class="btn btn-success btn-sm" v-b-modal.product-csv-file-modal>导入商品明细数据</button>
