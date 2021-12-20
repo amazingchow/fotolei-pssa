@@ -51,13 +51,17 @@
           </b-tbody>
           <b-tfoot id="product-table-footer">
             <b-tr>
-              <b-td colspan="15" variant="secondary">总共录入<b>{{ productsTotal }}</b>条记录, 当前展示<b>20</b>条记录</b-td>
+              <b-td colspan="15" variant="secondary">总共录入<b>{{ productsTotal }}</b>条记录，共计<b>{{ pageTotal }}</b>页，当前展示第<b>{{ pageCurr }}</b>页，共<b>{{ productsNum }}</b>条记录</b-td>
             </b-tr>
           </b-tfoot>
         </b-table-simple>
         <div id="pagination-btn-area">
+          <button class="btn btn-success btn-sm" v-on:click="onFirstPage">首页</button>
           <button class="btn btn-success btn-sm" :disabled="pageOffset==0" v-on:click="onPrevPage">前一页</button>
+          <input v-model="pageJump" type="number" placeholder="1" style="width: 10ch;" />
+          <button class="btn btn-success btn-sm" v-on:click="onJumpPage">快捷跳转</button>
           <button class="btn btn-success btn-sm" :disabled="pageOffset==pageOffsetMax" v-on:click="onNextPage">后一页</button>
+          <button class="btn btn-success btn-sm" v-on:click="onLastPage">尾页</button>
         </div>
       </div>
     </div>
@@ -164,9 +168,13 @@ export default {
     return {
       serverBaseURL: process.env.SERVER_BASE_URL,
       products: [],
+      productsNum: 0,
       productsTotal: 0,
       shouldOpenSidebar: false,
       addedSkus: [],
+      pageJump: 1,
+      pageCurr: 0,
+      pageTotal: 0,
       pageOffset: 0,
       pageOffsetMax: 0,
       uploadProductCSVFile: null,
@@ -183,6 +191,8 @@ export default {
       axios.get(this.serverBaseURL + `/api/v1/products?page.offset=${this.pageOffset}&page.limit=20`)
         .then((res) => {
           this.products = res.data.products
+          this.productsNum = res.data.products.length
+          this.pageCurr = this.pageOffset / 20 + 1
         })
         .catch((error) => {
           // eslint-disable-next-line
@@ -196,6 +206,7 @@ export default {
         .then((res) => {
           this.productsTotal = parseInt(res.data.products_total)
           this.pageOffsetMax = this.productsTotal - this.productsTotal % 20
+          this.pageTotal = this.pageOffsetMax / 20 + 1
         })
         .catch((error) => {
           // eslint-disable-next-line
@@ -333,6 +344,20 @@ export default {
       this.shouldOpenSidebar = false
       this.addedSkus = []
     },
+    onFirstPage (evt) {
+      evt.preventDefault()
+      this.pageOffset = 0
+      this.listProducts()
+    },
+    onJumpPage (evt) {
+      evt.preventDefault()
+      if (this.pageJump <= 0 || this.pageJump > this.pageTotal) {
+        this.pageOffset = 0
+      } else {
+        this.pageOffset = (this.pageJump - 1) * 20
+      }
+      this.listProducts()
+    },
     onPrevPage (evt) {
       evt.preventDefault()
       this.pageOffset -= 20
@@ -341,6 +366,11 @@ export default {
     onNextPage (evt) {
       evt.preventDefault()
       this.pageOffset += 20
+      this.listProducts()
+    },
+    onLastPage (evt) {
+      evt.preventDefault()
+      this.pageOffset = this.pageOffsetMax
       this.listProducts()
     }
   },
