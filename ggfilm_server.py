@@ -252,7 +252,7 @@ def get_products_total():
     stmt = "SELECT SUM(total) FROM ggfilm.product_summary;"
     ret = DBConnector.query(stmt)
     response_object = {"status": "success"}
-    if type(ret) is list and len(ret) > 0 and ret[0][0] != None:
+    if type(ret) is list and len(ret) > 0 and ret[0][0] is not None:
         response_object["products_total"] = ret[0][0]
     else:
         response_object["products_total"] = 0
@@ -385,8 +385,7 @@ FROM ggfilm.products WHERE specification_code = '{}';".format(specification_code
 @ggfilm_server.route("/api/v1/products/update", methods=["POST"])
 def update_one_product():
     payload = request.get_json()
-    specification_code = payload.get("specification_code", "").strip()
-    print(payload)
+    _ = payload.get("specification_code", "").strip()
 
     response_object = {"status": "success"}
     return jsonify(response_object)
@@ -398,7 +397,7 @@ def get_inventories_total():
     stmt = "SELECT SUM(total) FROM ggfilm.inventory_summary;"
     ret = DBConnector.query(stmt)
     response_object = {"status": "success"}
-    if type(ret) is list and len(ret) > 0 and ret[0][0] != None:
+    if type(ret) is list and len(ret) > 0 and ret[0][0] is not None:
         response_object["inventories_total"] = ret[0][0]
     else:
         response_object["inventories_total"] = 0
@@ -1558,7 +1557,7 @@ def do_data_check_for_input_products(csv_file: str):
             else:
                 csv_writer.writerow(row)
             line += 1
-    
+
     fw.close()
     shutil.move(csv_file + ".tmp", csv_file)
     return total - exist, exist
