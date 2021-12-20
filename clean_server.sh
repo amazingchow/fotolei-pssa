@@ -5,4 +5,5 @@ docker exec -i ${docker_container_id} /bin/bash -c 'mysql -u root -p"Pwd123!@" <
 
 docker-compose -f "test/mysql-deploy/docker-compose.yml" down
 
-rm -rf repetiation_lookup_table.db
+rm -rf load_file_repetition_lookup_table
+rm -rf load_file_repetition_lookup_table.db
