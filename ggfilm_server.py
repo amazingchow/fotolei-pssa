@@ -6,6 +6,8 @@ import hashlib
 import logging
 import pendulum
 import os
+import re
+RE_INT = re.compile(r'^([1-9]\d*|0)$')
 import shelve
 import shutil
 import sys
@@ -41,7 +43,7 @@ def keepalive():
     return jsonify("alive")
 
 
-# 载入"商品数据报表"的接口
+# 载入"商品明细数据报表"的接口
 @ggfilm_server.route("/api/v1/products/upload", methods=["POST"])
 def upload_products():
     csv_files = request.files.getlist("file")
@@ -51,50 +53,61 @@ def upload_products():
     )
     csv_files[0].save(csv_file)
 
+    # 校验表格格式，格式有变更，当前不让导入，需要人工干预解决
     if not do_data_schema_validation_for_input_products(csv_file):
         response_object = {"status": "invalid input data schema"}
-    else:
-        RepetitionLookupTable = shelve.open("repetiation_lookup_table", flag='c', writeback=False)
-        file_digest = generate_file_digest(csv_file)
-        if not RepetitionLookupTable.get(file_digest, False):
-            RepetitionLookupTable[file_digest] = True
+        return jsonify(response_object)
 
-            do_intelligent_calibration_for_input_products(csv_file)
+    # 用于检查是否是重复导入的数据报表？
+    load_file_repetition_lookup_table = shelve.open("load_file_repetition_lookup_table", flag='c', writeback=False)
+    file_digest = generate_file_digest(csv_file)
+    if load_file_repetition_lookup_table.get(file_digest, False):
+        load_file_repetition_lookup_table.close()
+        response_object = {"status": "repetition"}
+        return jsonify(response_object)
 
-            DBConnector.load_data_infile(
-                """LOAD DATA LOCAL INFILE "{}" """.format(csv_file) +
-                "INTO TABLE ggfilm.products " +
-                "FIELDS TERMINATED BY ',' " +
-                """ENCLOSED BY '"' """ +
-                "LINES TERMINATED BY '\n' " +
-                "IGNORE 1 LINES " +
-                "(product_code, specification_code, product_name, specification_name, " +
-                "brand, classification_1, classification_2, product_series, stop_status, " +
-                "product_weight, product_length, product_width, product_height, " +
-                "is_combined, be_aggregated, is_import, supplier_name, " +
-                "purchase_name, jit_inventory, moq);"
-            )
+    # 校验数据格式，对不规范的数据做自动校正，出现无法校正的情况直接报错退出
+    is_valid, err_msg = do_intelligent_calibration_for_input_products(csv_file)
+    if not is_valid:
+        response_object = {"status": "invalid input data"}
+        response_object["err_msg"] = err_msg
+        return jsonify(response_object)
 
-            stmt = "SELECT specification_code FROM ggfilm.products;"
-            rets = DBConnector.query(stmt)
-            SKU_LOOKUP_TABLE.clear()
-            for ret in rets:
-                SKU_LOOKUP_TABLE[ret[0]] = True
-            logger.info("Insert {} SKUs into SKU_LOOKUP_TABLE!!!".format(len(SKU_LOOKUP_TABLE)))
+    response_object = {"status": "success"}
+    # 用于检查是否有新增的SKU？是否是重复导入的SKU？
+    add, exist = do_data_check_for_input_products(csv_file)
+    response_object["items_total"] = add + exist
+    response_object["items_add"] = add
+    response_object["items_exist"] = exist
+    # 如果没有新增SKU，直接返回
+    if add > 0:
+        logger.info("Insert {} SKUs into SKU_LOOKUP_TABLE!!!".format(add))
 
-            with open(csv_file, "r", encoding='utf-8-sig') as fd:
-                csv_reader = csv.reader(fd, delimiter=",")
-                for _ in csv_reader:
-                    pass
-                stmt = "INSERT INTO ggfilm.product_summary (total) VALUES (%s);"
-                DBConnector.insert(stmt, (csv_reader.line_num - 1,))
-            stmt = "INSERT INTO ggfilm.operation_logs (oplog) VALUES (%s);"
-            DBConnector.insert(stmt, ("导入{}".format(csv_files[0].filename),))
+        DBConnector.load_data_infile(
+            """LOAD DATA LOCAL INFILE "{}" """.format(csv_file) +
+            "INTO TABLE ggfilm.products " +
+            "FIELDS TERMINATED BY ',' " +
+            """ENCLOSED BY '"' """ +
+            "LINES TERMINATED BY '\n' " +
+            "IGNORE 1 LINES " +
+            "(product_code, specification_code, product_name, specification_name, " +
+            "brand, classification_1, classification_2, product_series, stop_status, " +
+            "product_weight, product_length, product_width, product_height, " +
+            "is_combined, be_aggregated, is_import, supplier_name, " +
+            "purchase_name, jit_inventory, moq);"
+        )
 
-            response_object = {"status": "success"}
-        else:
-            response_object = {"status": "repetition"}
-        RepetitionLookupTable.close()
+        with open(csv_file, "r", encoding='utf-8-sig') as fd:
+            csv_reader = csv.reader(fd, delimiter=",")
+            for _ in csv_reader:
+                pass
+            stmt = "INSERT INTO ggfilm.product_summary (total) VALUES (%s);"
+            DBConnector.insert(stmt, (csv_reader.line_num - 1,))
+        stmt = "INSERT INTO ggfilm.operation_logs (oplog) VALUES (%s);"
+        DBConnector.insert(stmt, ("导入{}".format(csv_files[0].filename),))
+
+        load_file_repetition_lookup_table[file_digest] = True
+    load_file_repetition_lookup_table.close()
     return jsonify(response_object)
 
 
@@ -174,9 +187,9 @@ def upload_inventories():
     if not do_data_schema_validation_for_input_inventories(csv_file):
         response_object = {"status": "invalid input data schema"}
     else:
-        RepetitionLookupTable = shelve.open("repetiation_lookup_table", flag='c', writeback=False)
+        load_file_repetition_lookup_table = shelve.open("repetition_lookup_table", flag='c', writeback=False)
         file_digest = generate_file_digest(csv_file)
-        if not RepetitionLookupTable.get(file_digest, False):
+        if not load_file_repetition_lookup_table.get(file_digest, False):
             not_inserted_sku_list = []
             with open(csv_file, "r", encoding='utf-8-sig') as fd:
                 csv_reader = csv.reader(fd, delimiter=",")
@@ -191,7 +204,7 @@ def upload_inventories():
                 response_object = {"status": "new SKUs"}
                 response_object["added_skus"] = not_inserted_sku_list
             else:
-                RepetitionLookupTable[file_digest] = True
+                load_file_repetition_lookup_table[file_digest] = True
 
                 do_intelligent_calibration_for_input_inventories(csv_file)
 
@@ -228,7 +241,7 @@ def upload_inventories():
                 response_object = {"status": "success"}
         else:
             response_object = {"status": "repetition"}
-        RepetitionLookupTable.close()
+        load_file_repetition_lookup_table.close()
     return jsonify(response_object)
 
 
@@ -1413,6 +1426,32 @@ def do_data_schema_validation_for_input_products(csv_file: str):
     return is_valid
 
 
+def do_data_check_for_input_products(csv_file: str):
+    fw = open(csv_file + ".tmp", "w", encoding='utf-8-sig')
+    csv_writer = csv.writer(fw, delimiter=",")
+
+    exist = 0
+    total = 0
+    with open(csv_file, "r", encoding='utf-8-sig') as fd:
+        csv_reader = csv.reader(fd, delimiter=",")
+        line = 0
+        for row in csv_reader:
+            if line > 0:
+                total += 1
+                if SKU_LOOKUP_TABLE.get(row[1], False):
+                    exist += 1
+                else:
+                    SKU_LOOKUP_TABLE[row[1]] = True
+                    csv_writer.writerow(row)
+            else:
+                csv_writer.writerow(row)
+            line += 1
+    
+    fw.close()
+    shutil.move(csv_file + ".tmp", csv_file)
+    return total - exist, exist
+
+
 def do_intelligent_calibration_for_input_products(csv_file: str):
     # 1. 表格里面存在中文逗号，程序需要做下智能矫正
     fr = open(csv_file, "r", encoding='utf-8-sig')
@@ -1427,7 +1466,12 @@ def do_intelligent_calibration_for_input_products(csv_file: str):
     # 2.1. 表格里面存在很多空行（但是有占位符），程序需要做下智能矫正
     # 2.2. 表格里面存在很多只有逗号的行，程序需要做下智能矫正
     # 2.3. “品牌”，“分类1”，“分类2”，“产品系列”，“供应商名称”，“采购名称”存在“0”这种输入，程序需要做下智能矫正
-    # 2.4. “STOP状态”，“组合商品”，“参与统计”，“进口商品”存在“0”或”1“这种输入，程序需要做下智能矫正
+    # 2.4.1. “STOP状态”，“组合商品”，“参与统计”，“进口商品”存在“0”或”1“这种输入，程序需要做下智能矫正
+    # 2.4.2. “STOP状态”，“组合商品”，“参与统计”，“进口商品”存在非法输入，程序不需要做智能矫正，直接返回错误
+    # 2.5. “实时可用库存“，“最小订货单元”存在非法输入，程序不需要做智能矫正，直接返回错误
+    is_valid = True
+    err_msg = ""
+
     fr = open(csv_file, "r", encoding='utf-8-sig')
     csv_reader = csv.reader(fr, delimiter=",")
     fw = open(csv_file + ".tmp", "w", encoding='utf-8-sig')
@@ -1448,27 +1492,70 @@ def do_intelligent_calibration_for_input_products(csv_file: str):
                 for i in [4, 5, 6, 7, 16, 17]:
                     if new_row[i] == "0":
                         new_row[i] = ""
-                if len(new_row[8]) == 0 or new_row[8] == "0":
-                    new_row[8] == "停用"
-                elif new_row[8] == "1":
-                    new_row[8] == "在用"
-                if len(new_row[13]) == 0 or new_row[13] == "0":
-                    new_row[13] == "否"
-                elif new_row[13] == "1":
-                    new_row[13] == "是"
-                if len(new_row[14]) == 0 or new_row[14] == "0":
-                    new_row[14] == "不参与"
-                elif new_row[14] == "1":
-                    new_row[14] == "参与"
-                if len(new_row[15]) == 0 or new_row[15] == "0":
-                    new_row[15] == "非进口品"
-                elif new_row[15] == "1":
-                    new_row[15] == "进口品"
+                if new_row[8] != "在用" and new_row[8] != "停用":
+                    if len(new_row[8]) == 0 or new_row[8] == "0":
+                        new_row[8] == "停用"
+                    elif new_row[8] == "1":
+                        new_row[8] == "在用"
+                    else:
+                        is_valid = False
+                        err_msg = "'STOP状态'数据存在非法输入，出现在第{}行。".format(line + 1)
+                        logger.error("invalid 'STOP状态': {}".format(new_row[8]))
+                        break
+                if new_row[13] != "是" and new_row[13] != "否":
+                    if len(new_row[13]) == 0 or new_row[13] == "0":
+                        new_row[13] == "否"
+                    elif new_row[13] == "1":
+                        new_row[13] == "是"
+                    else:
+                        is_valid = False
+                        err_msg = "'组合商品'数据存在非法输入，出现在第{}行。".format(line + 1)
+                        logger.error("invalid '组合商品': {}".format(new_row[13]))
+                        break
+                if new_row[14] != "参与" and new_row[14] != "不参与":
+                    if len(new_row[14]) == 0 or new_row[14] == "0":
+                        new_row[14] == "不参与"
+                    elif new_row[14] == "1":
+                        new_row[14] == "参与"
+                    else:
+                        is_valid = False
+                        err_msg = "'参与统计'数据存在非法输入，出现在第{}行。".format(line + 1)
+                        logger.error("invalid '参与统计': {}".format(new_row[14]))
+                        break
+                if new_row[15] != "进口品" and new_row[15] != "非进口品":
+                    if len(new_row[15]) == 0 or new_row[15] == "0":
+                        new_row[15] == "非进口品"
+                    elif new_row[15] == "1":
+                        new_row[15] == "进口品"
+                    else:
+                        is_valid = False
+                        err_msg = "'进口商品'数据存在非法输入，出现在第{}行。".format(line + 1)
+                        logger.error("invalid '进口商品': {}".format(new_row[15]))
+                        break
+                if len(new_row[18]) == 0:
+                    new_row[18] == "0"
+                elif RE_INT.match(new_row[18]) is None:
+                    is_valid = False
+                    err_msg = "'实时可用库存'数据存在非法输入，出现在第{}行。".format(line + 1)
+                    logger.error("invalid '实时可用库存': {}".format(new_row[18]))
+                    break
+                if len(new_row[19]) == 0:
+                    new_row[19] == "1"
+                elif RE_INT.match(new_row[19]) is None:
+                    is_valid = False
+                    err_msg = "'最小订货单元'数据存在非法输入，出现在第{}行。".format(line + 1)
+                    logger.error("invalid '最小订货单元': {}".format(new_row[19]))
+                    break
                 csv_writer.writerow(new_row)
         line += 1
+
     fw.close()
     fr.close()
     shutil.move(csv_file + ".tmp", csv_file)
+
+    if not is_valid:
+        os.remove(csv_file)
+    return is_valid, err_msg
 
 
 def do_data_schema_validation_for_input_inventories(csv_file: str):

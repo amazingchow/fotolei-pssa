@@ -6,7 +6,7 @@
         <hr>
         <alert :message=message v-if="showMessage"></alert>
         <div id="import-and-export-btn-area">
-          <button type="button" class="btn btn-success btn-sm" v-b-modal.product-csv-file-modal>导入商品数据</button>
+          <button type="button" class="btn btn-success btn-sm" v-b-modal.product-csv-file-modal>导入商品明细数据</button>
           <button type="button" class="btn btn-success btn-sm" v-b-modal.jit-inventory-csv-file-modal>导入即时库存</button>
         </div>
         <br/>
@@ -61,7 +61,7 @@
         </div>
       </div>
     </div>
-    <b-modal ref="importProductCSVFileModal" id="product-csv-file-modal" title="导入商品数据" hide-footer>
+    <b-modal ref="importProductCSVFileModal" id="product-csv-file-modal" title="导入商品明细数据" hide-footer>
       <b-form @submit="onImportProduct" @reset="onCancelImportProduct">
         <b-form-group>
           <b-form-file
@@ -213,15 +213,20 @@ export default {
       axios.post(this.serverBaseURL + '/api/v1/products/upload', formData, config)
         .then((res) => {
           if (res.data.status === 'success') {
-            this.listProducts()
-            this.getProductsTotal()
-            this.message = '导入成功!'
+            this.message = '导入成功！预计导入' + res.data.items_total.toString() + '条，实际导入' + res.data.items_add.toString() + '条，去重' + res.data.items_exist.toString() + '条。'
+            this.showMessage = true
+            if (res.data.items_add > 0) {
+              this.listProducts()
+              this.getProductsTotal()
+            }
+          } else if (res.data.status === 'invalid input data schema') {
+            this.message = '导入失败！数据表格格式有变更，请人工复核！'
             this.showMessage = true
           } else if (res.data.status === 'repetition') {
-            this.message = '导入失败! 数据表格重复导入！'
+            this.message = '导入失败！数据表格重复导入！'
             this.showMessage = true
-          } else {
-            this.message = '导入失败! 数据表格格式有变更，请人工复合！'
+          } else if (res.data.status === 'invalid input data') {
+            this.message = '导入失败！' + res.data.err_msg
             this.showMessage = true
           }
         })
