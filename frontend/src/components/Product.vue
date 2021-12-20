@@ -2,11 +2,9 @@
   <div class="container-fluid">
     <div class="row">
       <div class="col-sm-12">
-        <h1>商品明细库</h1>
-        <hr>
         <alert :message=message v-if="showMessage"></alert>
         <div id="import-and-export-btn-area">
-          <button type="button" class="btn btn-success btn-sm" v-b-modal.product-csv-file-modal>导入商品数据</button>
+          <button type="button" class="btn btn-success btn-sm" v-b-modal.product-csv-file-modal>导入商品明细数据</button>
           <button type="button" class="btn btn-success btn-sm" v-b-modal.jit-inventory-csv-file-modal>导入即时库存</button>
         </div>
         <br/>
@@ -51,17 +49,21 @@
           </b-tbody>
           <b-tfoot id="product-table-footer">
             <b-tr>
-              <b-td colspan="15" variant="secondary">总共录入<b>{{ productsTotal }}</b>条记录, 当前展示<b>20</b>条记录</b-td>
+              <b-td colspan="15" variant="secondary">总共录入<b>{{ productsTotal }}</b>条记录，共计<b>{{ pageTotal }}</b>页，当前展示第<b>{{ pageCurr }}</b>页，共<b>{{ productsNum }}</b>条记录</b-td>
             </b-tr>
           </b-tfoot>
         </b-table-simple>
         <div id="pagination-btn-area">
+          <button class="btn btn-success btn-sm" v-on:click="onFirstPage">首页</button>
           <button class="btn btn-success btn-sm" :disabled="pageOffset==0" v-on:click="onPrevPage">前一页</button>
+          <input v-model="pageJump" type="number" placeholder="1" style="width: 10ch;" />
+          <button class="btn btn-success btn-sm" v-on:click="onJumpPage">快捷跳转</button>
           <button class="btn btn-success btn-sm" :disabled="pageOffset==pageOffsetMax" v-on:click="onNextPage">后一页</button>
+          <button class="btn btn-success btn-sm" v-on:click="onLastPage">尾页</button>
         </div>
       </div>
     </div>
-    <b-modal ref="importProductCSVFileModal" id="product-csv-file-modal" title="导入商品数据" hide-footer>
+    <b-modal ref="importProductCSVFileModal" id="product-csv-file-modal" title="导入商品明细数据" hide-footer>
       <b-form @submit="onImportProduct" @reset="onCancelImportProduct">
         <b-form-group>
           <b-form-file
@@ -164,9 +166,13 @@ export default {
     return {
       serverBaseURL: process.env.SERVER_BASE_URL,
       products: [],
+      productsNum: 0,
       productsTotal: 0,
       shouldOpenSidebar: false,
       addedSkus: [],
+      pageJump: 1,
+      pageCurr: 0,
+      pageTotal: 0,
       pageOffset: 0,
       pageOffsetMax: 0,
       uploadProductCSVFile: null,
@@ -183,6 +189,8 @@ export default {
       axios.get(this.serverBaseURL + `/api/v1/products?page.offset=${this.pageOffset}&page.limit=20`)
         .then((res) => {
           this.products = res.data.products
+          this.productsNum = res.data.products.length
+          this.pageCurr = this.pageOffset / 20 + 1
         })
         .catch((error) => {
           // eslint-disable-next-line
@@ -194,8 +202,9 @@ export default {
     getProductsTotal () {
       axios.get(this.serverBaseURL + '/api/v1/products/total')
         .then((res) => {
-          this.productsTotal = parseInt(res.data.products_total)
+          this.productsTotal = res.data.products_total
           this.pageOffsetMax = this.productsTotal - this.productsTotal % 20
+          this.pageTotal = this.pageOffsetMax / 20 + 1
         })
         .catch((error) => {
           // eslint-disable-next-line
@@ -213,15 +222,20 @@ export default {
       axios.post(this.serverBaseURL + '/api/v1/products/upload', formData, config)
         .then((res) => {
           if (res.data.status === 'success') {
-            this.listProducts()
-            this.getProductsTotal()
-            this.message = '导入成功!'
+            this.message = '导入成功！预计导入' + res.data.items_total.toString() + '条，实际导入' + res.data.items_add.toString() + '条，去重' + res.data.items_exist.toString() + '条。'
+            this.showMessage = true
+            if (res.data.items_add > 0) {
+              this.listProducts()
+              this.getProductsTotal()
+            }
+          } else if (res.data.status === 'invalid input data schema') {
+            this.message = '导入失败！数据表格格式有变更，请人工复核！'
             this.showMessage = true
           } else if (res.data.status === 'repetition') {
-            this.message = '导入失败! 数据表格重复导入！'
+            this.message = '导入失败！数据表格重复导入！'
             this.showMessage = true
-          } else {
-            this.message = '导入失败! 数据表格格式有变更，请人工复合！'
+          } else if (res.data.status === 'invalid input data') {
+            this.message = '导入失败！' + res.data.err_msg
             this.showMessage = true
           }
         })
@@ -328,6 +342,20 @@ export default {
       this.shouldOpenSidebar = false
       this.addedSkus = []
     },
+    onFirstPage (evt) {
+      evt.preventDefault()
+      this.pageOffset = 0
+      this.listProducts()
+    },
+    onJumpPage (evt) {
+      evt.preventDefault()
+      if (this.pageJump <= 0 || this.pageJump > this.pageTotal) {
+        this.pageOffset = 0
+      } else {
+        this.pageOffset = (this.pageJump - 1) * 20
+      }
+      this.listProducts()
+    },
     onPrevPage (evt) {
       evt.preventDefault()
       this.pageOffset -= 20
@@ -336,6 +364,11 @@ export default {
     onNextPage (evt) {
       evt.preventDefault()
       this.pageOffset += 20
+      this.listProducts()
+    },
+    onLastPage (evt) {
+      evt.preventDefault()
+      this.pageOffset = this.pageOffsetMax
       this.listProducts()
     }
   },

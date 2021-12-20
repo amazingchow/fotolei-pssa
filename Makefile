@@ -1,7 +1,7 @@
 .PHONY: check
 check:
 	@pyflakes ggfilm_server.py
-	@pycodestyle ggfilm_server.py --ignore=E501,W504,E502,E131
+	@pycodestyle ggfilm_server.py --ignore=E501,W504,E502,E131,E402
 
 .PHONY: init
 init:

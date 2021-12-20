@@ -128,4 +128,5 @@ dmypy.json
 .pyre/
 
 nohup.out
-repetiation_lookup_table.db
+load_file_repetition_lookup_table
+load_file_repetition_lookup_table.db
