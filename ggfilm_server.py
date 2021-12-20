@@ -88,7 +88,6 @@ def upload_products():
                     pass
                 stmt = "INSERT INTO ggfilm.product_summary (total) VALUES (%s);"
                 DBConnector.insert(stmt, (csv_reader.line_num - 1,))
-            
             stmt = "INSERT INTO ggfilm.operation_logs (oplog) VALUES (%s);"
             DBConnector.insert(stmt, ("导入{}".format(csv_files[0].filename),))
 
@@ -596,6 +595,8 @@ create_time <= '{}';".format(specification_code, st_date, ed_date)
 * 销售数量 = 时间段内每一个月的数量的累加
 * 截止库存数量 = 时间段内最后一个月的数量
 '''
+
+
 # 预览"销售报表（按单个SKU汇总）"的接口
 @ggfilm_server.route("/api/v1/case3/preview", methods=["POST"])
 def preview_report_file_case3():
@@ -836,6 +837,8 @@ ORDER BY create_time ASC;".format(
 * 销售数量 = 时间段内每一个月的数量的累加
 * 截止库存数量 = 时间段内最后一个月的数量
 '''
+
+
 # 预览"滞销品报表"的接口
 @ggfilm_server.route("/api/v1/case4/preview", methods=["POST"])
 def export_report_file_case4():
@@ -1017,6 +1020,8 @@ def prepare_report_file_case4():
 商品编码 | 品牌 | 商品名称 | 规格名称 | 供应商 | X个月销量 | Y个月销量 | 库存量 | 库存/X个月销量 | 库存/Y个月销量 |
 库存/X个月折算销量 | 库存/Y个月折算销量	| 拟定进货量 | 单个重量/g | 小计重量/kg | 单个体积/cm³ | 小计体积/m³
 '''
+
+
 # 预览"采购辅助分析报表"的接口
 @ggfilm_server.route("/api/v1/case5/preview", methods=["POST"])
 def preview_report_file_case5():
@@ -1278,6 +1283,8 @@ def upload_csv_file_for_case6():
 
 规格编码 | 商品名称 | 规格名称 | 数量 | 长度/cm | 宽度/cm | 高度/cm | 体积合计/m³ | 重量/g | 重量合计/kg
 '''
+
+
 # 预览"体积、重量计算汇总单"的接口
 @ggfilm_server.route("/api/v1/case6/preview", methods=["POST"])
 def preview_report_file_case6():
