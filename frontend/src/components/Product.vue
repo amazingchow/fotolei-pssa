@@ -4,8 +4,9 @@
       <div class="col-sm-12">
         <alert :message=message v-if="showMessage"></alert>
         <div id="import-and-export-btn-area">
-          <button type="button" class="btn btn-success btn-sm" v-b-modal.product-csv-file-modal>导入商品明细数据</button>
+          <button type="button" class="btn btn-success btn-sm" v-b-modal.product-csv-file-modal>导入商品明细</button>
           <button type="button" class="btn btn-success btn-sm" v-b-modal.jit-inventory-csv-file-modal>导入即时库存</button>
+          <button type="button" class="btn btn-success btn-sm" v-b-modal.products-clean-all-modal>删除商品明细</button>
         </div>
         <br/>
         <b-table-simple striped hover small id="product-table">
@@ -64,7 +65,7 @@
       </div>
     </div>
     <b-modal ref="importProductCSVFileModal" id="product-csv-file-modal" title="导入商品明细数据" hide-footer>
-      <b-form @submit="onImportProduct" @reset="onCancelImportProduct">
+      <b-form @submit="onImportProducts" @reset="onCancelImportProducts">
         <b-form-group>
           <b-form-file
             accept=".csv"
@@ -93,6 +94,31 @@
         <br/>
         <div id="product-table-operate-btn" class="w-100 d-block">
           <b-button type="submit" variant="dark">导入</b-button>
+          <b-button type="reset" variant="dark">取消</b-button>
+        </div>
+      </b-form>
+    </b-modal>
+    <b-modal ref="CleanAllProductsModal" id="products-clean-all-modal" title="删除全量商品明细" hide-footer>
+      <b-form @submit="onCleanAllProducts" @reset="onCancelCleanAllProducts">
+        <b-form-group
+          label="管理员账号"
+          label-size="sm"
+          label-align-sm="right"
+          label-cols-sm="3"
+        >
+          <b-form-input v-model="adminUsr"></b-form-input>
+        </b-form-group>
+        <b-form-group
+          label="管理员密码"
+          label-size="sm"
+          label-align-sm="right"
+          label-cols-sm="3"
+        >
+          <b-form-input v-model="adminPwd" type="password"></b-form-input>
+        </b-form-group>
+        <br/>
+        <div id="product-table-operate-btn" class="w-100 d-block">
+          <b-button type="submit" variant="dark">删除</b-button>
           <b-button type="reset" variant="dark">取消</b-button>
         </div>
       </b-form>
@@ -177,6 +203,8 @@ export default {
       pageOffsetMax: 0,
       uploadProductCSVFile: null,
       uploadJITInventoryCSVFile: null,
+      adminUsr: '',
+      adminPwd: '',
       message: '',
       showMessage: false
     }
@@ -190,7 +218,11 @@ export default {
         .then((res) => {
           this.products = res.data.products
           this.productsNum = res.data.products.length
-          this.pageCurr = this.pageOffset / 20 + 1
+          if (this.productsNum > 0) {
+            this.pageCurr = this.pageOffset / 20 + 1
+          } else {
+            this.pageCurr = 0
+          }
         })
         .catch((error) => {
           // eslint-disable-next-line
@@ -204,7 +236,11 @@ export default {
         .then((res) => {
           this.productsTotal = res.data.products_total
           this.pageOffsetMax = this.productsTotal - this.productsTotal % 20
-          this.pageTotal = this.pageOffsetMax / 20 + 1
+          if (this.productsTotal > 0) {
+            this.pageTotal = this.pageOffsetMax / 20 + 1
+          } else {
+            this.pageTotal = 0
+          }
         })
         .catch((error) => {
           // eslint-disable-next-line
@@ -272,6 +308,24 @@ export default {
           this.showMessage = true
         })
     },
+    cleanAllProducts (payload) {
+      axios.post(this.serverBaseURL + '/api/v1/products/clean', payload)
+        .then((res) => {
+          if (res.data.status === 'success') {
+            this.message = '删除成功！'
+            this.showMessage = true
+          } else if (res.data.status === 'invalid input data') {
+            this.message = '删除失败，管理员账号或密码错误！'
+            this.showMessage = true
+          }
+        })
+        .catch((error) => {
+          // eslint-disable-next-line
+          console.log(error)
+          this.message = '导入失败!'
+          this.showMessage = true
+        })
+    },
     preDownloadAddedSKUs (payload) {
       axios.post(this.serverBaseURL + '/api/v1/addedskus/prepare', payload)
         .then((res) => {
@@ -305,7 +359,7 @@ export default {
           this.showMessage = true
         })
     },
-    onImportProduct (evt) {
+    onImportProducts (evt) {
       evt.preventDefault()
       this.$refs.importProductCSVFileModal.hide()
       let formData = new FormData()
@@ -313,9 +367,10 @@ export default {
       this.importProductCSVFile(formData)
       this.uploadProductCSVFile = null
     },
-    onCancelImportProduct (evt) {
+    onCancelImportProducts (evt) {
       evt.preventDefault()
       this.$refs.importProductCSVFileModal.hide()
+      this.uploadProductCSVFile = null
     },
     onImportJITInventory (evt) {
       evt.preventDefault()
@@ -323,10 +378,37 @@ export default {
       let formData = new FormData()
       formData.append('file', this.uploadJITInventoryCSVFile, this.uploadJITInventoryCSVFile.name)
       this.importJITInventoryCSVFile(formData)
+      this.uploadJITInventoryCSVFile = null
     },
     onCancelImportJITInventory (evt) {
       evt.preventDefault()
       this.$refs.importJITInventoryCSVFileModal.hide()
+      this.uploadJITInventoryCSVFile = null
+    },
+    onCleanAllProducts (evt) {
+      evt.preventDefault()
+      this.$refs.CleanAllProductsModal.hide()
+      const payload = {
+        admin_usr: this.adminUsr,
+        admin_pwd: this.adminPwd
+      }
+      this.cleanAllProducts(payload)
+      this.products = []
+      this.productsNum = 0
+      this.productsTotal = 0
+      this.pageJump = 1
+      this.pageCurr = 0
+      this.pageTotal = 0
+      this.pageOffset = 0
+      this.pageOffsetMax = 0
+      this.adminUsr = ''
+      this.adminPwd = ''
+    },
+    onCancelCleanAllProducts (evt) {
+      evt.preventDefault()
+      this.$refs.CleanAllProductsModal.hide()
+      this.adminUsr = ''
+      this.adminPwd = ''
     },
     onDownloadAddedSKUs (evt) {
       evt.preventDefault()
