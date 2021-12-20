@@ -911,7 +911,7 @@ export default {
     getInventoriesTotal () {
       axios.get(this.serverBaseURL + '/api/v1/inventories/total')
         .then((res) => {
-          this.inventoriesTotal = parseInt(res.data.inventories_total)
+          this.inventoriesTotal = res.data.inventories_total
           this.pageOffsetMax = this.inventoriesTotal - this.inventoriesTotal % 20
         })
         .catch((error) => {

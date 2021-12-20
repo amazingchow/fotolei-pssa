@@ -204,7 +204,7 @@ export default {
     getProductsTotal () {
       axios.get(this.serverBaseURL + '/api/v1/products/total')
         .then((res) => {
-          this.productsTotal = parseInt(res.data.products_total)
+          this.productsTotal = res.data.products_total
           this.pageOffsetMax = this.productsTotal - this.productsTotal % 20
           this.pageTotal = this.pageOffsetMax / 20 + 1
         })

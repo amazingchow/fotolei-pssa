@@ -251,7 +251,7 @@ def get_products_total():
     stmt = "SELECT SUM(total) FROM ggfilm.product_summary;"
     ret = DBConnector.query(stmt)
     response_object = {"status": "success"}
-    if type(ret) is list and len(ret) > 0:
+    if type(ret) is list and len(ret) > 0 and ret[0][0] != None:
         response_object["products_total"] = ret[0][0]
     else:
         response_object["products_total"] = 0
@@ -286,7 +286,7 @@ def get_inventories_total():
     stmt = "SELECT SUM(total) FROM ggfilm.inventory_summary;"
     ret = DBConnector.query(stmt)
     response_object = {"status": "success"}
-    if type(ret) is list and len(ret) > 0:
+    if type(ret) is list and len(ret) > 0 and ret[0][0] != None:
         response_object["inventories_total"] = ret[0][0]
     else:
         response_object["inventories_total"] = 0
