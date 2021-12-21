@@ -121,6 +121,16 @@ def upload_jit_inventory_data():
     )
     csv_files[0].save(csv_file)
 
+    if not do_data_schema_validation_for_input_jit_inventories(csv_file):
+        response_object = {"status": "invalid input data schema"}
+        return jsonify(response_object)
+
+    is_valid, err_msg = do_data_check_for_input_jit_inventories(csv_file)
+    if not is_valid:
+        response_object = {"status": "invalid input data"}
+        response_object["err_msg"] = err_msg
+        return jsonify(response_object)
+
     sku_inventory_tuple_list = []
     not_inserted_sku_list = []
     with open(csv_file, "r", encoding='utf-8-sig') as fd:
@@ -1804,6 +1814,41 @@ def add_date_for_input_inventories(csv_file: str, import_date: str):
     fw.close()
     fr.close()
     shutil.move(csv_file + ".tmp", csv_file)
+
+
+def do_data_schema_validation_for_input_jit_inventories(csv_file: str):
+    data_schema = [
+        "规格编码", "实时可用库存",
+    ]
+    is_valid = True
+    with open(csv_file, "r", encoding='utf-8-sig') as fd:
+        csv_reader = csv.reader(fd, delimiter=",")
+        for row in csv_reader:
+            if len(row) != len(data_schema):
+                is_valid = False
+                break
+            for idx, item in enumerate(row):
+                if item.strip() != data_schema[idx]:
+                    is_valid = False
+                    break
+            break
+    return is_valid
+
+
+def do_data_check_for_input_jit_inventories(csv_file: str):
+    is_valid = True
+    err_msg = ""
+    with open(csv_file, "r", encoding='utf-8-sig') as fd:
+        csv_reader = csv.reader(fd, delimiter=",")
+        line = 0
+        for row in csv_reader:
+            if line > 0:
+                if RE_INT.match(row[1]) is None:
+                    is_valid = False
+                    err_msg = "'实时可用库存'数据存在非法输入，出现在第{}行。".format(line + 1)
+                    break
+            line += 1
+    return is_valid, err_msg
 
 
 def all_done():
