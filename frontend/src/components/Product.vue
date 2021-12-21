@@ -58,7 +58,7 @@
         <div id="pagination-btn-area">
           <button class="btn btn-success btn-sm" v-on:click="onFirstPage">首页</button>
           <button class="btn btn-success btn-sm" :disabled="pageOffset==0" v-on:click="onPrevPage">前一页</button>
-          <input v-model="pageJump" type="number" placeholder="1" style="width: 10ch;" />
+          <input v-model="pageJump" type="number" min="0" step="1" placeholder="1" style="width: 10ch;" />
           <button class="btn btn-success btn-sm" v-on:click="onJumpPage">快捷跳转</button>
           <button class="btn btn-success btn-sm" :disabled="pageOffset==pageOffsetMax" v-on:click="onNextPage">后一页</button>
           <button class="btn btn-success btn-sm" v-on:click="onLastPage">尾页</button>

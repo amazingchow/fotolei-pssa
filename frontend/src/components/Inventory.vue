@@ -71,7 +71,7 @@
         <div id="pagination-btn-area">
           <button class="btn btn-success btn-sm" v-on:click="onFirstPage">首页</button>
           <button class="btn btn-success btn-sm" :disabled="pageOffset==0" v-on:click="onPrevPage">前一页</button>
-          <input v-model="pageJump" type="number" placeholder="1" style="width: 10ch;" />
+          <input v-model="pageJump" type="number" min="0" step="1" placeholder="1" style="width: 10ch;" />
           <button class="btn btn-success btn-sm" v-on:click="onJumpPage">快捷跳转</button>
           <button class="btn btn-success btn-sm" :disabled="pageOffset==pageOffsetMax" v-on:click="onNextPage">后一页</button>
           <button class="btn btn-success btn-sm" v-on:click="onLastPage">尾页</button>
@@ -431,7 +431,7 @@
             label-align-sm="right"
             label-cols-sm="3"
           >
-            <b-form-input v-model="thresholdSSR" type="number" placeholder="4"></b-form-input>
+            <b-form-input v-model="thresholdSSR" type="number" min="0" step="1" placeholder="4"></b-form-input>
           </b-form-group>
           <b-form-group
             label="断货折算"
@@ -501,7 +501,7 @@
             label-align-sm="right"
             label-cols-sm="5"
           >
-            <b-form-input v-model="timeQuantumX" type="number" placeholder="6"></b-form-input>
+            <b-form-input v-model="timeQuantumX" type="number" min="0" step="1" placeholder="6"></b-form-input>
           </b-form-group>
           <b-form-group
             label="阈值1"
@@ -509,7 +509,7 @@
             label-align-sm="right"
             label-cols-sm="5"
           >
-            <b-form-input v-model="thresholdX" type="number" placeholder="2"></b-form-input>
+            <b-form-input v-model="thresholdX" type="number" min="0" step="1" placeholder="2"></b-form-input>
           </b-form-group>
           <b-form-group
             label="时间段2（月数）"
@@ -517,7 +517,7 @@
             label-align-sm="right"
             label-cols-sm="5"
           >
-            <b-form-input v-model="timeQuantumY" type="number" placeholder="12"></b-form-input>
+            <b-form-input v-model="timeQuantumY" type="number" min="0" step="1" placeholder="12"></b-form-input>
           </b-form-group>
           <b-form-group
             label="阈值2"
@@ -525,7 +525,7 @@
             label-align-sm="right"
             label-cols-sm="5"
           >
-            <b-form-input v-model="thresholdY" type="number" placeholder="1"></b-form-input>
+            <b-form-input v-model="thresholdY" type="number" min="0" step="1" placeholder="1"></b-form-input>
           </b-form-group>
           <b-form-group
             label="拟定进货（可销月数）"
@@ -533,7 +533,7 @@
             label-align-sm="right"
             label-cols-sm="5"
           >
-            <b-form-input v-model="projectedPurchase" type="number" placeholder="12"></b-form-input>
+            <b-form-input v-model="projectedPurchase" type="number" min="0" step="1" placeholder="12"></b-form-input>
           </b-form-group>
           <b-form-group
             label="断货折算"
