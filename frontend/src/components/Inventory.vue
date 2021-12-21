@@ -567,7 +567,7 @@
         </b-card>
       </b-form>
     </b-modal>
-    <b-modal ref="previewCase5Modal" title="预览采购辅助分析报表" size="xl" hide-footer>
+    <b-modal ref="previewCase5Modal" title="预览采购辅助分析报表" size="huge" hide-footer>
       <b-table-simple striped hover small id="preview-table">
         <b-thead>
           <b-tr>
@@ -576,13 +576,13 @@
             <b-th scope="col">商品名称</b-th>
             <b-th scope="col">规格名称</b-th>
             <b-th scope="col">供应商</b-th>
-            <b-th scope="col">X个月销量</b-th>
-            <b-th scope="col">Y个月销量</b-th>
+            <b-th scope="col">{{ timeQuantumX }}个月销量</b-th>
+            <b-th scope="col">{{ timeQuantumY }}个月销量</b-th>
             <b-th scope="col">库存量</b-th>
-            <b-th scope="col">库存/X个月销量</b-th>
-            <b-th scope="col">库存/Y个月销量</b-th>
-            <b-th scope="col">库存/X个月折算销量</b-th>
-            <b-th scope="col">库存/Y个月折算销量</b-th>
+            <b-th scope="col">库存/{{ timeQuantumX }}个月销量</b-th>
+            <b-th scope="col">库存/{{ timeQuantumY }}个月销量</b-th>
+            <b-th scope="col">库存/{{ timeQuantumX }}个月折算销量</b-th>
+            <b-th scope="col">库存/{{ timeQuantumY }}个月折算销量</b-th>
             <b-th scope="col">拟定进货量</b-th>
             <b-th scope="col">单个重量/g</b-th>
             <b-th scope="col">小计重量/kg</b-th>
@@ -764,6 +764,13 @@
 
 #added-skus-table-operate-btn {
   text-align: right;
+}
+
+@media (min-width: 992px) {
+  .modal .modal-huge {
+    width: 90% !important;;
+    max-width: 90% !important;
+  }
 }
 </style>
 
@@ -1287,6 +1294,8 @@ export default {
       this.$refs.previewCase5Modal.hide()
       this.$refs.exportFileCase5Modal.hide()
       const payload = {
+        time_quantum_x: this.timeQuantumX,
+        time_quantum_y: this.timeQuantumY,
         preview_table: this.previewCase5.previewTable
       }
       this.prepareExportReportFile('/api/v1/case5/prepare', payload)

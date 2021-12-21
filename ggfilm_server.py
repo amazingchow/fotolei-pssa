@@ -1451,6 +1451,8 @@ ORDER BY create_time DESC LIMIT {};".format(specification_code, time_quantum_y)
 @ggfilm_server.route("/api/v1/case5/prepare", methods=["POST"])
 def prepare_report_file_case5():
     payload = request.get_json()
+    time_quantum_x = int(payload.get("time_quantum_x", "6"))
+    time_quantum_y = int(payload.get("time_quantum_y", "12"))
     preview_table = payload.get("preview_table", [])
 
     ts = int(time.time())
@@ -1461,8 +1463,10 @@ def prepare_report_file_case5():
         csv_writer = csv.writer(fd, delimiter=",")
         csv_writer.writerow([
             "商品编码", "品牌", "商品名称", "规格名称", "供应商",
-            "X个月销量", "X个月折算销量", "Y个月销量", "Y个月折算销量",
-            "库存量", "库存/X个月销量", "库存/Y个月销量", "拟定进货量",
+            "{}个月销量".format(time_quantum_x), "{}个月折算销量".format(time_quantum_x),
+            "{}个月销量".format(time_quantum_y), "{}个月折算销量".format(time_quantum_y),
+            "库存量", "库存/{}个月销量".format(time_quantum_x),
+            "库存/{}个月销量".format(time_quantum_y), "拟定进货量",
             "单个重量/g", "小计重量/kg", "单个体积/cm³", "小计体积/m³"
         ])
         for item in preview_table:
