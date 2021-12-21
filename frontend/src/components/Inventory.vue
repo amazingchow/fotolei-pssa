@@ -296,16 +296,16 @@
           </b-tr>
         </b-thead>
         <b-tbody>
-          <b-tr>
-            <b-td>{{ previewCase3.productCode }}</b-td>
-            <b-td>{{ previewCase3.specificationCode }}</b-td>
-            <b-td>{{ previewCase3.productName }}</b-td>
-            <b-td>{{ previewCase3.specificationName }}</b-td>
-            <b-td>{{ previewCase3.stInventoryQty }}</b-td>
-            <b-td>{{ previewCase3.purchaseQty }}</b-td>
-            <b-td>{{ previewCase3.saleQty }}</b-td>
-            <b-td>{{ previewCase3.edInventoryQty }}</b-td>
-            <b-td>{{ previewCase3.jitInventory}}</b-td>
+          <b-tr v-for="(item, index) in previewCase3.previewTable" :key="index">
+            <b-td>{{ item.product_code }}</b-td>
+            <b-td>{{ item.specification_code }}</b-td>
+            <b-td>{{ item.product_name }}</b-td>
+            <b-td>{{ item.specification_name }}</b-td>
+            <b-td>{{ item.st_inventory_qty }}</b-td>
+            <b-td>{{ item.purchase_qty }}</b-td>
+            <b-td>{{ item.sale_qty }}</b-td>
+            <b-td>{{ item.ed_inventory_qty }}</b-td>
+            <b-td>{{ item.jit_inventory }}</b-td>
           </b-tr>
         </b-tbody>
       </b-table-simple>
@@ -798,7 +798,6 @@ export default {
       classification2Selection: '',
       productSeriesOptions: [],
       productSeriesSelection: '',
-      // TODO： 支持“全部”选项检索
       stopStatusOptions: [
         { value: '在用', text: '在用' },
         { value: '停用', text: '停用' },
@@ -827,17 +826,7 @@ export default {
       supplierNameSelections: [],
       supplierNameSelection: '',
       previewCase3: {
-        stDate: '',
-        edDate: '',
-        productCode: '',
-        specificationCode: '',
-        productName: '',
-        specificationName: '',
-        stInventoryQty: 0,
-        purchaseQty: 0,
-        saleQty: 0,
-        edInventoryQty: 0,
-        jitInventory: 0
+        previewTable: []
       },
       previewCase4: {
         previewTable: []
@@ -960,17 +949,7 @@ export default {
       this.beAggregatedSelection = '参与'
       this.isImportSelection = '全部'
       this.supplierNameSelection = ''
-      this.previewCase3.stDate = ''
-      this.previewCase3.edDate = ''
-      this.previewCase3.productCode = ''
-      this.previewCase3.specificationCode = ''
-      this.previewCase3.productName = ''
-      this.previewCase3.specificationName = ''
-      this.previewCase3.stInventoryQty = 0
-      this.previewCase3.purchaseQty = 0
-      this.previewCase3.saleQty = 0
-      this.previewCase3.edInventoryQty = 0
-      this.previewCase3.jitInventory = 0
+      this.previewCase3.previewTable = []
       this.previewCase4.previewTable = []
       this.previewCase5.previewTable = []
       this.previewCase6.previewTable = []
@@ -982,6 +961,8 @@ export default {
       this.projectedPurchase = '12'
       this.reducedBtnOption = 'open'
       this.thresholdSSR = '4'
+      this.uploadCSVFileForCase6 = null
+      this.demandTable = null
     },
     importCSVFileClose () {
       this.$refs.processingModal.hide()
@@ -1054,12 +1035,14 @@ export default {
       this.$refs.exportFileCase1Modal.hide()
       const payload = {}
       this.exportReportFileCase1(payload)
+      // 恢复默认设置
       this.initExportForm()
     },
     onCancelExportCase1 (evt) {
       // 取消导出销售报表（按分类汇总）
       evt.preventDefault()
       this.$refs.exportFileCase1Modal.hide()
+      // 恢复默认设置
       this.initExportForm()
     },
     // 销售报表（按系列汇总）
@@ -1083,30 +1066,20 @@ export default {
       // 取消导出销售报表（按系列汇总）
       evt.preventDefault()
       this.$refs.exportFileCase2Modal.hide()
+      // 恢复默认设置
       this.initExportForm()
     },
     previewReportFileCase3Close () {
       this.$refs.processingModal.hide()
-      this.initExportForm()
     },
     // 销售报表（按单个SKU汇总）
     previewReportFileCase3 (payload) {
       axios.post(this.serverBaseURL + '/api/v1/case3/preview', payload)
         .then((res) => {
           if (res.data.status === 'success') {
-            this.previewCase3.stDate = res.data.st_date
-            this.previewCase3.edDate = res.data.ed_date
-            this.previewCase3.productCode = res.data.product_code
-            this.previewCase3.specificationCode = res.data.specification_code
-            this.previewCase3.productName = res.data.product_name
-            this.previewCase3.specificationName = res.data.specification_name
-            this.previewCase3.stInventoryQty = res.data.st_inventory_qty
-            this.previewCase3.purchaseQty = res.data.purchase_qty
-            this.previewCase3.saleQty = res.data.sale_qty
-            this.previewCase3.edInventoryQty = res.data.ed_inventory_qty
-            this.previewCase3.jitInventory = res.data.jit_inventory
+            this.previewCase3.previewTable = res.data.preview_table
             this.$refs.previewCase3Modal.show()
-          } else {
+          } else if (res.data.status === 'not found') {
             this.message = '预览失败！不存在指定的库存条目。'
             this.showMessage = true
           }
@@ -1152,30 +1125,23 @@ export default {
     onCancelPreviewCase3 (evt) {
       evt.preventDefault()
       this.$refs.previewCase3Modal.hide()
-      this.initExportForm()
     },
     onExportCase3 (evt) {
       // 确定下载销售报表（按单个SKU汇总）
       evt.preventDefault()
-      if (this.dateReg.test(this.previewCase3.stDate) && this.dateReg.test(this.previewCase3.edDate)) {
-        this.$refs.previewCase3Modal.hide()
-        this.$refs.exportFileCase3Modal.hide()
-        this.$refs.processingModal.show()
-        const payload = {
-          st_date: this.previewCase3.stDate,
-          ed_date: this.previewCase3.edDate,
-          specification_code: this.previewCase3.specificationCode
-        }
-        this.prepareExportReportFile('/api/v1/case3/prepare', payload)
-      } else {
-        this.message = '日期格式有误！'
-        this.showMessage = true
+      this.$refs.previewCase3Modal.hide()
+      this.$refs.exportFileCase3Modal.hide()
+      this.$refs.processingModal.show()
+      const payload = {
+        preview_table: this.previewCase3.previewTable
       }
+      this.prepareExportReportFile('/api/v1/case3/prepare', payload)
     },
     onCancelExportCase3 (evt) {
       // 取消下载销售报表（按单个SKU汇总）
       evt.preventDefault()
       this.$refs.exportFileCase3Modal.hide()
+      // 恢复默认设置
       this.initExportForm()
     },
     // 滞销品报表
@@ -1244,12 +1210,12 @@ export default {
     onCancelPreviewCase4 (evt) {
       evt.preventDefault()
       this.$refs.previewCase4Modal.hide()
-      this.initExportForm()
     },
     onCancelExportCase4 (evt) {
       // 取消导出滞销品报表
       evt.preventDefault()
       this.$refs.exportFileCase4Modal.hide()
+      // 恢复默认设置
       this.initExportForm()
     },
     // 采购辅助分析报表
@@ -1311,7 +1277,6 @@ export default {
     onCancelPreviewCase5 (evt) {
       evt.preventDefault()
       this.$refs.previewCase5Modal.hide()
-      this.initExportForm()
     },
     onExportCase5 (evt) {
       // 确定导出采购辅助分析报表
@@ -1330,6 +1295,7 @@ export default {
       // 取消导出采购辅助分析报表
       evt.preventDefault()
       this.$refs.exportFileCase5Modal.hide()
+      // 恢复默认设置
       this.initExportForm()
     },
     // 体积、重量计算汇总单
@@ -1339,12 +1305,6 @@ export default {
       let formData = new FormData()
       formData.append('file', this.uploadCSVFileForCase6, this.uploadCSVFileForCase6.name)
       this.importCSVFileForCase6(formData)
-    },
-    onCancelExportCase6 (evt) {
-      evt.preventDefault()
-      this.$refs.exportFileCase6Modal.hide()
-      this.uploadCSVFileForCase6 = null
-      this.demandTable = []
     },
     importCSVFileForCase6Close () {
       this.$refs.processingModal.hide()
@@ -1422,10 +1382,16 @@ export default {
     onCancelPreviewCase6 (evt) {
       evt.preventDefault()
       this.$refs.previewCase6Modal.hide()
+    },
+    onCancelExportCase6 (evt) {
+      evt.preventDefault()
+      this.$refs.exportFileCase6Modal.hide()
+      // 恢复默认设置
       this.initExportForm()
     },
     prepareExportReportFileClose () {
       this.$refs.processingModal.hide()
+      // 恢复默认设置
       this.initExportForm()
     },
     prepareExportReportFile (url, payload) {

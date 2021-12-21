@@ -841,50 +841,62 @@ def preview_report_file_case3():
         return jsonify(response_object)
 
     specification_code = payload.get("specification_code", "").strip()
+    specification_code_list = []
 
     def inline():
         resp = {"status": "success"}
-        stmt = "SELECT product_code, specification_code, \
-product_name, specification_name, \
-st_inventory_qty, purchase_qty, \
-sale_qty, ed_inventory_qty, create_time \
-FROM ggfilm.inventories \
-WHERE specification_code = '{}' AND \
-create_time >= '{}' AND \
-create_time <= '{}' \
-ORDER BY create_time ASC;".format(
-            specification_code, st_date, ed_date
-        )
-        rets = DBConnector.query(stmt)
-        if type(rets) is list and len(rets) > 0:
-            resp["st_date"] = st_date
-            resp["ed_date"] = ed_date
-            resp["product_code"] = rets[0][0]
-            resp["specification_code"] = rets[0][1]
-            resp["product_name"] = rets[0][2]
-            resp["specification_name"] = rets[0][3]
-            resp["st_inventory_qty"] = rets[0][4]
-            resp["ed_inventory_qty"] = rets[len(rets) - 1][7]
-            purchase_qty = 0
-            for ret in rets:
-                purchase_qty += ret[5]
-            resp["purchase_qty"] = purchase_qty
-            sale_qty = 0
-            for ret in rets:
-                sale_qty += ret[6]
-            resp["sale_qty"] = sale_qty
+        resp["preview_table"] = []
+        for scode in specification_code_list:
+            cache = {}
 
-            stmt = "SELECT jit_inventory FROM ggfilm.products WHERE specification_code = '{}';".format(specification_code)
+            stmt = "SELECT * FROM ggfilm.inventories WHERE specification_code = '{}' AND create_time >= '{}' AND create_time <= '{}' ORDER BY create_time ASC;".format(
+                scode, st_date, ed_date
+            )
             rets = DBConnector.query(stmt)
             if type(rets) is list and len(rets) > 0:
-                resp["jit_inventory"] = rets[0][0]
-            else:
-                resp["jit_inventory"] = 0
-        else:
+                cache["st_inventory_qty"] = rets[0][5]
+                cache["st_inventory_total"] = rets[0][6]
+                cache["purchase_qty"] = sum([ret[7] for ret in rets])
+                cache["purchase_total"] = sum([ret[8] for ret in rets])
+                cache["purchase_then_return_qty"] = sum([ret[9] for ret in rets])
+                cache["purchase_then_return_total"] = sum([ret[10] for ret in rets])
+                cache["sale_qty"] = sum([ret[11] for ret in rets])
+                cache["sale_total"] = sum([ret[12] for ret in rets])
+                cache["sale_then_return_qty"] = sum([ret[13] for ret in rets])
+                cache["sale_then_return_total"] = sum([ret[14] for ret in rets])
+                cache["others_qty"] = sum([ret[15] for ret in rets])
+                cache["others_total"] = sum([ret[16] for ret in rets])
+                cache["ed_inventory_qty"] = rets[len(rets) - 1][17]
+                cache["ed_inventory_total"] = rets[len(rets) - 1][18]
+
+                stmt = "SELECT * FROM ggfilm.products WHERE specification_code = '{}';".format(scode)
+                inner_rets = DBConnector.query(stmt)
+                cache["product_code"] = inner_rets[0][1]
+                cache["product_name"] = inner_rets[0][2]
+                cache["specification_code"] = inner_rets[0][3]
+                cache["specification_name"] = inner_rets[0][4]
+                cache["brand"] = inner_rets[0][5]
+                cache["classification_1"] = inner_rets[0][6]
+                cache["classification_2"] = inner_rets[0][7]
+                cache["product_series"] = inner_rets[0][8]
+                cache["stop_status"] = inner_rets[0][9]
+                cache["product_weight"] = inner_rets[0][10]
+                cache["product_length"] = inner_rets[0][11]
+                cache["product_width"] = inner_rets[0][12]
+                cache["product_height"] = inner_rets[0][13]
+                cache["is_combined"] = inner_rets[0][14]
+                cache["is_import"] = inner_rets[0][15]
+                cache["supplier_name"] = inner_rets[0][16]
+                cache["purchase_name"] = inner_rets[0][17]
+                cache["jit_inventory"] = inner_rets[0][18]
+
+                resp["preview_table"].append(cache)
+        if len(resp["preview_table"]) == 0:
             resp = {"status": "not found"}
         return resp
 
     if len(specification_code) > 0:
+        specification_code_list.append(specification_code)
         response_object = inline()
         return jsonify(response_object)
     else:
@@ -928,7 +940,8 @@ ORDER BY create_time ASC;".format(
         stmt += ";"
         rets = DBConnector.query(stmt)
         if type(rets) is list and len(rets) > 0:
-            specification_code = rets[0][0]
+            for ret in rets:
+                specification_code_list.append(ret[0])
             response_object = inline()
             return jsonify(response_object)
         else:
@@ -940,88 +953,7 @@ ORDER BY create_time ASC;".format(
 @ggfilm_server.route("/api/v1/case3/prepare", methods=["POST"])
 def prepare_report_file_case3():
     payload = request.get_json()
-    st_date = payload.get("st_date", "").strip()
-    ed_date = payload.get("ed_date", "").strip()
-    if (st_date > ed_date):
-        response_object = {"status": "not found"}
-        return jsonify(response_object)
-
-    specification_code = payload.get("specification_code", "").strip()
-
-    stmt = "SELECT * FROM ggfilm.products WHERE specification_code = '{}';".format(specification_code)
-    rets = DBConnector.query(stmt)
-    cache = {}
-    cache["product_code"] = rets[0][1]
-    cache["product_name"] = rets[0][2]
-    cache["specification_code"] = rets[0][3]
-    cache["specification_name"] = rets[0][4]
-    cache["brand"] = rets[0][5]
-    cache["classification_1"] = rets[0][6]
-    cache["classification_2"] = rets[0][7]
-    cache["product_series"] = rets[0][8]
-    cache["stop_status"] = rets[0][9]
-    cache["product_weight"] = rets[0][10]
-    cache["product_length"] = rets[0][11]
-    cache["product_width"] = rets[0][12]
-    cache["product_height"] = rets[0][13]
-    cache["is_combined"] = rets[0][14]
-    cache["is_import"] = rets[0][16]
-    cache["supplier_name"] = rets[0][17]
-    cache["purchase_name"] = rets[0][18]
-    cache["jit_inventory"] = rets[0][19]
-
-    stmt = "SELECT * FROM ggfilm.inventories \
-WHERE specification_code = '{}' AND \
-create_time >= '{}' AND \
-create_time <= '{}' \
-ORDER BY create_time ASC;".format(
-        specification_code, st_date, ed_date
-    )
-    rets = DBConnector.query(stmt)
-    cache["st_inventory_qty"] = rets[0][5]
-    cache["st_inventory_total"] = rets[0][6]
-    cache["ed_inventory_qty"] = rets[len(rets) - 1][17]
-    cache["ed_inventory_total"] = rets[len(rets) - 1][18]
-    purchase_qty = 0
-    for ret in rets:
-        purchase_qty += ret[7]
-    cache["purchase_qty"] = purchase_qty
-    purchase_total = 0
-    for ret in rets:
-        purchase_total += ret[8]
-    cache["purchase_total"] = purchase_total
-    purchase_then_return_qty = 0
-    for ret in rets:
-        purchase_then_return_qty += ret[9]
-    cache["purchase_then_return_qty"] = purchase_then_return_qty
-    purchase_then_return_total = 0
-    for ret in rets:
-        purchase_then_return_total += ret[10]
-    cache["purchase_then_return_total"] = purchase_then_return_total
-    sale_qty = 0
-    for ret in rets:
-        sale_qty += ret[11]
-    cache["sale_qty"] = sale_qty
-    sale_total = 0
-    for ret in rets:
-        sale_total += ret[12]
-    cache["sale_total"] = sale_total
-    sale_then_return_qty = 0
-    for ret in rets:
-        sale_then_return_qty += ret[13]
-    cache["sale_then_return_qty"] = sale_then_return_qty
-    sale_then_return_total = 0
-    for ret in rets:
-        sale_then_return_total += ret[14]
-    cache["sale_then_return_total"] = sale_then_return_total
-    others_qty = 0
-    for ret in rets:
-        others_qty += ret[15]
-    cache["others_qty"] = others_qty
-    others_total = 0
-    for ret in rets:
-        others_total += ret[16]
-    cache["others_total"] = others_total
+    preview_table = payload.get("preview_table", [])
 
     ts = int(time.time())
     csv_file_sha256 = generate_digest("销售报表（按单个SKU汇总）_{}.csv".format(ts))
@@ -1039,16 +971,17 @@ ORDER BY create_time ASC;".format(
             "销售退货数量", "销售退货总额", "其他变更数量", "其他变更总额",
             "截止库存数量", "截止库存总额", "实时可用库存",
         ])
-        csv_writer.writerow([
-            cache["product_code"], cache["specification_code"], cache["product_name"], cache["specification_name"],
-            cache["brand"], cache["classification_1"], cache["classification_2"], cache["product_series"],
-            cache["stop_status"], cache["product_weight"], cache["product_length"], cache["product_width"], cache["product_height"],
-            cache["is_combined"], cache["is_import"], cache["supplier_name"], cache["purchase_name"],
-            cache["st_inventory_qty"], cache["st_inventory_total"], cache["purchase_qty"], cache["purchase_total"],
-            cache["purchase_then_return_qty"], cache["purchase_then_return_total"], cache["sale_qty"], cache["sale_total"],
-            cache["sale_then_return_qty"], cache["sale_then_return_total"], cache["others_qty"], cache["others_total"],
-            cache["ed_inventory_qty"], cache["ed_inventory_total"], cache["jit_inventory"],
-        ])
+        for item in preview_table:
+            csv_writer.writerow([
+                item["product_code"], item["specification_code"], item["product_name"], item["specification_name"],
+                item["brand"], item["classification_1"], item["classification_2"], item["product_series"],
+                item["stop_status"], item["product_weight"], item["product_length"], item["product_width"], item["product_height"],
+                item["is_combined"], item["is_import"], item["supplier_name"], item["purchase_name"],
+                item["st_inventory_qty"], item["st_inventory_total"], item["purchase_qty"], item["purchase_total"],
+                item["purchase_then_return_qty"], item["purchase_then_return_total"], item["sale_qty"], item["sale_total"],
+                item["sale_then_return_qty"], item["sale_then_return_total"], item["others_qty"], item["others_total"],
+                item["ed_inventory_qty"], item["ed_inventory_total"], item["jit_inventory"],
+            ])
 
     response_object = {"status": "success"}
     response_object["output_file"] = output_file
