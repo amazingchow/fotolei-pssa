@@ -278,7 +278,7 @@ def list_products():
     stmt = "SELECT product_code, specification_code, product_name, specification_name, \
 brand, classification_1, classification_2, product_series, stop_status, \
 is_combined, is_import, supplier_name, purchase_name, jit_inventory, moq \
-FROM ggfilm.products ORDER BY 'specification_code' DESC LIMIT {}, {};".format(
+FROM ggfilm.products ORDER BY specification_code LIMIT {}, {};".format(
         page_offset, page_limit)
     products = DBConnector.query(stmt)
 
@@ -495,7 +495,7 @@ def list_inventories():
     stmt = "SELECT specification_code, \
 st_inventory_qty, purchase_qty, purchase_then_return_qty, sale_qty, \
 sale_then_return_qty, others_qty, ed_inventory_qty, create_time, sale_unit_price \
-FROM ggfilm.inventories ORDER BY 'id' DESC LIMIT {}, {};".format(
+FROM ggfilm.inventories ORDER BY create_time DESC LIMIT {}, {};".format(
         page_offset, page_limit)
     inventories = DBConnector.query(stmt)
 
