@@ -983,6 +983,11 @@ export default {
       this.reducedBtnOption = 'open'
       this.thresholdSSR = '4'
     },
+    importCSVFileClose () {
+      this.$refs.processingModal.hide()
+      this.setDefaultDate()
+      this.uploadCSVFile = null
+    },
     importCSVFile (formData, date) {
       let config = {
         header: {
@@ -1012,24 +1017,25 @@ export default {
             this.message = '导入失败！数据表格格式有变更，请人工复合！'
             this.showMessage = true
           }
+          this.importCSVFileClose()
         })
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
           this.message = '导入失败！'
           this.showMessage = true
+          this.importCSVFileClose()
         })
     },
     onImport (evt) {
       evt.preventDefault()
       if (this.dateReg.test(this.customDateSelection)) {
         this.$refs.importCSVFileModal.hide()
+        this.$refs.processingModal.show()
         let formData = new FormData()
         formData.append('file', this.uploadCSVFile, this.uploadCSVFile.name)
         formData.append('import_date', this.customDateSelection)
         this.importCSVFile(formData, this.customDateSelection)
-        this.setDefaultDate()
-        this.uploadCSVFile = null
       } else {
         this.message = '日期格式有误！'
         this.showMessage = true
@@ -1062,12 +1068,12 @@ export default {
       evt.preventDefault()
       if (this.dateReg.test(this.stDateSelection) && this.dateReg.test(this.edDateSelection)) {
         this.$refs.exportFileCase2Modal.hide()
+        this.$refs.processingModal.show()
         const payload = {
           st_date: this.stDateSelection,
           ed_date: this.edDateSelection
         }
         this.prepareExportReportFile('/api/v1/case2/prepare', payload)
-        this.initExportForm()
       } else {
         this.message = '日期格式有误！'
         this.showMessage = true
@@ -1077,6 +1083,10 @@ export default {
       // 取消导出销售报表（按系列汇总）
       evt.preventDefault()
       this.$refs.exportFileCase2Modal.hide()
+      this.initExportForm()
+    },
+    previewReportFileCase3Close () {
+      this.$refs.processingModal.hide()
       this.initExportForm()
     },
     // 销售报表（按单个SKU汇总）
@@ -1100,12 +1110,14 @@ export default {
             this.message = '预览失败！不存在指定的库存条目。'
             this.showMessage = true
           }
+          this.previewReportFileCase3Close()
         })
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
           this.message = '预览失败！'
           this.showMessage = true
+          this.previewReportFileCase3Close()
         })
     },
     onPreviewCase3 (evt) {
@@ -1114,6 +1126,7 @@ export default {
         this.message = '起始日期/截止日期不能为空！'
         this.showMessage = true
       } else if (this.dateReg.test(this.stDateSelection) && this.dateReg.test(this.edDateSelection)) {
+        this.$refs.processingModal.show()
         const payload = {
           st_date: this.stDateSelection,
           ed_date: this.edDateSelection,
@@ -1131,7 +1144,6 @@ export default {
           supplier_name: this.supplierNameSelection
         }
         this.previewReportFileCase3(payload)
-        this.initExportForm()
       } else {
         this.message = '日期格式有误！'
         this.showMessage = true
@@ -1148,13 +1160,13 @@ export default {
       if (this.dateReg.test(this.previewCase3.stDate) && this.dateReg.test(this.previewCase3.edDate)) {
         this.$refs.previewCase3Modal.hide()
         this.$refs.exportFileCase3Modal.hide()
+        this.$refs.processingModal.show()
         const payload = {
           st_date: this.previewCase3.stDate,
           ed_date: this.previewCase3.edDate,
           specification_code: this.previewCase3.specificationCode
         }
         this.prepareExportReportFile('/api/v1/case3/prepare', payload)
-        this.initExportForm()
       } else {
         this.message = '日期格式有误！'
         this.showMessage = true
@@ -1172,11 +1184,14 @@ export default {
       evt.preventDefault()
       this.$refs.previewCase4Modal.hide()
       this.$refs.exportFileCase4Modal.hide()
+      this.$refs.processingModal.show()
       const payload = {
         preview_table: this.previewCase4.previewTable
       }
       this.prepareExportReportFile('/api/v1/case4/prepare', payload)
-      this.initExportForm()
+    },
+    previewReportFileCase4Close () {
+      this.$refs.processingModal.hide()
     },
     previewReportFileCase4 (payload) {
       axios.post(this.serverBaseURL + '/api/v1/case4/preview', payload)
@@ -1188,12 +1203,14 @@ export default {
             this.message = '预览失败！不存在指定的库存条目。'
             this.showMessage = true
           }
+          this.previewReportFileCase4Close()
         })
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
           this.message = '预览失败！'
           this.showMessage = true
+          this.previewReportFileCase4Close()
         })
     },
     onPreviewCase4 (evt) {
@@ -1217,6 +1234,7 @@ export default {
           threshold_ssr: this.thresholdSSR,
           reduced_btn_option: this.reducedBtnOption
         }
+        this.$refs.processingModal.show()
         this.previewReportFileCase4(payload)
       } else {
         this.message = '日期格式有误！'
@@ -1235,6 +1253,9 @@ export default {
       this.initExportForm()
     },
     // 采购辅助分析报表
+    previewReportFileCase5WayClose () {
+      this.$refs.processingModal.hide()
+    },
     previewReportFileCase5Way (url, payload) {
       axios.post(this.serverBaseURL + url, payload)
         .then((res) => {
@@ -1245,16 +1266,19 @@ export default {
             this.message = '预览失败！不存在指定的库存条目。'
             this.showMessage = true
           }
+          this.previewReportFileCase5WayClose()
         })
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
           this.message = '预览失败！'
           this.showMessage = true
+          this.previewReportFileCase5WayClose()
         })
     },
     onPreviewCase5Pattern1 (evt) {
       evt.preventDefault()
+      this.$refs.processingModal.show()
       const payload = {
         supplier_name: this.supplierNameSelection,
         time_quantum_x: this.timeQuantumX,
@@ -1270,6 +1294,7 @@ export default {
     },
     onPreviewCase5Pattern2 (evt) {
       evt.preventDefault()
+      this.$refs.processingModal.show()
       const payload = {
         supplier_name: this.supplierNameSelection,
         time_quantum_x: this.timeQuantumX,
@@ -1293,13 +1318,13 @@ export default {
       evt.preventDefault()
       this.$refs.previewCase5Modal.hide()
       this.$refs.exportFileCase5Modal.hide()
+      this.$refs.processingModal.show()
       const payload = {
         time_quantum_x: this.timeQuantumX,
         time_quantum_y: this.timeQuantumY,
         preview_table: this.previewCase5.previewTable
       }
       this.prepareExportReportFile('/api/v1/case5/prepare', payload)
-      this.initExportForm()
     },
     onCancelExportCase5 (evt) {
       // 取消导出采购辅助分析报表
@@ -1310,6 +1335,7 @@ export default {
     // 体积、重量计算汇总单
     onImportForCase6 (evt) {
       evt.preventDefault()
+      this.$refs.processingModal.show()
       let formData = new FormData()
       formData.append('file', this.uploadCSVFileForCase6, this.uploadCSVFileForCase6.name)
       this.importCSVFileForCase6(formData)
@@ -1319,6 +1345,9 @@ export default {
       this.$refs.exportFileCase6Modal.hide()
       this.uploadCSVFileForCase6 = null
       this.demandTable = []
+    },
+    importCSVFileForCase6Close () {
+      this.$refs.processingModal.hide()
     },
     importCSVFileForCase6 (formData) {
       let config = {
@@ -1331,12 +1360,14 @@ export default {
           this.message = '导入成功！'
           this.showMessage = true
           this.demandTable = res.data.demand_table
+          this.importCSVFileForCase6Close()
         })
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
           this.message = '导入失败！'
           this.showMessage = true
+          this.importCSVFileForCase6Close()
         })
     },
     onPreviewCase6 (evt) {
@@ -1345,11 +1376,15 @@ export default {
         this.message = '请先加载需求表！'
         this.showMessage = true
       } else {
+        this.$refs.processingModal.show()
         const payload = {
           demand_table: this.demandTable
         }
         this.previewReportFileCase6(payload)
       }
+    },
+    previewReportFileCase6Close () {
+      this.$refs.processingModal.hide()
     },
     previewReportFileCase6 (payload) {
       axios.post(this.serverBaseURL + '/api/v1/case6/preview', payload)
@@ -1362,12 +1397,14 @@ export default {
             this.message = '预览失败！不存在指定的商品条目。'
             this.showMessage = true
           }
+          this.previewReportFileCase6Close()
         })
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
           this.message = '预览失败！'
           this.showMessage = true
+          this.previewReportFileCase6Close()
         })
     },
     onExportCase6 (evt) {
@@ -1375,20 +1412,23 @@ export default {
       evt.preventDefault()
       this.$refs.previewCase6Modal.hide()
       this.$refs.exportFileCase6Modal.hide()
+      this.$refs.processingModal.show()
       const payload = {
         preview_table: this.previewCase6.previewTable,
         preview_summary_table: this.previewCase6.previewSummaryTable
       }
       this.prepareExportReportFile('/api/v1/case6/prepare', payload)
-      this.initExportForm()
     },
     onCancelPreviewCase6 (evt) {
       evt.preventDefault()
       this.$refs.previewCase6Modal.hide()
       this.initExportForm()
     },
+    prepareExportReportFileClose () {
+      this.$refs.processingModal.hide()
+      this.initExportForm()
+    },
     prepareExportReportFile (url, payload) {
-      this.$refs.processingModal.show()
       axios.post(this.serverBaseURL + url, payload)
         .then((res) => {
           if (res.data.status === 'success') {
@@ -1397,14 +1437,14 @@ export default {
             this.message = '没有满足要求的数据条目！'
             this.showMessage = true
           }
-          this.$refs.processingModal.hide()
+          this.prepareExportReportFileClose()
         })
         .catch((error) => {
-          this.$refs.processingModal.hide()
           // eslint-disable-next-line
           console.log(error)
           this.message = '下载失败！'
           this.showMessage = true
+          this.prepareExportReportFileClose()
         })
     },
     exportReportFile (queryFile, saveFile) {

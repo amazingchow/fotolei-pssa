@@ -310,6 +310,12 @@
         </div>
       </div>
     </b-sidebar>
+    <b-modal ref="processingModal" hide-footer>
+      <div class="d-flex align-items-center">
+        <strong>处理中...</strong>
+        <b-spinner class="ml-auto"></b-spinner>
+      </div>
+    </b-modal>
   </div>
 </template>
 
@@ -443,6 +449,10 @@ export default {
           this.showMessage = true
         })
     },
+    importProductCSVFileClose () {
+      this.$refs.processingModal.hide()
+      this.uploadProductCSVFile = null
+    },
     importProductCSVFile (formData) {
       let config = {
         header: {
@@ -468,13 +478,19 @@ export default {
             this.message = '导入失败！' + res.data.err_msg
             this.showMessage = true
           }
+          this.importProductCSVFileClose()
         })
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
           this.message = '导入失败!'
           this.showMessage = true
+          this.importProductCSVFileClose()
         })
+    },
+    importJITInventoryCSVFileClose () {
+      this.$refs.processingModal.hide()
+      this.uploadJITInventoryCSVFile = null
     },
     importJITInventoryCSVFile (formData) {
       let config = {
@@ -502,13 +518,28 @@ export default {
             this.message = '导入失败！' + res.data.err_msg
             this.showMessage = true
           }
+          this.importJITInventoryCSVFileClose()
         })
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
           this.message = '导入失败!'
           this.showMessage = true
+          this.importJITInventoryCSVFileClose()
         })
+    },
+    cleanAllProductsClose () {
+      this.$refs.processingModal.hide()
+      this.products = []
+      this.productsNum = 0
+      this.productsTotal = 0
+      this.pageJump = 1
+      this.pageCurr = 0
+      this.pageTotal = 0
+      this.pageOffset = 0
+      this.pageOffsetMax = 0
+      this.adminUsr = ''
+      this.adminPwd = ''
     },
     cleanAllProducts (payload) {
       axios.post(this.serverBaseURL + '/api/v1/products/clean', payload)
@@ -520,13 +551,18 @@ export default {
             this.message = '删除失败，管理员账号或密码错误！'
             this.showMessage = true
           }
+          this.cleanAllProductsClose()
         })
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
           this.message = '导入失败!'
           this.showMessage = true
+          this.cleanAllProductsClose()
         })
+    },
+    loadOldProductDataClose () {
+      this.$refs.processingModal.hide()
     },
     loadOldProductData (specificationCode) {
       axios.get(this.serverBaseURL + '/api/v1/products/one?specification_code=' + specificationCode)
@@ -557,13 +593,38 @@ export default {
             this.message = '加载失败！'
             this.showMessage = true
           }
+          this.loadOldProductDataClose()
         })
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
           this.message = '导入失败!'
           this.showMessage = true
+          this.loadOldProductDataClose()
         })
+    },
+    updateNewProductDataClose () {
+      this.$refs.processingModal.hide()
+      this.updateProduct.specificationCode = ''
+      this.updateProduct.productCode = ''
+      this.updateProduct.productName = ''
+      this.updateProduct.specificationName = ''
+      this.updateProduct.brand = ''
+      this.updateProduct.classification1 = ''
+      this.updateProduct.classification2 = ''
+      this.updateProduct.productSeries = ''
+      this.updateProduct.stopStatus = ''
+      this.updateProduct.productWeight = ''
+      this.updateProduct.productLength = ''
+      this.updateProduct.productWidth = ''
+      this.updateProduct.productHeight = ''
+      this.updateProduct.isCombined = ''
+      this.updateProduct.beAggregated = ''
+      this.updateProduct.isImport = ''
+      this.updateProduct.supplierName = ''
+      this.updateProduct.purchaseName = ''
+      this.updateProduct.jitInventory = ''
+      this.updateProduct.moq = ''
     },
     updateNewProductData (payload) {
       axios.post(this.serverBaseURL + '/api/v1/products/update', payload)
@@ -575,24 +636,33 @@ export default {
             this.message = '更新失败！'
             this.showMessage = true
           }
+          this.updateNewProductDataClose()
         })
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
           this.message = '下载失败!'
           this.showMessage = true
+          this.updateNewProductDataClose()
         })
+    },
+    preDownloadAddedSKUsClose () {
+      this.$refs.processingModal.hide()
+      this.shouldOpenSidebar = false
+      this.addedSkus = []
     },
     preDownloadAddedSKUs (payload) {
       axios.post(this.serverBaseURL + '/api/v1/addedskus/prepare', payload)
         .then((res) => {
           this.downloadAddedSKUs(res.data.server_send_queue_file, res.data.output_file)
+          this.preDownloadAddedSKUsClose()
         })
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
           this.message = '下载失败!'
           this.showMessage = true
+          this.preDownloadAddedSKUsClose()
         })
     },
     downloadAddedSKUs (queryFile, saveFile) {
@@ -619,10 +689,10 @@ export default {
     onImportProducts (evt) {
       evt.preventDefault()
       this.$refs.importProductCSVFileModal.hide()
+      this.$refs.processingModal.show()
       let formData = new FormData()
       formData.append('file', this.uploadProductCSVFile, this.uploadProductCSVFile.name)
       this.importProductCSVFile(formData)
-      this.uploadProductCSVFile = null
     },
     onCancelImportProducts (evt) {
       evt.preventDefault()
@@ -632,10 +702,10 @@ export default {
     onImportJITInventory (evt) {
       evt.preventDefault()
       this.$refs.importJITInventoryCSVFileModal.hide()
+      this.$refs.processingModal.show()
       let formData = new FormData()
       formData.append('file', this.uploadJITInventoryCSVFile, this.uploadJITInventoryCSVFile.name)
       this.importJITInventoryCSVFile(formData)
-      this.uploadJITInventoryCSVFile = null
     },
     onCancelImportJITInventory (evt) {
       evt.preventDefault()
@@ -645,21 +715,12 @@ export default {
     onCleanAllProducts (evt) {
       evt.preventDefault()
       this.$refs.CleanAllProductsModal.hide()
+      this.$refs.processingModal.show()
       const payload = {
         admin_usr: this.adminUsr,
         admin_pwd: this.adminPwd
       }
       this.cleanAllProducts(payload)
-      this.products = []
-      this.productsNum = 0
-      this.productsTotal = 0
-      this.pageJump = 1
-      this.pageCurr = 0
-      this.pageTotal = 0
-      this.pageOffset = 0
-      this.pageOffsetMax = 0
-      this.adminUsr = ''
-      this.adminPwd = ''
     },
     onCancelCleanAllProducts (evt) {
       evt.preventDefault()
@@ -669,10 +730,13 @@ export default {
     },
     onLoadOldProductData (evt) {
       evt.preventDefault()
+      this.$refs.processingModal.show()
       this.loadOldProductData(this.updateProduct.specificationCode)
     },
     onUpdateNewProductData (evt) {
       evt.preventDefault()
+      this.$refs.updateOneProductModal.hide()
+      this.$refs.processingModal.show()
       const payload = {
         specification_code: this.updateProduct.specificationCode,
         product_code: this.updateProduct.productCode,
@@ -696,27 +760,6 @@ export default {
         moq: this.updateProduct.moq
       }
       this.updateNewProductData(payload)
-      this.$refs.updateOneProductModal.hide()
-      this.updateProduct.specificationCode = ''
-      this.updateProduct.productCode = ''
-      this.updateProduct.productName = ''
-      this.updateProduct.specificationName = ''
-      this.updateProduct.brand = ''
-      this.updateProduct.classification1 = ''
-      this.updateProduct.classification2 = ''
-      this.updateProduct.productSeries = ''
-      this.updateProduct.stopStatus = ''
-      this.updateProduct.productWeight = ''
-      this.updateProduct.productLength = ''
-      this.updateProduct.productWidth = ''
-      this.updateProduct.productHeight = ''
-      this.updateProduct.isCombined = ''
-      this.updateProduct.beAggregated = ''
-      this.updateProduct.isImport = ''
-      this.updateProduct.supplierName = ''
-      this.updateProduct.purchaseName = ''
-      this.updateProduct.jitInventory = ''
-      this.updateProduct.moq = ''
     },
     onCancelUpdateNewProductData (evt) {
       evt.preventDefault()
@@ -744,12 +787,11 @@ export default {
     },
     onDownloadAddedSKUs (evt) {
       evt.preventDefault()
+      this.$refs.processingModal.show()
       const payload = {
         added_skus: this.addedSkus
       }
       this.preDownloadAddedSKUs(payload)
-      this.shouldOpenSidebar = false
-      this.addedSkus = []
     },
     onCancelDownloadAddedSKUs (evt) {
       evt.preventDefault()
