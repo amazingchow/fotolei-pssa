@@ -345,6 +345,9 @@ CREATE TABLE IF NOT EXISTS ggfilm.product_summary (
 @ggfilm_server.route("/api/v1/products/one", methods=["GET"])
 def pick_one_product():
     specification_code = request.args.get("specification_code")
+    if not SKU_LOOKUP_TABLE.get(specification_code, False):
+        response_object = {"status": "not found"}
+        return response_object
 
     stmt = "SELECT product_code, product_name, specification_name, \
 brand, classification_1, classification_2, product_series, stop_status, \
@@ -385,7 +388,76 @@ FROM ggfilm.products WHERE specification_code = '{}';".format(specification_code
 @ggfilm_server.route("/api/v1/products/update", methods=["POST"])
 def update_one_product():
     payload = request.get_json()
-    _ = payload.get("specification_code", "").strip()
+
+    specification_code = payload.get("specification_code", "").strip()
+    if not SKU_LOOKUP_TABLE.get(specification_code, False):
+        response_object = {"status": "not found"}
+        return response_object
+
+    product_code = payload.get("product_code", "").strip()
+    product_name = payload.get("product_name", "").strip()
+    specification_name = payload.get("specification_name", "").strip()
+    brand = payload.get("brand", "").strip()
+    classification_1 = payload.get("classification_1", "").strip()
+    classification_2 = payload.get("classification_2", "").strip()
+    product_series = payload.get("product_series", "").strip()
+    stop_status = payload.get("stop_status", "在用").strip()
+    product_weight = payload.get("product_weight", 0)
+    product_length = payload.get("product_length", 0)
+    product_width = payload.get("product_width", 0)
+    product_height = payload.get("product_height", 0)
+    is_combined = payload.get("is_combined", "否").strip()
+    be_aggregated = payload.get("be_aggregated", "参与").strip()
+    is_import = payload.get("is_import", "非进口品").strip()
+    supplier_name = payload.get("supplier_name", "").strip()
+    purchase_name = payload.get("purchase_name", "").strip()
+    jit_inventory = payload.get("jit_inventory", 0)
+    moq = payload.get("moq", 0)
+
+    stmt = "UPDATE ggfilm.products SET "
+    updates = []
+    if len(product_code) > 0:
+        updates.append("product_code = '{}'".format(product_code))
+    if len(product_name) > 0:
+        updates.append("product_name = '{}'".format(product_name))
+    if len(specification_name) > 0:
+        updates.append("specification_name = '{}'".format(specification_name))
+    if len(brand) > 0:
+        updates.append("brand = '{}'".format(brand))
+    if len(classification_1) > 0:
+        updates.append("classification_1 = '{}'".format(classification_1))
+    if len(classification_2) > 0:
+        updates.append("classification_2 = '{}'".format(classification_2))
+    if len(product_series) > 0:
+        updates.append("product_series = '{}'".format(product_series))
+    if stop_status != '全部':
+        updates.append("stop_status = '{}'".format(stop_status))
+    if product_weight > 0:
+        updates.append("product_weight = '{}'".format(product_weight))
+    if product_length > 0:
+        updates.append("product_length = '{}'".format(product_length))
+    if product_width > 0:
+        updates.append("product_width = '{}'".format(product_width))
+    if product_height > 0:
+        updates.append("product_height = '{}'".format(product_height))
+    if is_combined != '全部':
+        updates.append("is_combined = '{}'".format(is_combined))
+    if be_aggregated != '全部':
+        updates.append("be_aggregated = '{}'".format(be_aggregated))
+    if is_import != '全部':
+        updates.append("is_import = '{}'".format(is_import))
+    if len(supplier_name) > 0:
+        updates.append("supplier_name = '{}'".format(supplier_name))
+    if len(purchase_name) > 0:
+        updates.append("purchase_name = '{}'".format(purchase_name))
+    if jit_inventory > 0:
+        updates.append("jit_inventory = '{}'".format(jit_inventory))
+    if moq > 0:
+        updates.append("moq = '{}'".format(moq))
+    stmt += ", ".join(updates)
+    stmt += " WHERE specification_code = '{}';".format(specification_code)
+    print(stmt)
+    DBConnector.update(stmt)
 
     response_object = {"status": "success"}
     return jsonify(response_object)

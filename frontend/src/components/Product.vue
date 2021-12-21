@@ -524,8 +524,6 @@ export default {
       axios.get(this.serverBaseURL + '/api/v1/products/one?specification_code=' + specificationCode)
         .then((res) => {
           if (res.data.status === 'success') {
-            this.message = '加载成功！'
-            this.showMessage = true
             this.updateProduct.productCode = res.data.product.product_code
             this.updateProduct.productName = res.data.product.product_name
             this.updateProduct.specificationName = res.data.product.specification_name
@@ -545,6 +543,8 @@ export default {
             this.updateProduct.purchaseName = res.data.product.purchase_name
             this.updateProduct.jitInventory = res.data.product.jit_inventory
             this.updateProduct.moq = res.data.product.moq
+            this.message = '加载成功！'
+            this.showMessage = true
           } else {
             this.message = '加载失败！'
             this.showMessage = true

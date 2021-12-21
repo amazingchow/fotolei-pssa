@@ -130,6 +130,19 @@ class MySQLConnector():
             cur.close()
             cnx.close()
 
+    def update(self, stmt:str):
+        cnx = self.cnxpool.get_connection()
+        cur = cnx.cursor()
+        try:
+            cur.execute(stmt)
+            cnx.commit()
+        except mysql.connector.Error as err:
+            cnx.rollback()
+            logger.error("UPDATE err: {}".format(err))
+        finally:
+            cur.close()
+            cnx.close()
+
     def delete(self, stmt:str):
         pass
 
