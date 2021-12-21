@@ -712,6 +712,8 @@ WHERE COALESCE(CHAR_LENGTH(product_series), 0) != 0;"
                 "ed_inventory_total": 0,
                 "jit_inventory": 0,
             }
+            do_update = False
+
             for vv in v:
                 specification_code = vv[0]
                 jit_inventory = vv[1]
@@ -723,6 +725,8 @@ create_time >= '{}' AND \
 create_time <= '{}';".format(specification_code, st_date, ed_date)
                 inner_rets = DBConnector.query(stmt)
                 if type(inner_rets) is list and len(inner_rets) > 0:
+                    do_update = True
+
                     cache[product_series]["st_inventory_qty"] += inner_rets[0][5]
                     cache[product_series]["st_inventory_total"] += inner_rets[0][6]
                     cache[product_series]["ed_inventory_qty"] += inner_rets[len(inner_rets) - 1][17]
@@ -767,6 +771,12 @@ create_time <= '{}';".format(specification_code, st_date, ed_date)
                     for inner_ret in inner_rets:
                         others_total += inner_ret[16]
                     cache[product_series]["others_total"] += others_total
+            if not do_update:
+                del cache[product_series]
+
+        if len(cache.keys()) == 0:
+            response_object = {"status": "not found"}
+            return jsonify(response_object)
 
         ts = int(time.time())
         csv_file_sha256 = generate_digest("销售报表（按系列汇总）_{}.csv".format(ts))

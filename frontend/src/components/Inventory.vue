@@ -1382,9 +1382,16 @@ export default {
       this.$refs.processingModal.show()
       axios.post(this.serverBaseURL + url, payload)
         .then((res) => {
-          this.exportReportFile(res.data.server_send_queue_file, res.data.output_file)
+          if (res.data.status === 'success') {
+            this.exportReportFile(res.data.server_send_queue_file, res.data.output_file)
+          } else if (res.data.status === 'not found') {
+            this.message = '没有满足要求的数据条目！'
+            this.showMessage = true
+          }
+          this.$refs.processingModal.hide()
         })
         .catch((error) => {
+          this.$refs.processingModal.hide()
           // eslint-disable-next-line
           console.log(error)
           this.message = '下载失败！'
@@ -1394,7 +1401,6 @@ export default {
     exportReportFile (queryFile, saveFile) {
       axios.get(this.serverBaseURL + '/api/v1/download/' + queryFile)
         .then((res) => {
-          this.$refs.processingModal.hide()
           const evt = document.createEvent('MouseEvents')
           var docUrl = document.createElement('a')
           docUrl.download = saveFile
@@ -1407,7 +1413,6 @@ export default {
           this.showMessage = true
         })
         .catch((error) => {
-          this.$refs.processingModal.hide()
           // eslint-disable-next-line
           console.log(error)
           this.message = '下载失败！'
