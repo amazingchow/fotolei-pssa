@@ -7,6 +7,7 @@
           <button type="button" class="btn btn-success btn-sm" v-b-modal.product-csv-file-modal>导入商品明细</button>
           <button type="button" class="btn btn-success btn-sm" v-b-modal.jit-inventory-csv-file-modal>导入即时库存</button>
           <button type="button" class="btn btn-success btn-sm" v-b-modal.products-clean-all-modal>删除商品明细</button>
+          <button type="button" class="btn btn-success btn-sm" v-b-modal.update-one-product-modal>更新商品明细</button>
         </div>
         <br/>
         <b-table-simple striped hover small id="product-table">
@@ -123,6 +124,177 @@
         </div>
       </b-form>
     </b-modal>
+    <b-modal ref="updateOneProductModal" id="update-one-product-modal" title="更新某一条商品明细" hide-footer>
+      <b-form>
+        <b-form-group
+          label="规格编码"
+          label-size="sm"
+          label-align-sm="right"
+          label-cols-sm="3"
+        >
+          <b-form-input v-model="updateProduct.specificationCode"></b-form-input>
+        </b-form-group>
+        <b-form-text>Tips：通过规格编码加载已有条目，再按需修改条目数据</b-form-text>
+        <b-form-group
+          label="商品编码"
+          label-size="sm"
+          label-align-sm="right"
+          label-cols-sm="3"
+        >
+          <b-form-input v-model="updateProduct.productCode"></b-form-input>
+        </b-form-group>
+        <b-form-group
+          label="商品名称"
+          label-size="sm"
+          label-align-sm="right"
+          label-cols-sm="3"
+        >
+          <b-form-input v-model="updateProduct.productName"></b-form-input>
+        </b-form-group>
+        <b-form-group
+          label="规格名称"
+          label-size="sm"
+          label-align-sm="right"
+          label-cols-sm="3"
+        >
+          <b-form-input v-model="updateProduct.specificationName"></b-form-input>
+        </b-form-group>
+        <b-form-group
+          label="品牌"
+          label-size="sm"
+          label-align-sm="right"
+          label-cols-sm="3"
+        >
+          <b-form-input v-model="updateProduct.brand"></b-form-input>
+        </b-form-group>
+        <b-form-group
+          label="分类1"
+          label-size="sm"
+          label-align-sm="right"
+          label-cols-sm="3"
+        >
+          <b-form-input v-model="updateProduct.classification1"></b-form-input>
+        </b-form-group>
+        <b-form-group
+          label="分类2"
+          label-size="sm"
+          label-align-sm="right"
+          label-cols-sm="3"
+        >
+          <b-form-input v-model="updateProduct.classification2"></b-form-input>
+        </b-form-group>
+        <b-form-group
+          label="产品系列"
+          label-size="sm"
+          label-align-sm="right"
+          label-cols-sm="3"
+        >
+          <b-form-input v-model="updateProduct.productSeries"></b-form-input>
+        </b-form-group>
+        <b-form-group
+          label="STOP状态"
+          label-size="sm"
+          label-align-sm="right"
+          label-cols-sm="3"
+        >
+          <b-form-input v-model="updateProduct.stopStatus"></b-form-input>
+        </b-form-group>
+        <b-form-group
+          label="重量/g"
+          label-size="sm"
+          label-align-sm="right"
+          label-cols-sm="3"
+        >
+          <b-form-input v-model="updateProduct.productWeight"></b-form-input>
+        </b-form-group>
+        <b-form-group
+          label="长度/cm"
+          label-size="sm"
+          label-align-sm="right"
+          label-cols-sm="3"
+        >
+          <b-form-input v-model="updateProduct.productLength"></b-form-input>
+        </b-form-group>
+        <b-form-group
+          label="宽度/cm"
+          label-size="sm"
+          label-align-sm="right"
+          label-cols-sm="3"
+        >
+          <b-form-input v-model="updateProduct.productWidth"></b-form-input>
+        </b-form-group>
+        <b-form-group
+          label="高度/cm"
+          label-size="sm"
+          label-align-sm="right"
+          label-cols-sm="3"
+        >
+          <b-form-input v-model="updateProduct.productHeight"></b-form-input>
+        </b-form-group>
+        <b-form-group
+          label="组合商品"
+          label-size="sm"
+          label-align-sm="right"
+          label-cols-sm="3"
+        >
+          <b-form-input v-model="updateProduct.isCombined"></b-form-input>
+        </b-form-group>
+        <b-form-group
+          label="参与统计"
+          label-size="sm"
+          label-align-sm="right"
+          label-cols-sm="3"
+        >
+          <b-form-input v-model="updateProduct.beAggregated"></b-form-input>
+        </b-form-group>
+        <b-form-group
+          label="进口商品"
+          label-size="sm"
+          label-align-sm="right"
+          label-cols-sm="3"
+        >
+          <b-form-input v-model="updateProduct.isImport"></b-form-input>
+        </b-form-group>
+        <b-form-group
+          label="供应商名称"
+          label-size="sm"
+          label-align-sm="right"
+          label-cols-sm="3"
+        >
+          <b-form-input v-model="updateProduct.supplierName"></b-form-input>
+        </b-form-group>
+        <b-form-group
+          label="采购名称"
+          label-size="sm"
+          label-align-sm="right"
+          label-cols-sm="3"
+        >
+          <b-form-input v-model="updateProduct.purchaseName"></b-form-input>
+        </b-form-group>
+        <b-form-group
+          label="实时可用库存"
+          label-size="sm"
+          label-align-sm="right"
+          label-cols-sm="3"
+        >
+          <b-form-input v-model="updateProduct.jitInventory"></b-form-input>
+        </b-form-group>
+        <b-form-group
+          label="最小订货单元"
+          label-size="sm"
+          label-align-sm="right"
+          label-cols-sm="3"
+        >
+          <b-form-input v-model="updateProduct.moq"></b-form-input>
+        </b-form-group>
+        <br/>
+        <div id="product-table-operate-btn" class="w-100 d-block">
+          <b-button variant="dark" @click="onLoadOldProductData">加载旧数据</b-button>
+          <b-button variant="dark" @click="onUpdateNewProductData">更新新数据</b-button>
+          <b-button variant="dark" @click="onCancelUpdateNewProductData">取消</b-button>
+        </div>
+      </b-form>
+    </b-modal>
     <b-sidebar id="added-skus-sidebar" title="新增SKU清单" v-model="shouldOpenSidebar" right shadow>
       <div class="px-3 py-2">
         <b-table-simple striped hover small id="added-skus-table">
@@ -205,6 +377,28 @@ export default {
       uploadJITInventoryCSVFile: null,
       adminUsr: '',
       adminPwd: '',
+      updateProduct: {
+        specificationCode: '',
+        productCode: '',
+        productName: '',
+        specificationName: '',
+        brand: '',
+        classification1: '',
+        classification2: '',
+        productSeries: '',
+        stopStatus: '',
+        productWeight: '',
+        productLength: '',
+        productWidth: '',
+        productHeight: '',
+        isCombined: '',
+        beAggregated: '',
+        isImport: '',
+        supplierName: '',
+        purchaseName: '',
+        jitInventory: '',
+        moq: ''
+      },
       message: '',
       showMessage: false
     }
@@ -326,6 +520,61 @@ export default {
           this.showMessage = true
         })
     },
+    loadOldProductData (specificationCode) {
+      axios.get(this.serverBaseURL + '/api/v1/products/one?specification_code=' + specificationCode)
+        .then((res) => {
+          if (res.data.status === 'success') {
+            this.message = '加载成功！'
+            this.showMessage = true
+            this.updateProduct.productCode = res.data.product.product_code
+            this.updateProduct.productName = res.data.product.product_name
+            this.updateProduct.specificationName = res.data.product.specification_name
+            this.updateProduct.brand = res.data.product.brand
+            this.updateProduct.classification1 = res.data.product.classification_1
+            this.updateProduct.classification2 = res.data.product.classification_2
+            this.updateProduct.productSeries = res.data.product.product_series
+            this.updateProduct.stopStatus = res.data.product.stop_status
+            this.updateProduct.productWeight = res.data.product.product_weight
+            this.updateProduct.productLength = res.data.product.product_length
+            this.updateProduct.productWidth = res.data.product.product_width
+            this.updateProduct.productHeight = res.data.product.product_height
+            this.updateProduct.isCombined = res.data.product.is_combined
+            this.updateProduct.beAggregated = res.data.product.be_aggregated
+            this.updateProduct.isImport = res.data.product.is_import
+            this.updateProduct.supplierName = res.data.product.supplier_name
+            this.updateProduct.purchaseName = res.data.product.purchase_name
+            this.updateProduct.jitInventory = res.data.product.jit_inventory
+            this.updateProduct.moq = res.data.product.moq
+          } else {
+            this.message = '加载失败！'
+            this.showMessage = true
+          }
+        })
+        .catch((error) => {
+          // eslint-disable-next-line
+          console.log(error)
+          this.message = '导入失败!'
+          this.showMessage = true
+        })
+    },
+    updateNewProductData (payload) {
+      axios.post(this.serverBaseURL + '/api/v1/products/update', payload)
+        .then((res) => {
+          if (res.data.status === 'success') {
+            this.message = '更新成功！'
+            this.showMessage = true
+          } else {
+            this.message = '更新失败！'
+            this.showMessage = true
+          }
+        })
+        .catch((error) => {
+          // eslint-disable-next-line
+          console.log(error)
+          this.message = '下载失败!'
+          this.showMessage = true
+        })
+    },
     preDownloadAddedSKUs (payload) {
       axios.post(this.serverBaseURL + '/api/v1/addedskus/prepare', payload)
         .then((res) => {
@@ -409,6 +658,81 @@ export default {
       this.$refs.CleanAllProductsModal.hide()
       this.adminUsr = ''
       this.adminPwd = ''
+    },
+    onLoadOldProductData (evt) {
+      evt.preventDefault()
+      this.loadOldProductData(this.updateProduct.specificationCode)
+    },
+    onUpdateNewProductData (evt) {
+      evt.preventDefault()
+      const payload = {
+        specification_code: this.updateProduct.specificationCode,
+        product_code: this.updateProduct.productCode,
+        product_name: this.updateProduct.productName,
+        specification_name: this.updateProduct.specificationName,
+        brand: this.updateProduct.brand,
+        classification_1: this.updateProduct.classification1,
+        classification_2: this.updateProduct.classification2,
+        product_series: this.updateProduct.productSeries,
+        stop_status: this.updateProduct.stopStatus,
+        product_weight: this.updateProduct.productWeight,
+        product_length: this.updateProduct.productLength,
+        product_width: this.updateProduct.productWidth,
+        product_height: this.updateProduct.productHeight,
+        is_combined: this.updateProduct.isCombined,
+        be_aggregated: this.updateProduct.beAggregated,
+        is_import: this.updateProduct.isImport,
+        supplier_name: this.updateProduct.supplierName,
+        purchase_name: this.updateProduct.purchaseName,
+        jit_inventory: this.updateProduct.jitInventory,
+        moq: this.updateProduct.moq
+      }
+      this.updateNewProductData(payload)
+      this.$refs.updateOneProductModal.hide()
+      this.updateProduct.specificationCode = ''
+      this.updateProduct.productCode = ''
+      this.updateProduct.productName = ''
+      this.updateProduct.specificationName = ''
+      this.updateProduct.brand = ''
+      this.updateProduct.classification1 = ''
+      this.updateProduct.classification2 = ''
+      this.updateProduct.productSeries = ''
+      this.updateProduct.stopStatus = ''
+      this.updateProduct.productWeight = ''
+      this.updateProduct.productLength = ''
+      this.updateProduct.productWidth = ''
+      this.updateProduct.productHeight = ''
+      this.updateProduct.isCombined = ''
+      this.updateProduct.beAggregated = ''
+      this.updateProduct.isImport = ''
+      this.updateProduct.supplierName = ''
+      this.updateProduct.purchaseName = ''
+      this.updateProduct.jitInventory = ''
+      this.updateProduct.moq = ''
+    },
+    onCancelUpdateNewProductData (evt) {
+      evt.preventDefault()
+      this.$refs.updateOneProductModal.hide()
+      this.updateProduct.specificationCode = ''
+      this.updateProduct.productCode = ''
+      this.updateProduct.productName = ''
+      this.updateProduct.specificationName = ''
+      this.updateProduct.brand = ''
+      this.updateProduct.classification1 = ''
+      this.updateProduct.classification2 = ''
+      this.updateProduct.productSeries = ''
+      this.updateProduct.stopStatus = ''
+      this.updateProduct.productWeight = ''
+      this.updateProduct.productLength = ''
+      this.updateProduct.productWidth = ''
+      this.updateProduct.productHeight = ''
+      this.updateProduct.isCombined = ''
+      this.updateProduct.beAggregated = ''
+      this.updateProduct.isImport = ''
+      this.updateProduct.supplierName = ''
+      this.updateProduct.purchaseName = ''
+      this.updateProduct.jitInventory = ''
+      this.updateProduct.moq = ''
     },
     onDownloadAddedSKUs (evt) {
       evt.preventDefault()

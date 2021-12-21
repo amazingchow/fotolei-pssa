@@ -252,7 +252,7 @@ def get_products_total():
     stmt = "SELECT SUM(total) FROM ggfilm.product_summary;"
     ret = DBConnector.query(stmt)
     response_object = {"status": "success"}
-    if type(ret) is list and len(ret) > 0 and ret[0][0] != None:
+    if type(ret) is list and len(ret) > 0 and ret[0][0] is not None:
         response_object["products_total"] = ret[0][0]
     else:
         response_object["products_total"] = 0
@@ -273,8 +273,8 @@ FROM ggfilm.products ORDER BY 'specification_code' DESC LIMIT {}, {};".format(
     products = DBConnector.query(stmt)
 
     response_object = {"status": "success"}
-    if (products) == 0:
-        response_object = {"status": "not found"}
+    if len(products) == 0:
+        response_object["status"] = "not found"
         response_object["products"] = []
     else:
         response_object["products"] = products
@@ -341,13 +341,63 @@ CREATE TABLE IF NOT EXISTS ggfilm.product_summary (
         return jsonify(response_object)
 
 
+# 获取一条商品条目的接口
+@ggfilm_server.route("/api/v1/products/one", methods=["GET"])
+def pick_one_product():
+    specification_code = request.args.get("specification_code")
+
+    stmt = "SELECT product_code, product_name, specification_name, \
+brand, classification_1, classification_2, product_series, stop_status, \
+product_weight, product_length, product_width, product_height, \
+is_combined, be_aggregated, is_import, supplier_name, purchase_name, jit_inventory, moq \
+FROM ggfilm.products WHERE specification_code = '{}';".format(specification_code)
+    products = DBConnector.query(stmt)
+
+    response_object = {"status": "success"}
+    if len(products) == 0:
+        response_object["status"] = "not found"
+    else:
+        response_object["product"] = {
+            "product_code": products[0][0],
+            "product_name": products[0][1],
+            "specification_name": products[0][2],
+            "brand": products[0][3],
+            "classification_1": products[0][4],
+            "classification_2": products[0][5],
+            "product_series": products[0][6],
+            "stop_status": products[0][7],
+            "product_weight": products[0][8],
+            "product_length": products[0][9],
+            "product_width": products[0][10],
+            "product_height": products[0][11],
+            "is_combined": products[0][12],
+            "be_aggregated": products[0][13],
+            "is_import": products[0][14],
+            "supplier_name": products[0][15],
+            "purchase_name": products[0][16],
+            "jit_inventory": products[0][17],
+            "moq": products[0][18],
+        }
+    return jsonify(response_object)
+
+
+# 更新一条商品条目的接口
+@ggfilm_server.route("/api/v1/products/update", methods=["POST"])
+def update_one_product():
+    payload = request.get_json()
+    _ = payload.get("specification_code", "").strip()
+
+    response_object = {"status": "success"}
+    return jsonify(response_object)
+
+
 # 获取总库存条目量的接口
 @ggfilm_server.route("/api/v1/inventories/total", methods=["GET"])
 def get_inventories_total():
     stmt = "SELECT SUM(total) FROM ggfilm.inventory_summary;"
     ret = DBConnector.query(stmt)
     response_object = {"status": "success"}
-    if type(ret) is list and len(ret) > 0 and ret[0][0] != None:
+    if type(ret) is list and len(ret) > 0 and ret[0][0] is not None:
         response_object["inventories_total"] = ret[0][0]
     else:
         response_object["inventories_total"] = 0
@@ -368,7 +418,7 @@ FROM ggfilm.inventories ORDER BY 'id' DESC LIMIT {}, {};".format(
     inventories = DBConnector.query(stmt)
 
     response_object = {"status": "success"}
-    if (inventories) == 0:
+    if len(inventories) == 0:
         response_object = {"status": "not found"}
         response_object["inventories"] = []
     else:
@@ -383,35 +433,35 @@ def list_all_options():
 
     stmt = "SELECT DISTINCT brand FROM ggfilm.products;"
     brand_options = DBConnector.query(stmt)
-    if (brand_options) == 0:
+    if len(brand_options) == 0:
         response_object["brand_options"] = []
     else:
         response_object["brand_options"] = [{"id": i, "brand": brand[0]} for i, brand in enumerate(brand_options)]
 
     stmt = "SELECT DISTINCT classification_1 FROM ggfilm.products;"
     classification_1_options = DBConnector.query(stmt)
-    if (classification_1_options) == 0:
+    if len(classification_1_options) == 0:
         response_object["classification_1_options"] = []
     else:
         response_object["classification_1_options"] = [{"id": i, "classification-1": classification_1[0]} for i, classification_1 in enumerate(classification_1_options)]
 
     stmt = "SELECT DISTINCT classification_2 FROM ggfilm.products;"
     classification_2_options = DBConnector.query(stmt)
-    if (classification_2_options) == 0:
+    if len(classification_2_options) == 0:
         response_object["classification_2_options"] = []
     else:
         response_object["classification_2_options"] = [{"id": i, "classification-2": classification_2[0]} for i, classification_2 in enumerate(classification_2_options)]
 
     stmt = "SELECT DISTINCT product_series FROM ggfilm.products;"
     product_series_options = DBConnector.query(stmt)
-    if (product_series_options) == 0:
+    if len(product_series_options) == 0:
         response_object["product_series_options"] = []
     else:
         response_object["product_series_options"] = [{"id": i, "product-series": product_series[0]} for i, product_series in enumerate(product_series_options)]
 
     stmt = "SELECT DISTINCT supplier_name FROM ggfilm.products;"
     supplier_name_options = DBConnector.query(stmt)
-    if (supplier_name_options) == 0:
+    if len(supplier_name_options) == 0:
         response_object["supplier_name_options"] = []
     else:
         response_object["supplier_name_options"] = [{"id": i, "supplier-name": supplier_name[0]} for i, supplier_name in enumerate(supplier_name_options)]
@@ -426,7 +476,7 @@ def list_all_selections():
 
     stmt = "SELECT DISTINCT brand FROM ggfilm.products;"
     brand_selections = DBConnector.query(stmt)
-    if (brand_selections) == 0:
+    if len(brand_selections) == 0:
         response_object["brand_selections"] = []
     else:
         response_object["brand_selections"] = [
@@ -437,7 +487,7 @@ def list_all_selections():
 
     stmt = "SELECT DISTINCT classification_1 FROM ggfilm.products;"
     classification_1_selections = DBConnector.query(stmt)
-    if (classification_1_selections) == 0:
+    if len(classification_1_selections) == 0:
         response_object["classification_1_selections"] = []
     else:
         response_object["classification_1_selections"] = [
@@ -448,7 +498,7 @@ def list_all_selections():
 
     stmt = "SELECT DISTINCT classification_2 FROM ggfilm.products;"
     classification_2_selections = DBConnector.query(stmt)
-    if (classification_2_selections) == 0:
+    if len(classification_2_selections) == 0:
         response_object["classification_2_selections"] = []
     else:
         response_object["classification_2_selections"] = [
@@ -459,7 +509,7 @@ def list_all_selections():
 
     stmt = "SELECT DISTINCT product_series FROM ggfilm.products;"
     product_series_selections = DBConnector.query(stmt)
-    if (product_series_selections) == 0:
+    if len(product_series_selections) == 0:
         response_object["product_series_selections"] = []
     else:
         response_object["product_series_selections"] = [
@@ -470,7 +520,7 @@ def list_all_selections():
 
     stmt = "SELECT DISTINCT supplier_name FROM ggfilm.products;"
     supplier_name_selections = DBConnector.query(stmt)
-    if (supplier_name_selections) == 0:
+    if len(supplier_name_selections) == 0:
         response_object["supplier_name_selections"] = []
     else:
         response_object["supplier_name_selections"] = [
@@ -489,7 +539,7 @@ def list_all_supplier_selections():
 
     stmt = "SELECT DISTINCT supplier_name FROM ggfilm.products;"
     supplier_name_selections = DBConnector.query(stmt)
-    if (supplier_name_selections) == 0:
+    if len(supplier_name_selections) == 0:
         response_object["supplier_name_selections"] = []
     else:
         response_object["supplier_name_selections"] = [
@@ -1507,7 +1557,7 @@ def do_data_check_for_input_products(csv_file: str):
             else:
                 csv_writer.writerow(row)
             line += 1
-    
+
     fw.close()
     shutil.move(csv_file + ".tmp", csv_file)
     return total - exist, exist
