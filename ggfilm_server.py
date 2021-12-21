@@ -2,7 +2,6 @@
 import atexit
 import csv
 import datetime
-import hashlib
 import logging
 import pendulum
 import platform
@@ -16,6 +15,8 @@ import time
 from collections import defaultdict
 sys.path.append(os.path.abspath("./db"))
 from db.mysqlcli import MySQLConnector
+sys.path.append(os.path.abspath("./utils"))
+from utils.utils import generate_file_digest, generate_digest
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 
@@ -24,6 +25,7 @@ logging.basicConfig(level=logging.INFO, format="[%(asctime)s][%(levelname)s] %(m
 logger = logging.getLogger(__name__)
 
 SKU_LOOKUP_TABLE = defaultdict(bool)
+INVENTORIES_UPDATE_LOOKUP_TABLE = defaultdict(bool)
 DBConnector = MySQLConnector.instance()
 DBConnector.init_conn("ggfilm")
 _stmt = "SELECT specification_code FROM ggfilm.products;"
@@ -32,6 +34,12 @@ if type(_rets) is list and len(_rets) > 0:
     for ret in _rets:
         SKU_LOOKUP_TABLE[ret[0]] = True
     logger.info("Insert {} SKUs into SKU_LOOKUP_TABLE!!!".format(len(SKU_LOOKUP_TABLE)))
+_stmt = "SELECT create_time, specification_code FROM ggfilm.inventories;"
+_rets = DBConnector.query(_stmt)
+if type(_rets) is list and len(_rets) > 0:
+    for ret in _rets:
+        INVENTORIES_UPDATE_LOOKUP_TABLE[generate_digest("{} | {}".format(ret[0], ret[1]))] = True
+    logger.info("Insert {} INVENTORIES_UPDATEs into INVENTORIES_UPDATE_LOOKUP_TABLE!!!".format(len(INVENTORIES_UPDATE_LOOKUP_TABLE)))
 
 ggfilm_server = Flask(__name__)
 ggfilm_server.config.from_object(__name__)
@@ -225,6 +233,8 @@ def upload_inventories():
                     import_date = last_month.strftime('%Y-%m')
                 add_date_for_input_inventories(csv_file, import_date.strip())
 
+                repeat = do_remove_repeat_inventories_updates(csv_file)
+
                 DBConnector.load_data_infile(
                     """LOAD DATA LOCAL INFILE "{}" """.format(csv_file) +
                     "INTO TABLE ggfilm.inventories " +
@@ -250,6 +260,10 @@ def upload_inventories():
                 DBConnector.insert(stmt, ("导入{}".format(csv_files[0].filename),))
 
                 response_object = {"status": "success"}
+                if repeat > 0:
+                    response_object["msg"] = "已自动删除{}条尝试重复导入的库存明细数据，目前不支持库存明细数据的覆盖写操作！".format(repeat)
+                else:
+                    response_object["msg"] = ""
         else:
             response_object = {"status": "repetition"}
         load_file_repetition_lookup_table.close()
@@ -1582,18 +1596,6 @@ def export_report_file_case3(filename):
     return send_from_directory(directory="{}/ggfilm-server/send_queue".format(os.path.expanduser("~")), path=filename)
 
 
-def generate_file_digest(f: str):
-    sha256_hash = hashlib.sha256()
-    with open(f, "rb") as fin:
-        for byte_block in iter(lambda: fin.read(4096), b""):
-            sha256_hash.update(byte_block)
-    return sha256_hash.hexdigest()
-
-
-def generate_digest(s: str):
-    return hashlib.sha256(s.encode("utf-8")).hexdigest()
-
-
 def do_data_schema_validation_for_input_products(csv_file: str):
     data_schema = [
         "商品编码", "规格编码", "商品名称", "规格名称",
@@ -1814,6 +1816,32 @@ def add_date_for_input_inventories(csv_file: str, import_date: str):
     fw.close()
     fr.close()
     shutil.move(csv_file + ".tmp", csv_file)
+
+
+def do_remove_repeat_inventories_updates(csv_file: str):
+    repeat = 0
+
+    fr = open(csv_file, "r", encoding='utf-8-sig')
+    csv_reader = csv.reader(fr, delimiter=",")
+    fw = open(csv_file + ".tmp", "w", encoding='utf-8-sig')
+    csv_writer = csv.writer(fw, delimiter=",")
+    line = 0
+    for row in csv_reader:
+        if line == 0:
+            csv_writer.writerow(row)
+        else:
+            k = generate_digest("{} | {}".format(row[0], row[3]))
+            if not INVENTORIES_UPDATE_LOOKUP_TABLE.get(k, False):
+                INVENTORIES_UPDATE_LOOKUP_TABLE[k] = True
+                csv_writer.writerow(row)
+            else:
+                repeat += 1
+        line += 1
+    fw.close()
+    fr.close()
+    shutil.move(csv_file + ".tmp", csv_file)
+
+    return repeat
 
 
 def do_data_schema_validation_for_input_jit_inventories(csv_file: str):

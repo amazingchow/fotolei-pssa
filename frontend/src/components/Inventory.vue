@@ -887,7 +887,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '内部服务错误!'
+          this.message = '内部服务错误！'
           this.showMessage = true
         })
     },
@@ -899,7 +899,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '内部服务错误!'
+          this.message = '内部服务错误！'
           this.showMessage = true
         })
     },
@@ -917,7 +917,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '内部服务错误!'
+          this.message = '内部服务错误！'
           this.showMessage = true
         })
     },
@@ -935,7 +935,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '内部服务错误!'
+          this.message = '内部服务错误！'
           this.showMessage = true
         })
     },
@@ -987,10 +987,14 @@ export default {
           if (res.data.status === 'success') {
             this.listInventories()
             this.getInventoriesTotal()
-            this.message = date + '数据导入成功!'
+            if (res.data.msg.length > 0) {
+              this.message = date + '数据导入成功！' + res.data.msg
+            } else {
+              this.message = date + '数据导入成功！'
+            }
             this.showMessage = true
           } else if (res.data.status === 'repetition') {
-            this.message = '导入失败! 数据表格重复导入！'
+            this.message = '导入失败！数据表格重复导入！'
             this.showMessage = true
           } else if (res.data.status === 'new SKUs') {
             this.message = '禁止导入，有新增SKU！'
@@ -998,14 +1002,14 @@ export default {
             this.addedSkus = res.data.added_skus
             this.shouldOpenSidebar = true
           } else {
-            this.message = '导入失败! 数据表格格式有变更，请人工复合！'
+            this.message = '导入失败！数据表格格式有变更，请人工复合！'
             this.showMessage = true
           }
         })
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '导入失败!'
+          this.message = '导入失败！'
           this.showMessage = true
         })
     },
@@ -1020,7 +1024,7 @@ export default {
         this.setDefaultDate()
         this.uploadCSVFile = null
       } else {
-        this.message = '日期格式有误!'
+        this.message = '日期格式有误！'
         this.showMessage = true
       }
     },
@@ -1058,7 +1062,7 @@ export default {
         this.prepareExportReportFile('/api/v1/case2/prepare', payload)
         this.initExportForm()
       } else {
-        this.message = '日期格式有误!'
+        this.message = '日期格式有误！'
         this.showMessage = true
       }
     },
@@ -1086,21 +1090,21 @@ export default {
             this.previewCase3.jitInventory = res.data.jit_inventory
             this.$refs.previewCase3Modal.show()
           } else {
-            this.message = '预览失败! 不存在指定的库存条目.'
+            this.message = '预览失败！不存在指定的库存条目。'
             this.showMessage = true
           }
         })
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '预览失败!'
+          this.message = '预览失败！'
           this.showMessage = true
         })
     },
     onPreviewCase3 (evt) {
       evt.preventDefault()
       if ((this.stDateSelection === '') || (this.edDateSelection === '')) {
-        this.message = '起始日期/截止日期不能为空!'
+        this.message = '起始日期/截止日期不能为空！'
         this.showMessage = true
       } else if (this.dateReg.test(this.stDateSelection) && this.dateReg.test(this.edDateSelection)) {
         const payload = {
@@ -1122,7 +1126,7 @@ export default {
         this.previewReportFileCase3(payload)
         this.initExportForm()
       } else {
-        this.message = '日期格式有误!'
+        this.message = '日期格式有误！'
         this.showMessage = true
       }
     },
@@ -1145,7 +1149,7 @@ export default {
         this.prepareExportReportFile('/api/v1/case3/prepare', payload)
         this.initExportForm()
       } else {
-        this.message = '日期格式有误!'
+        this.message = '日期格式有误！'
         this.showMessage = true
       }
     },
@@ -1174,21 +1178,21 @@ export default {
             this.previewCase4.previewTable = res.data.preview_table
             this.$refs.previewCase4Modal.show()
           } else {
-            this.message = '预览失败! 不存在指定的库存条目.'
+            this.message = '预览失败！不存在指定的库存条目。'
             this.showMessage = true
           }
         })
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '预览失败!'
+          this.message = '预览失败！'
           this.showMessage = true
         })
     },
     onPreviewCase4 (evt) {
       evt.preventDefault()
       if ((this.stDateSelection === '') || (this.edDateSelection === '')) {
-        this.message = '起始日期/截止日期不能为空!'
+        this.message = '起始日期/截止日期不能为空！'
         this.showMessage = true
       } else if (this.dateReg.test(this.stDateSelection) && this.dateReg.test(this.edDateSelection)) {
         const payload = {
@@ -1208,7 +1212,7 @@ export default {
         }
         this.previewReportFileCase4(payload)
       } else {
-        this.message = '日期格式有误!'
+        this.message = '日期格式有误！'
         this.showMessage = true
       }
     },
@@ -1231,14 +1235,14 @@ export default {
             this.previewCase5.previewTable = res.data.preview_table
             this.$refs.previewCase5Modal.show()
           } else {
-            this.message = '预览失败! 不存在指定的库存条目.'
+            this.message = '预览失败！不存在指定的库存条目。'
             this.showMessage = true
           }
         })
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '预览失败!'
+          this.message = '预览失败！'
           this.showMessage = true
         })
     },
@@ -1315,21 +1319,21 @@ export default {
       }
       axios.post(this.serverBaseURL + '/api/v1/case6/upload', formData, config)
         .then((res) => {
-          this.message = '导入成功!'
+          this.message = '导入成功！'
           this.showMessage = true
           this.demandTable = res.data.demand_table
         })
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '导入失败!'
+          this.message = '导入失败！'
           this.showMessage = true
         })
     },
     onPreviewCase6 (evt) {
       evt.preventDefault()
       if (this.demandTable.length === 0) {
-        this.message = '请先加载需求表!'
+        this.message = '请先加载需求表！'
         this.showMessage = true
       } else {
         const payload = {
@@ -1346,14 +1350,14 @@ export default {
             this.previewCase6.previewSummaryTable = res.data.preview_summary_table
             this.$refs.previewCase6Modal.show()
           } else {
-            this.message = '预览失败! 不存在指定的商品条目.'
+            this.message = '预览失败！不存在指定的商品条目。'
             this.showMessage = true
           }
         })
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '预览失败!'
+          this.message = '预览失败！'
           this.showMessage = true
         })
     },
@@ -1383,7 +1387,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '下载失败!'
+          this.message = '下载失败！'
           this.showMessage = true
         })
     },
@@ -1399,14 +1403,14 @@ export default {
           // TODO: 替换为支持的解决方案
           evt.initEvent('click', true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null)
           docUrl.dispatchEvent(evt)
-          this.message = '下载成功! 保存为本地文件<' + saveFile + '>.'
+          this.message = '下载成功！保存为本地文件<' + saveFile + '>。'
           this.showMessage = true
         })
         .catch((error) => {
           this.$refs.processingModal.hide()
           // eslint-disable-next-line
           console.log(error)
-          this.message = '下载失败!'
+          this.message = '下载失败！'
           this.showMessage = true
         })
     },
@@ -1418,7 +1422,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '下载失败!'
+          this.message = '下载失败！'
           this.showMessage = true
         })
     },
@@ -1433,13 +1437,13 @@ export default {
           // TODO: 替换为支持的解决方案
           evt.initEvent('click', true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null)
           docUrl.dispatchEvent(evt)
-          this.message = '下载成功! 保存为本地文件<' + saveFile + '>.'
+          this.message = '下载成功！保存为本地文件<' + saveFile + '>。'
           this.showMessage = true
         })
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '下载失败!'
+          this.message = '下载失败！'
           this.showMessage = true
         })
     },
