@@ -772,6 +772,7 @@ export default {
   data () {
     return {
       serverBaseURL: process.env.SERVER_BASE_URL,
+      dateReg: /^20[2-3][0-9]-(0[1-9]|1[0-2])$/,
       customDateSelection: '',
       stDateSelection: '',
       edDateSelection: '',
@@ -991,13 +992,18 @@ export default {
     },
     onImport (evt) {
       evt.preventDefault()
-      this.$refs.importCSVFileModal.hide()
-      let formData = new FormData()
-      formData.append('file', this.uploadCSVFile, this.uploadCSVFile.name)
-      formData.append('import_date', this.customDateSelection)
-      this.importCSVFile(formData, this.customDateSelection)
-      this.setDefaultDate()
-      this.uploadCSVFile = null
+      if (this.dateReg.test(this.customDateSelection)) {
+        this.$refs.importCSVFileModal.hide()
+        let formData = new FormData()
+        formData.append('file', this.uploadCSVFile, this.uploadCSVFile.name)
+        formData.append('import_date', this.customDateSelection)
+        this.importCSVFile(formData, this.customDateSelection)
+        this.setDefaultDate()
+        this.uploadCSVFile = null
+      } else {
+        this.message = '日期格式有误!'
+        this.showMessage = true
+      }
     },
     onCancel (evt) {
       evt.preventDefault()
@@ -1024,13 +1030,18 @@ export default {
     onExportCase2 (evt) {
       // 确定导出销售报表（按系列汇总）
       evt.preventDefault()
-      this.$refs.exportFileCase2Modal.hide()
-      const payload = {
-        st_date: this.stDateSelection,
-        ed_date: this.edDateSelection
+      if (this.dateReg.test(this.stDateSelection) && this.dateReg.test(this.edDateSelection)) {
+        this.$refs.exportFileCase2Modal.hide()
+        const payload = {
+          st_date: this.stDateSelection,
+          ed_date: this.edDateSelection
+        }
+        this.prepareExportReportFile('/api/v1/case2/prepare', payload)
+        this.initExportForm()
+      } else {
+        this.message = '日期格式有误!'
+        this.showMessage = true
       }
-      this.prepareExportReportFile('/api/v1/case2/prepare', payload)
-      this.initExportForm()
     },
     onCancelExportCase2 (evt) {
       // 取消导出销售报表（按系列汇总）
@@ -1072,7 +1083,7 @@ export default {
       if ((this.stDateSelection === '') || (this.edDateSelection === '')) {
         this.message = '起始日期/截止日期不能为空!'
         this.showMessage = true
-      } else {
+      } else if (this.dateReg.test(this.stDateSelection) && this.dateReg.test(this.edDateSelection)) {
         const payload = {
           st_date: this.stDateSelection,
           ed_date: this.edDateSelection,
@@ -1090,8 +1101,11 @@ export default {
           supplier_name: this.supplierNameSelection
         }
         this.previewReportFileCase3(payload)
+        this.initExportForm()
+      } else {
+        this.message = '日期格式有误!'
+        this.showMessage = true
       }
-      this.initExportForm()
     },
     onCancelPreviewCase3 (evt) {
       evt.preventDefault()
@@ -1101,15 +1115,20 @@ export default {
     onExportCase3 (evt) {
       // 确定下载销售报表（按单个SKU汇总）
       evt.preventDefault()
-      this.$refs.previewCase3Modal.hide()
-      this.$refs.exportFileCase3Modal.hide()
-      const payload = {
-        st_date: this.previewCase3.stDate,
-        ed_date: this.previewCase3.edDate,
-        specification_code: this.previewCase3.specificationCode
+      if (this.dateReg.test(this.previewCase3.stDate) && this.dateReg.test(this.previewCase3.edDate)) {
+        this.$refs.previewCase3Modal.hide()
+        this.$refs.exportFileCase3Modal.hide()
+        const payload = {
+          st_date: this.previewCase3.stDate,
+          ed_date: this.previewCase3.edDate,
+          specification_code: this.previewCase3.specificationCode
+        }
+        this.prepareExportReportFile('/api/v1/case3/prepare', payload)
+        this.initExportForm()
+      } else {
+        this.message = '日期格式有误!'
+        this.showMessage = true
       }
-      this.prepareExportReportFile('/api/v1/case3/prepare', payload)
-      this.initExportForm()
     },
     onCancelExportCase3 (evt) {
       // 取消下载销售报表（按单个SKU汇总）
@@ -1152,7 +1171,7 @@ export default {
       if ((this.stDateSelection === '') || (this.edDateSelection === '')) {
         this.message = '起始日期/截止日期不能为空!'
         this.showMessage = true
-      } else {
+      } else if (this.dateReg.test(this.stDateSelection) && this.dateReg.test(this.edDateSelection)) {
         const payload = {
           st_date: this.stDateSelection,
           ed_date: this.edDateSelection,
@@ -1169,6 +1188,9 @@ export default {
           reduced_btn_option: this.reducedBtnOption
         }
         this.previewReportFileCase4(payload)
+      } else {
+        this.message = '日期格式有误!'
+        this.showMessage = true
       }
     },
     onCancelPreviewCase4 (evt) {
@@ -1429,7 +1451,7 @@ export default {
     setDefaultDate () {
       var today = new Date()
       var year = today.getFullYear() * 1
-      var month = today.getMonth() * 1 + 1
+      var month = today.getMonth() * 1
       // 为导入时间设置默认值
       if (month >= 10) {
         this.customDateSelection = year.toString() + '-' + month.toString()
