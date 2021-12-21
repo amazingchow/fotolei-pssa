@@ -64,13 +64,17 @@
           </b-tbody>
           <b-tfoot id="inventory-table-footer">
             <b-tr>
-              <b-td colspan="10" variant="secondary">总共录入<b>{{ inventoriesTotal }}</b>条记录, 当前展示<b>20</b>条记录</b-td>
+              <b-td colspan="10" variant="secondary">总共录入<b>{{ inventoriesTotal }}</b>条记录，共计<b>{{ pageTotal }}</b>页，当前展示第<b>{{ pageCurr }}</b>页，共<b>{{ inventoriesNum }}</b>条记录</b-td>
             </b-tr>
           </b-tfoot>
         </b-table-simple>
         <div id="pagination-btn-area">
+          <button class="btn btn-success btn-sm" v-on:click="onFirstPage">首页</button>
           <button class="btn btn-success btn-sm" :disabled="pageOffset==0" v-on:click="onPrevPage">前一页</button>
+          <input v-model="pageJump" type="number" placeholder="1" style="width: 10ch;" />
+          <button class="btn btn-success btn-sm" v-on:click="onJumpPage">快捷跳转</button>
           <button class="btn btn-success btn-sm" :disabled="pageOffset==pageOffsetMax" v-on:click="onNextPage">后一页</button>
+          <button class="btn btn-success btn-sm" v-on:click="onLastPage">尾页</button>
         </div>
       </div>
     </div>
@@ -850,9 +854,13 @@ export default {
       ],
       thresholdSSR: '4',
       inventories: [],
+      inventoriesNum: 0,
       inventoriesTotal: 0,
       shouldOpenSidebar: false,
       addedSkus: [],
+      pageJump: 1,
+      pageCurr: 0,
+      pageTotal: 0,
       pageOffset: 0,
       pageOffsetMax: 0,
       uploadCSVFile: null,
@@ -899,6 +907,12 @@ export default {
       axios.get(this.serverBaseURL + `/api/v1/inventories?page.offset=${this.pageOffset}&page.limit=20`)
         .then((res) => {
           this.inventories = res.data.inventories
+          this.inventoriesNum = res.data.inventories.length
+          if (this.inventoriesNum > 0) {
+            this.pageCurr = this.pageOffset / 20 + 1
+          } else {
+            this.pageCurr = 0
+          }
         })
         .catch((error) => {
           // eslint-disable-next-line
@@ -912,6 +926,11 @@ export default {
         .then((res) => {
           this.inventoriesTotal = res.data.inventories_total
           this.pageOffsetMax = this.inventoriesTotal - this.inventoriesTotal % 20
+          if (this.inventoriesTotal > 0) {
+            this.pageTotal = this.pageOffsetMax / 20 + 1
+          } else {
+            this.pageTotal = 0
+          }
         })
         .catch((error) => {
           // eslint-disable-next-line
@@ -1438,6 +1457,20 @@ export default {
       this.shouldOpenSidebar = false
       this.addedSkus = []
     },
+    onFirstPage (evt) {
+      evt.preventDefault()
+      this.pageOffset = 0
+      this.listInventories()
+    },
+    onJumpPage (evt) {
+      evt.preventDefault()
+      if (this.pageJump <= 0 || this.pageJump > this.pageTotal) {
+        this.pageOffset = 0
+      } else {
+        this.pageOffset = (this.pageJump - 1) * 20
+      }
+      this.listInventories()
+    },
     onPrevPage (evt) {
       evt.preventDefault()
       this.pageOffset -= 20
@@ -1446,6 +1479,11 @@ export default {
     onNextPage (evt) {
       evt.preventDefault()
       this.pageOffset += 20
+      this.listInventories()
+    },
+    onLastPage (evt) {
+      evt.preventDefault()
+      this.pageOffset = this.pageOffsetMax
       this.listInventories()
     },
     setDefaultDate () {
