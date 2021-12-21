@@ -274,7 +274,7 @@
             ></v-suggest>
           </b-form-group>
           <div id="inventory-table-operate-btn" class="w-100 d-block">
-            <b-button variant="dark" @click="onPreviewCase3">下载报表</b-button>
+            <b-button variant="dark" @click="onPreviewCase3">预览报表</b-button>
             <b-button variant="dark" @click="onCancelExportCase3">取消</b-button>
           </div>
         </b-card>
