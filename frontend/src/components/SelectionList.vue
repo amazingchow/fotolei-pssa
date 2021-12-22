@@ -13,62 +13,86 @@
       </div>
     </div>
     <br/>
-    <div class="row">
-      <div class="col-sm-3">
+    <div class="row" style="margin-bottom: 0; padding-bottom: 0;">
+      <div class="col-sm-4">
       </div>
-      <div class="col-sm-6">
-        <b-card bg-variant="light">
+      <div class="col-sm-4" style="text-align: right;">
+        <h5>提示：<b-badge>通过关联查询，导出关联标签</b-badge></h5>
+      </div>
+      <div class="col-sm-4">
+      </div>
+    </div>
+    <div class="row" style="margin-top: 0; padding-top: 0;">
+      <div class="col-sm-4">
+      </div>
+      <div class="col-sm-1" style="margin-right: 0; padding-right: 0;">
+        <b-card bg-variant="success" style="height: 600px;">
+          <b-form-group class="selection-area">
+            <b-avatar variant="warning" size="5em">品牌</b-avatar>
+          </b-form-group>
+          <b-form-group class="selection-area">
+            <b-avatar variant="warning" size="5em">分类1</b-avatar>
+          </b-form-group>
+          <b-form-group class="selection-area">
+            <b-avatar variant="warning" size="5em">分类2</b-avatar>
+          </b-form-group>
+          <b-form-group class="selection-area">
+            <b-avatar variant="warning" size="5em">产品系列</b-avatar>
+          </b-form-group>
+          <b-form-group class="selection-area">
+            <b-avatar variant="warning" size="5em">供应商名称</b-avatar>
+          </b-form-group>
+        </b-card>
+      </div>
+      <div class="col-sm-3" style="margin-left: 0; padding-left: 0;">
+        <b-card bg-variant="light" style="height: 600px;">
           <b-form-group
-            label="品牌"
-            label-size="sm"
-            label-align-sm="right"
-            label-cols-sm="2"
+            class="selection-area"
           >
             <b-form-select v-model="brandSelection" :options="brandSelections" :select-size="1"></b-form-select>
-            <b-button variant="dark" @click="onFetchAssociations1">关联查询</b-button>
+            <b-button class="selection-area-btn" variant="dark" @click="onFetchAssociations1">关联查询</b-button>
           </b-form-group>
           <b-form-group
-            label="分类1"
-            label-size="sm"
-            label-align-sm="right"
-            label-cols-sm="2"
+            class="selection-area"
           >
             <b-form-select v-model="classification1Selection" :options="classification1Selections" :select-size="1"></b-form-select>
-            <b-button variant="dark" @click="onFetchAssociations2" :disabled="btnEnabled1 === false">关联查询</b-button>
+            <b-button class="selection-area-btn" variant="dark" @click="onFetchAssociations2" :disabled="btnEnabled1 === false">关联查询</b-button>
           </b-form-group>
           <b-form-group
-            label="分类2"
-            label-size="sm"
-            label-align-sm="right"
-            label-cols-sm="2"
+            class="selection-area"
           >
             <b-form-select v-model="classification2Selection" :options="classification2Selections" :select-size="1"></b-form-select>
-            <b-button variant="dark" @click="onFetchAssociations3" :disabled="btnEnabled2 === false">关联查询</b-button>
+            <b-button class="selection-area-btn" variant="dark" @click="onFetchAssociations3" :disabled="btnEnabled2 === false">关联查询</b-button>
           </b-form-group>
           <b-form-group
-            label="产品系列"
-            label-size="sm"
-            label-align-sm="right"
-            label-cols-sm="2"
+            class="selection-area"
           >
             <b-form-select v-model="productSeriesSelection" :options="productSeriesSelections" :select-size="1"></b-form-select>
-            <b-button variant="dark" @click="onFetchAssociations4" :disabled="btnEnabled3 === false">关联查询</b-button>
+            <b-button class="selection-area-btn" variant="dark" @click="onFetchAssociations4" :disabled="btnEnabled3 === false">关联查询</b-button>
           </b-form-group>
           <b-form-group
-            label="供应商名称"
-            label-size="sm"
-            label-align-sm="right"
-            label-cols-sm="2"
+            class="selection-area"
           >
             <b-form-select v-model="supplierNameSelection" :options="supplierNameSelections" :select-size="1"></b-form-select>
           </b-form-group>
         </b-card>
       </div>
-      <div class="col-sm-3">
+      <div class="col-sm-4">
       </div>
     </div>
   </div>
 </template>
+
+<style>
+.selection-area {
+  height: 100px;
+  text-align: right;
+}
+
+.selection-area-btn {
+  margin-top: 10px;
+}
+</style>
 
 <script>
 import axios from 'axios'
