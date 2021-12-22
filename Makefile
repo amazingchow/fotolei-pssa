@@ -5,11 +5,11 @@ check:
 
 .PHONY: init
 init:
-	@./init_server.sh
+	@./scripts/init_server.sh
 
 .PHONY: clean
 clean:
-	@./clean_server.sh
+	@./scripts/clean_server.sh
 
 .PHONY: run_server_local
 run_server_local:

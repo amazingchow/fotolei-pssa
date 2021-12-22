@@ -2,14 +2,15 @@
 
 mkdir -p ~/mysql/data
 mkdir -p ~/mysql/migrations
-cp ./db/migrations/*.sql ~/mysql/migrations
+cp $PWD/db/migrations/*.sql ~/mysql/migrations
 mkdir -p ~/ggfilm-server/inventories
 mkdir -p ~/ggfilm-server/jit_inventory
 mkdir -p ~/ggfilm-server/products
 mkdir -p ~/ggfilm-server/send_queue
 mkdir -p ~/ggfilm-server/recev_queue
+mkdir -p $PWD/tmp
 
-docker-compose -f "test/mysql-deploy/docker-compose.yml" up -d --build
+docker-compose -f "$PWD/test/mysql-deploy/docker-compose.yml" up -d --build
 docker_container_id=`docker container ls | grep mysql-deploy | awk '{print $1}'`
 sleep 2
 docker exec -i ${docker_container_id} /bin/bash -c 'mysql -uroot -p"Pwd123!@" < /migrations/create_database_up.sql'
