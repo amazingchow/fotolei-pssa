@@ -68,7 +68,7 @@ def upload_products():
         return jsonify(response_object)
 
     # 用于检查是否是重复导入的数据报表？
-    load_file_repetition_lookup_table = shelve.open("products_load_file_repetition_lookup_table", flag='c', writeback=False)
+    load_file_repetition_lookup_table = shelve.open("./tmp/products_load_file_repetition_lookup_table", flag='c', writeback=False)
     file_digest = generate_file_digest(csv_file)
     if load_file_repetition_lookup_table.get(file_digest, False):
         load_file_repetition_lookup_table.close()
@@ -206,7 +206,7 @@ def upload_inventories():
     if not do_data_schema_validation_for_input_inventories(csv_file):
         response_object = {"status": "invalid input data schema"}
     else:
-        load_file_repetition_lookup_table = shelve.open("inventories_load_file_repetition_lookup_table", flag='c', writeback=False)
+        load_file_repetition_lookup_table = shelve.open("./tmp/inventories_load_file_repetition_lookup_table", flag='c', writeback=False)
         file_digest = generate_file_digest(csv_file)
         if not load_file_repetition_lookup_table.get(file_digest, False):
             not_inserted_sku_list = []
@@ -354,9 +354,9 @@ CREATE TABLE IF NOT EXISTS ggfilm.product_summary (
 '''
         DBConnector.create_table(stmt)
         if platform.system() == "Linux":
-            os.remove("./products_load_file_repetition_lookup_table")
+            os.remove("./tmp/products_load_file_repetition_lookup_table")
         else:
-            os.remove("./products_load_file_repetition_lookup_table.db")
+            os.remove("./tmp/products_load_file_repetition_lookup_table.db")
         SKU_LOOKUP_TABLE.clear()
         response_object = {"status": "success"}
         return jsonify(response_object)
