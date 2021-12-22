@@ -669,22 +669,32 @@ def export_report_file_case1():
     return jsonify("导出销售报表（按分类汇总）")
 
 
-# 预下载"销售报表（按系列汇总）"的接口
-@ggfilm_server.route("/api/v1/case2/prepare", methods=["POST"])
-def prepare_report_file_case2():
+'''
+预览效果
+
+商品编码 | 规格编码	| 商品名称 | 规格名称 | 起始库存数量 | 采购数量	| 销售数量 | 截止库存数量 | 实时可用库存
+
+其中
+* 起始库存数量 = 时间段内第一个月的数量
+* 采购数量 = 时间段内每一个月的数量的累加
+* 销售数量 = 时间段内每一个月的数量的累加
+* 截止库存数量 = 时间段内最后一个月的数量
+'''
+
+
+# 预览"销售报表（按系列汇总）"的接口
+@ggfilm_server.route("/api/v1/case2/preview", methods=["POST"])
+def preview_report_file_case2():
     payload = request.get_json()
-    # 1. 起始日期和截止日期用于过滤掉时间条件不符合的记录项
-    # 2. 按照“产品系列”进行分类汇总，没有系列名称的不参与汇总
+    # 起始日期和截止日期用于过滤掉时间条件不符合的记录项
     st_date = payload.get("st_date", "").strip()
     ed_date = payload.get("ed_date", "").strip()
     if (st_date > ed_date):
         response_object = {"status": "not found"}
         return jsonify(response_object)
 
-    stmt = "SELECT specification_code, product_series, jit_inventory FROM ggfilm.products \
-WHERE COALESCE(CHAR_LENGTH(product_series), 0) != 0;"
+    stmt = "SELECT specification_code, product_series, jit_inventory FROM ggfilm.products WHERE COALESCE(CHAR_LENGTH(product_series), 0) != 0;"
     rets = DBConnector.query(stmt)
-
     if type(rets) is list and len(rets) > 0:
         lookup_table = {}  # product_series -> [(specification_code, jit_inventory)]
         for ret in rets:
@@ -692,10 +702,12 @@ WHERE COALESCE(CHAR_LENGTH(product_series), 0) != 0;"
                 lookup_table[ret[1]].append((ret[0], ret[2]))
             else:
                 lookup_table[ret[1]] = [(ret[0], ret[2])]
+
         cache = {}
         for k, v in lookup_table.items():
             product_series = k
             cache[product_series] = {
+                "product_series": product_series,
                 "st_inventory_qty": 0,
                 "st_inventory_total": 0,
                 "purchase_qty": 0,
@@ -719,10 +731,9 @@ WHERE COALESCE(CHAR_LENGTH(product_series), 0) != 0;"
                 jit_inventory = vv[1]
                 cache[product_series]["jit_inventory"] += jit_inventory
 
-                stmt = "SELECT * FROM ggfilm.inventories \
-WHERE specification_code = '{}' AND \
-create_time >= '{}' AND \
-create_time <= '{}';".format(specification_code, st_date, ed_date)
+                stmt = "SELECT * FROM ggfilm.inventories WHERE specification_code = '{}' AND create_time >= '{}' AND create_time <= '{}';".format(
+                    specification_code, st_date, ed_date
+                )
                 inner_rets = DBConnector.query(stmt)
                 if type(inner_rets) is list and len(inner_rets) > 0:
                     do_update = True
@@ -731,46 +742,16 @@ create_time <= '{}';".format(specification_code, st_date, ed_date)
                     cache[product_series]["st_inventory_total"] += inner_rets[0][6]
                     cache[product_series]["ed_inventory_qty"] += inner_rets[len(inner_rets) - 1][17]
                     cache[product_series]["ed_inventory_total"] += inner_rets[len(inner_rets) - 1][18]
-                    purchase_qty = 0
-                    for inner_ret in inner_rets:
-                        purchase_qty += inner_ret[7]
-                    cache[product_series]["purchase_qty"] += purchase_qty
-                    purchase_total = 0
-                    for inner_ret in inner_rets:
-                        purchase_total += inner_ret[8]
-                    cache[product_series]["purchase_total"] += purchase_total
-                    purchase_then_return_qty = 0
-                    for inner_ret in inner_rets:
-                        purchase_then_return_qty += inner_ret[9]
-                    cache[product_series]["purchase_then_return_qty"] += purchase_then_return_qty
-                    purchase_then_return_total = 0
-                    for inner_ret in inner_rets:
-                        purchase_then_return_total += inner_ret[10]
-                    cache[product_series]["purchase_then_return_total"] += purchase_then_return_total
-                    sale_qty = 0
-                    for inner_ret in inner_rets:
-                        sale_qty += inner_ret[11]
-                    cache[product_series]["sale_qty"] += sale_qty
-                    sale_total = 0
-                    for inner_ret in inner_rets:
-                        sale_total += inner_ret[12]
-                    cache[product_series]["sale_total"] += sale_total
-                    sale_then_return_qty = 0
-                    for inner_ret in inner_rets:
-                        sale_then_return_qty += inner_ret[13]
-                    cache[product_series]["sale_then_return_qty"] += sale_then_return_qty
-                    sale_then_return_total = 0
-                    for inner_ret in inner_rets:
-                        sale_then_return_total += inner_ret[14]
-                    cache[product_series]["sale_then_return_total"] += sale_then_return_total
-                    others_qty = 0
-                    for inner_ret in inner_rets:
-                        others_qty += inner_ret[15]
-                    cache[product_series]["others_qty"] += others_qty
-                    others_total = 0
-                    for inner_ret in inner_rets:
-                        others_total += inner_ret[16]
-                    cache[product_series]["others_total"] += others_total
+                    cache[product_series]["purchase_qty"] += sum([inner_ret[7] for inner_ret in inner_rets])
+                    cache[product_series]["purchase_total"] += sum([inner_ret[8] for inner_ret in inner_rets])
+                    cache[product_series]["purchase_then_return_qty"] += sum([inner_ret[9] for inner_ret in inner_rets])
+                    cache[product_series]["purchase_then_return_total"] += sum([inner_ret[10] for inner_ret in inner_rets])
+                    cache[product_series]["sale_qty"] += sum([inner_ret[11] for inner_ret in inner_rets])
+                    cache[product_series]["sale_total"] += sum([inner_ret[12] for inner_ret in inner_rets])
+                    cache[product_series]["sale_then_return_qty"] += sum([inner_ret[13] for inner_ret in inner_rets])
+                    cache[product_series]["sale_then_return_total"] += sum([inner_ret[14] for inner_ret in inner_rets])
+                    cache[product_series]["others_qty"] += sum([inner_ret[15] for inner_ret in inner_rets])
+                    cache[product_series]["others_total"] += sum([inner_ret[16] for inner_ret in inner_rets])
             if not do_update:
                 del cache[product_series]
 
@@ -778,42 +759,51 @@ create_time <= '{}';".format(specification_code, st_date, ed_date)
             response_object = {"status": "not found"}
             return jsonify(response_object)
 
-        ts = int(time.time())
-        csv_file_sha256 = generate_digest("销售报表（按系列汇总）_{}.csv".format(ts))
-        csv_file = "{}/ggfilm-server/send_queue/{}".format(os.path.expanduser("~"), csv_file_sha256)
-        output_file = "销售报表（按系列汇总）_{}.csv".format(ts)
-        with open(csv_file, "w", encoding='utf-8-sig') as fd:
-            csv_writer = csv.writer(fd, delimiter=",")
-            csv_writer.writerow([
-                "产品系列", "起始库存数量", "起始库存总额", "采购数量",
-                "采购总额", "采购退货数量", "采购退货总额", "销售数量",
-                "销售总额", "销售退货数量", "销售退货总额", "其他变更数量",
-                "其他变更总额", "截止库存数量", "截止库存总额", "实时可用库存",
-            ])
-
-            for k, v in cache.items():
-                csv_writer.writerow([
-                    k,
-                    v["st_inventory_qty"], v["st_inventory_total"],
-                    v["purchase_qty"], v["purchase_total"],
-                    v["purchase_then_return_qty"], v["purchase_then_return_total"],
-                    v["sale_qty"], v["sale_total"],
-                    v["sale_then_return_qty"], v["sale_then_return_total"],
-                    v["others_qty"], v["others_total"],
-                    v["ed_inventory_qty"], v["ed_inventory_total"],
-                    v["jit_inventory"],
-                ])
+        preview_table = []
+        for k, v in cache.items():
+            preview_table.append(v)
 
         response_object = {"status": "success"}
-        response_object["output_file"] = output_file
-        response_object["server_send_queue_file"] = csv_file_sha256
+        response_object["preview_table"] = preview_table
         return jsonify(response_object)
     else:
         response_object = {"status": "not found"}
         return jsonify(response_object)
 
 
-# TODO: fix me
+# 预下载"销售报表（按系列汇总）"的接口
+@ggfilm_server.route("/api/v1/case2/prepare", methods=["POST"])
+def prepare_report_file_case2():
+    payload = request.get_json()
+    preview_table = payload.get("preview_table", [])
+
+    ts = int(time.time())
+    csv_file_sha256 = generate_digest("销售报表（按系列汇总）_{}.csv".format(ts))
+    csv_file = "{}/ggfilm-server/send_queue/{}".format(os.path.expanduser("~"), csv_file_sha256)
+    output_file = "销售报表（按系列汇总）_{}.csv".format(ts)
+    with open(csv_file, "w", encoding='utf-8-sig') as fd:
+        csv_writer = csv.writer(fd, delimiter=",")
+        csv_writer.writerow([
+            "产品系列", "起始库存数量", "起始库存总额", "采购数量",
+            "采购总额", "采购退货数量", "采购退货总额", "销售数量",
+            "销售总额", "销售退货数量", "销售退货总额", "其他变更数量",
+            "其他变更总额", "截止库存数量", "截止库存总额", "实时可用库存",
+        ])
+
+        for item in preview_table:
+            csv_writer.writerow([
+                item["product_series"], item["st_inventory_qty"], item["st_inventory_total"], item["purchase_qty"],
+                item["purchase_total"], item["purchase_then_return_qty"], item["purchase_then_return_total"], item["sale_qty"],
+                item["sale_total"], item["sale_then_return_qty"], item["sale_then_return_total"], item["others_qty"],
+                item["others_total"], item["ed_inventory_qty"], item["ed_inventory_total"], item["jit_inventory"],
+            ])
+
+    response_object = {"status": "success"}
+    response_object["output_file"] = output_file
+    response_object["server_send_queue_file"] = csv_file_sha256
+    return jsonify(response_object)
+
+
 '''
 预览效果
 

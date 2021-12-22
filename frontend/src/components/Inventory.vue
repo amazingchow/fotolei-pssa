@@ -131,12 +131,60 @@
               <b-form-input v-model="edDateSelection" placeholder="YYYY-MM"></b-form-input>
             </b-form-group>
             <div id="inventory-table-operate-btn" class="w-100 d-block">
-              <b-button variant="dark" @click="onExportCase2">下载</b-button>
+              <b-button variant="dark" @click="onPreviewCase2">预览报表</b-button>
               <b-button variant="dark" @click="onCancelExportCase2">取消</b-button>
             </div>
           </b-card>
         </b-form>
       </b-form>
+    </b-modal>
+    <b-modal ref="previewCase2Modal" title="预览销售报表（按分类汇总）" size="huge" hide-footer>
+      <b-table-simple striped hover small id="preview-table">
+        <b-thead>
+          <b-tr>
+            <b-th scope="col">产品系列</b-th>
+            <b-th scope="col">起始库存数量</b-th>
+            <b-th scope="col">起始库存总额</b-th>
+            <b-th scope="col">采购数量</b-th>
+            <b-th scope="col">采购总额</b-th>
+            <b-th scope="col">采购退货数量</b-th>
+            <b-th scope="col">采购退货总额</b-th>
+            <b-th scope="col">销售数量</b-th>
+            <b-th scope="col">销售总额</b-th>
+            <b-th scope="col">销售退货数量</b-th>
+            <b-th scope="col">销售退货总额</b-th>
+            <b-th scope="col">其他变更数量</b-th>
+            <b-th scope="col">其他变更总额</b-th>
+            <b-th scope="col">截止库存数量</b-th>
+            <b-th scope="col">截止库存总额</b-th>
+            <b-th scope="col">实时可用库存</b-th>
+          </b-tr>
+        </b-thead>
+        <b-tbody>
+          <b-tr v-for="(item, index) in previewCase2.previewTable" :key="index">
+            <b-td>{{ item.product_series }}</b-td>
+            <b-td>{{ item.st_inventory_qty }}</b-td>
+            <b-td>{{ item.st_inventory_total }}</b-td>
+            <b-td>{{ item.purchase_qty }}</b-td>
+            <b-td>{{ item.purchase_total }}</b-td>
+            <b-td>{{ item.purchase_then_return_qty }}</b-td>
+            <b-td>{{ item.purchase_then_return_total }}</b-td>
+            <b-td>{{ item.sale_qty }}</b-td>
+            <b-td>{{ item.sale_total }}</b-td>
+            <b-td>{{ item.sale_then_return_qty }}</b-td>
+            <b-td>{{ item.sale_then_return_total }}</b-td>
+            <b-td>{{ item.others_qty }}</b-td>
+            <b-td>{{ item.others_total }}</b-td>
+            <b-td>{{ item.ed_inventory_qty }}</b-td>
+            <b-td>{{ item.ed_inventory_total }}</b-td>
+            <b-td>{{ item.jit_inventory }}</b-td>
+          </b-tr>
+        </b-tbody>
+      </b-table-simple>
+      <div id="inventory-table-operate-btn" class="w-100 d-block">
+        <b-button variant="dark" @click="onExportCase2">下载报表</b-button>
+        <b-button variant="dark" @click="onCancelPreviewCase2">取消</b-button>
+      </div>
     </b-modal>
     <b-modal ref="exportFileCase3Modal" id="export-file-case3-modal" title="导出销售报表（按单个SKU汇总）" hide-footer>
       <b-form>
@@ -825,6 +873,9 @@ export default {
       supplierNameOptions: [],
       supplierNameSelections: [],
       supplierNameSelection: '',
+      previewCase2: {
+        previewTable: []
+      },
       previewCase3: {
         previewTable: []
       },
@@ -949,6 +1000,7 @@ export default {
       this.beAggregatedSelection = '参与'
       this.isImportSelection = '全部'
       this.supplierNameSelection = ''
+      this.previewCase2.previewTable = []
       this.previewCase3.previewTable = []
       this.previewCase4.previewTable = []
       this.previewCase5.previewTable = []
@@ -1028,9 +1080,8 @@ export default {
       this.setDefaultDate()
       this.uploadCSVFile = null
     },
-    // 销售报表（按分类汇总）
+    // ------------------------------ 销售报表（按分类汇总） ------------------------------
     onExportCase1 (evt) {
-      // 确定导出销售报表（按分类汇总）
       evt.preventDefault()
       this.$refs.exportFileCase1Modal.hide()
       const payload = {}
@@ -1039,40 +1090,76 @@ export default {
       this.initExportForm()
     },
     onCancelExportCase1 (evt) {
-      // 取消导出销售报表（按分类汇总）
       evt.preventDefault()
       this.$refs.exportFileCase1Modal.hide()
       // 恢复默认设置
       this.initExportForm()
     },
-    // 销售报表（按系列汇总）
-    onExportCase2 (evt) {
-      // 确定导出销售报表（按系列汇总）
+    // ------------------------------ 销售报表（按系列汇总） ------------------------------
+    previewReportFileCase2Close () {
+      this.$refs.processingModal.hide()
+    },
+    previewReportFileCase2 (payload) {
+      axios.post(this.serverBaseURL + '/api/v1/case2/preview', payload)
+        .then((res) => {
+          if (res.data.status === 'success') {
+            this.previewCase2.previewTable = res.data.preview_table
+            this.$refs.previewCase2Modal.show()
+          } else if (res.data.status === 'not found') {
+            this.message = '预览失败！不存在指定的库存条目。'
+            this.showMessage = true
+          }
+          this.previewReportFileCase2Close()
+        })
+        .catch((error) => {
+          // eslint-disable-next-line
+          console.log(error)
+          this.message = '预览失败！'
+          this.showMessage = true
+          this.previewReportFileCase2Close()
+        })
+    },
+    onPreviewCase2 (evt) {
       evt.preventDefault()
-      if (this.dateReg.test(this.stDateSelection) && this.dateReg.test(this.edDateSelection)) {
-        this.$refs.exportFileCase2Modal.hide()
+      if ((this.stDateSelection === '') || (this.edDateSelection === '')) {
+        this.message = '起始日期/截止日期不能为空！'
+        this.showMessage = true
+      } else if (this.dateReg.test(this.stDateSelection) && this.dateReg.test(this.edDateSelection)) {
         this.$refs.processingModal.show()
         const payload = {
           st_date: this.stDateSelection,
           ed_date: this.edDateSelection
         }
-        this.prepareExportReportFile('/api/v1/case2/prepare', payload)
+        this.previewReportFileCase2(payload)
       } else {
         this.message = '日期格式有误！'
         this.showMessage = true
       }
     },
+    onCancelPreviewCase2 (evt) {
+      evt.preventDefault()
+      this.$refs.previewCase2Modal.hide()
+    },
+    onExportCase2 (evt) {
+      evt.preventDefault()
+      this.$refs.previewCase2Modal.hide()
+      this.$refs.exportFileCase2Modal.hide()
+      this.$refs.processingModal.show()
+      const payload = {
+        preview_table: this.previewCase2.previewTable
+      }
+      this.prepareExportReportFile('/api/v1/case2/prepare', payload)
+    },
     onCancelExportCase2 (evt) {
-      // 取消导出销售报表（按系列汇总）
       evt.preventDefault()
       this.$refs.exportFileCase2Modal.hide()
       // 恢复默认设置
       this.initExportForm()
     },
+    // ------------------------------ 销售报表（按单个SKU汇总） ------------------------------
     previewReportFileCase3Close () {
       this.$refs.processingModal.hide()
     },
-    // 销售报表（按单个SKU汇总）
     previewReportFileCase3 (payload) {
       axios.post(this.serverBaseURL + '/api/v1/case3/preview', payload)
         .then((res) => {
@@ -1127,7 +1214,6 @@ export default {
       this.$refs.previewCase3Modal.hide()
     },
     onExportCase3 (evt) {
-      // 确定下载销售报表（按单个SKU汇总）
       evt.preventDefault()
       this.$refs.previewCase3Modal.hide()
       this.$refs.exportFileCase3Modal.hide()
@@ -1138,15 +1224,13 @@ export default {
       this.prepareExportReportFile('/api/v1/case3/prepare', payload)
     },
     onCancelExportCase3 (evt) {
-      // 取消下载销售报表（按单个SKU汇总）
       evt.preventDefault()
       this.$refs.exportFileCase3Modal.hide()
       // 恢复默认设置
       this.initExportForm()
     },
-    // 滞销品报表
+    // ------------------------------ 滞销品报表 ------------------------------
     onExportCase4 (evt) {
-      // 确定导出滞销品报表
       evt.preventDefault()
       this.$refs.previewCase4Modal.hide()
       this.$refs.exportFileCase4Modal.hide()
@@ -1212,13 +1296,12 @@ export default {
       this.$refs.previewCase4Modal.hide()
     },
     onCancelExportCase4 (evt) {
-      // 取消导出滞销品报表
       evt.preventDefault()
       this.$refs.exportFileCase4Modal.hide()
       // 恢复默认设置
       this.initExportForm()
     },
-    // 采购辅助分析报表
+    // ------------------------------ 采购辅助分析报表 ------------------------------
     previewReportFileCase5WayClose () {
       this.$refs.processingModal.hide()
     },
@@ -1279,7 +1362,6 @@ export default {
       this.$refs.previewCase5Modal.hide()
     },
     onExportCase5 (evt) {
-      // 确定导出采购辅助分析报表
       evt.preventDefault()
       this.$refs.previewCase5Modal.hide()
       this.$refs.exportFileCase5Modal.hide()
@@ -1292,13 +1374,12 @@ export default {
       this.prepareExportReportFile('/api/v1/case5/prepare', payload)
     },
     onCancelExportCase5 (evt) {
-      // 取消导出采购辅助分析报表
       evt.preventDefault()
       this.$refs.exportFileCase5Modal.hide()
       // 恢复默认设置
       this.initExportForm()
     },
-    // 体积、重量计算汇总单
+    // ------------------------------ 体积、重量计算汇总单 ------------------------------
     onImportForCase6 (evt) {
       evt.preventDefault()
       this.$refs.processingModal.show()
@@ -1368,7 +1449,6 @@ export default {
         })
     },
     onExportCase6 (evt) {
-      // 确定下载体积、重量计算汇总单
       evt.preventDefault()
       this.$refs.previewCase6Modal.hide()
       this.$refs.exportFileCase6Modal.hide()
@@ -1389,6 +1469,7 @@ export default {
       // 恢复默认设置
       this.initExportForm()
     },
+    // ------------------------------ 文件统一下载 ------------------------------
     prepareExportReportFileClose () {
       this.$refs.processingModal.hide()
       // 恢复默认设置
@@ -1434,6 +1515,7 @@ export default {
           this.showMessage = true
         })
     },
+    // ------------------------------ 新增SKU下载 ------------------------------
     preDownloadAddedSKUs (payload) {
       axios.post(this.serverBaseURL + '/api/v1/addedskus/prepare', payload)
         .then((res) => {
@@ -1481,6 +1563,7 @@ export default {
       this.shouldOpenSidebar = false
       this.addedSkus = []
     },
+    // ------------------------------ 翻页 ------------------------------
     onFirstPage (evt) {
       evt.preventDefault()
       this.pageOffset = 0
@@ -1510,6 +1593,7 @@ export default {
       this.pageOffset = this.pageOffsetMax
       this.listInventories()
     },
+    // ------------------------------ 设置默认日期值 ------------------------------
     setDefaultDate () {
       var today = new Date()
       var year = today.getFullYear() * 1
