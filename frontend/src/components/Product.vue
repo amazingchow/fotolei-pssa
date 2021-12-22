@@ -2,6 +2,19 @@
   <div class="container-fluid">
     <div class="row">
       <div class="col-sm-12">
+        <b-navbar type="dark" variant="success">
+          <b-navbar-nav>
+            <b-nav-item :active="true" href="/product">商品明细库</b-nav-item>
+            <b-nav-item :active="false" href="/">库存明细库</b-nav-item>
+            <b-nav-item :active="false" href="/slist">搜索项列表</b-nav-item>
+            <b-nav-item :active="false" href="/oplog">操作日志</b-nav-item>
+          </b-navbar-nav>
+        </b-navbar>
+      </div>
+    </div>
+    <br/>
+    <div class="row">
+      <div class="col-sm-12">
         <alert :message=message v-if="showMessage"></alert>
         <div id="import-and-export-btn-area">
           <button type="button" class="btn btn-success btn-sm" v-b-modal.product-csv-file-modal>导入商品明细</button>
@@ -9,7 +22,6 @@
           <button type="button" class="btn btn-success btn-sm" v-b-modal.products-clean-all-modal>删除商品明细</button>
           <button type="button" class="btn btn-success btn-sm" v-b-modal.update-one-product-modal>更新商品明细</button>
         </div>
-        <br/>
         <b-table-simple striped hover small id="product-table">
           <b-thead>
             <b-tr>
@@ -320,6 +332,10 @@
 </template>
 
 <style>
+#import-and-export-btn-area {
+  margin-bottom: 10px;
+}
+
 #product-table {
   border: 2px solid black !important;
   font-size: small;
