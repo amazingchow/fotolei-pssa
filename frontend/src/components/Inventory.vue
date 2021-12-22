@@ -64,13 +64,17 @@
           </b-tbody>
           <b-tfoot id="inventory-table-footer">
             <b-tr>
-              <b-td colspan="10" variant="secondary">总共录入<b>{{ inventoriesTotal }}</b>条记录, 当前展示<b>20</b>条记录</b-td>
+              <b-td colspan="10" variant="secondary">总共录入<b>{{ inventoriesTotal }}</b>条记录，共计<b>{{ pageTotal }}</b>页，当前展示第<b>{{ pageCurr }}</b>页，共<b>{{ inventoriesNum }}</b>条记录</b-td>
             </b-tr>
           </b-tfoot>
         </b-table-simple>
         <div id="pagination-btn-area">
+          <button class="btn btn-success btn-sm" v-on:click="onFirstPage">首页</button>
           <button class="btn btn-success btn-sm" :disabled="pageOffset==0" v-on:click="onPrevPage">前一页</button>
+          <input v-model="pageJump" type="number" min="0" step="1" placeholder="1" style="width: 10ch;" />
+          <button class="btn btn-success btn-sm" v-on:click="onJumpPage">快捷跳转</button>
           <button class="btn btn-success btn-sm" :disabled="pageOffset==pageOffsetMax" v-on:click="onNextPage">后一页</button>
+          <button class="btn btn-success btn-sm" v-on:click="onLastPage">尾页</button>
         </div>
       </div>
     </div>
@@ -127,12 +131,60 @@
               <b-form-input v-model="edDateSelection" placeholder="YYYY-MM"></b-form-input>
             </b-form-group>
             <div id="inventory-table-operate-btn" class="w-100 d-block">
-              <b-button variant="dark" @click="onExportCase2">下载</b-button>
+              <b-button variant="dark" @click="onPreviewCase2">预览报表</b-button>
               <b-button variant="dark" @click="onCancelExportCase2">取消</b-button>
             </div>
           </b-card>
         </b-form>
       </b-form>
+    </b-modal>
+    <b-modal ref="previewCase2Modal" title="预览销售报表（按分类汇总）" size="huge" hide-footer>
+      <b-table-simple striped hover small id="preview-table">
+        <b-thead>
+          <b-tr>
+            <b-th scope="col">产品系列</b-th>
+            <b-th scope="col">起始库存数量</b-th>
+            <b-th scope="col">起始库存总额</b-th>
+            <b-th scope="col">采购数量</b-th>
+            <b-th scope="col">采购总额</b-th>
+            <b-th scope="col">采购退货数量</b-th>
+            <b-th scope="col">采购退货总额</b-th>
+            <b-th scope="col">销售数量</b-th>
+            <b-th scope="col">销售总额</b-th>
+            <b-th scope="col">销售退货数量</b-th>
+            <b-th scope="col">销售退货总额</b-th>
+            <b-th scope="col">其他变更数量</b-th>
+            <b-th scope="col">其他变更总额</b-th>
+            <b-th scope="col">截止库存数量</b-th>
+            <b-th scope="col">截止库存总额</b-th>
+            <b-th scope="col">实时可用库存</b-th>
+          </b-tr>
+        </b-thead>
+        <b-tbody>
+          <b-tr v-for="(item, index) in previewCase2.previewTable" :key="index">
+            <b-td>{{ item.product_series }}</b-td>
+            <b-td>{{ item.st_inventory_qty }}</b-td>
+            <b-td>{{ item.st_inventory_total }}</b-td>
+            <b-td>{{ item.purchase_qty }}</b-td>
+            <b-td>{{ item.purchase_total }}</b-td>
+            <b-td>{{ item.purchase_then_return_qty }}</b-td>
+            <b-td>{{ item.purchase_then_return_total }}</b-td>
+            <b-td>{{ item.sale_qty }}</b-td>
+            <b-td>{{ item.sale_total }}</b-td>
+            <b-td>{{ item.sale_then_return_qty }}</b-td>
+            <b-td>{{ item.sale_then_return_total }}</b-td>
+            <b-td>{{ item.others_qty }}</b-td>
+            <b-td>{{ item.others_total }}</b-td>
+            <b-td>{{ item.ed_inventory_qty }}</b-td>
+            <b-td>{{ item.ed_inventory_total }}</b-td>
+            <b-td>{{ item.jit_inventory }}</b-td>
+          </b-tr>
+        </b-tbody>
+      </b-table-simple>
+      <div id="inventory-table-operate-btn" class="w-100 d-block">
+        <b-button variant="dark" @click="onExportCase2">下载报表</b-button>
+        <b-button variant="dark" @click="onCancelPreviewCase2">取消</b-button>
+      </div>
     </b-modal>
     <b-modal ref="exportFileCase3Modal" id="export-file-case3-modal" title="导出销售报表（按单个SKU汇总）" hide-footer>
       <b-form>
@@ -270,7 +322,7 @@
             ></v-suggest>
           </b-form-group>
           <div id="inventory-table-operate-btn" class="w-100 d-block">
-            <b-button variant="dark" @click="onPreviewCase3">下载报表</b-button>
+            <b-button variant="dark" @click="onPreviewCase3">预览报表</b-button>
             <b-button variant="dark" @click="onCancelExportCase3">取消</b-button>
           </div>
         </b-card>
@@ -292,16 +344,16 @@
           </b-tr>
         </b-thead>
         <b-tbody>
-          <b-tr>
-            <b-td>{{ previewCase3.productCode }}</b-td>
-            <b-td>{{ previewCase3.specificationCode }}</b-td>
-            <b-td>{{ previewCase3.productName }}</b-td>
-            <b-td>{{ previewCase3.specificationName }}</b-td>
-            <b-td>{{ previewCase3.stInventoryQty }}</b-td>
-            <b-td>{{ previewCase3.purchaseQty }}</b-td>
-            <b-td>{{ previewCase3.saleQty }}</b-td>
-            <b-td>{{ previewCase3.edInventoryQty }}</b-td>
-            <b-td>{{ previewCase3.jitInventory}}</b-td>
+          <b-tr v-for="(item, index) in previewCase3.previewTable" :key="index">
+            <b-td>{{ item.product_code }}</b-td>
+            <b-td>{{ item.specification_code }}</b-td>
+            <b-td>{{ item.product_name }}</b-td>
+            <b-td>{{ item.specification_name }}</b-td>
+            <b-td>{{ item.st_inventory_qty }}</b-td>
+            <b-td>{{ item.purchase_qty }}</b-td>
+            <b-td>{{ item.sale_qty }}</b-td>
+            <b-td>{{ item.ed_inventory_qty }}</b-td>
+            <b-td>{{ item.jit_inventory }}</b-td>
           </b-tr>
         </b-tbody>
       </b-table-simple>
@@ -427,7 +479,7 @@
             label-align-sm="right"
             label-cols-sm="3"
           >
-            <b-form-input v-model="thresholdSSR" type="number" placeholder="4"></b-form-input>
+            <b-form-input v-model="thresholdSSR" type="number" min="0" step="1" placeholder="4"></b-form-input>
           </b-form-group>
           <b-form-group
             label="断货折算"
@@ -497,7 +549,7 @@
             label-align-sm="right"
             label-cols-sm="5"
           >
-            <b-form-input v-model="timeQuantumX" type="number" placeholder="6"></b-form-input>
+            <b-form-input v-model="timeQuantumX" type="number" min="0" step="1" placeholder="6"></b-form-input>
           </b-form-group>
           <b-form-group
             label="阈值1"
@@ -505,7 +557,7 @@
             label-align-sm="right"
             label-cols-sm="5"
           >
-            <b-form-input v-model="thresholdX" type="number" placeholder="2"></b-form-input>
+            <b-form-input v-model="thresholdX" type="number" min="0" step="1" placeholder="2"></b-form-input>
           </b-form-group>
           <b-form-group
             label="时间段2（月数）"
@@ -513,7 +565,7 @@
             label-align-sm="right"
             label-cols-sm="5"
           >
-            <b-form-input v-model="timeQuantumY" type="number" placeholder="12"></b-form-input>
+            <b-form-input v-model="timeQuantumY" type="number" min="0" step="1" placeholder="12"></b-form-input>
           </b-form-group>
           <b-form-group
             label="阈值2"
@@ -521,7 +573,7 @@
             label-align-sm="right"
             label-cols-sm="5"
           >
-            <b-form-input v-model="thresholdY" type="number" placeholder="1"></b-form-input>
+            <b-form-input v-model="thresholdY" type="number" min="0" step="1" placeholder="1"></b-form-input>
           </b-form-group>
           <b-form-group
             label="拟定进货（可销月数）"
@@ -529,7 +581,7 @@
             label-align-sm="right"
             label-cols-sm="5"
           >
-            <b-form-input v-model="projectedPurchase" type="number" placeholder="12"></b-form-input>
+            <b-form-input v-model="projectedPurchase" type="number" min="0" step="1" placeholder="12"></b-form-input>
           </b-form-group>
           <b-form-group
             label="断货折算"
@@ -563,7 +615,7 @@
         </b-card>
       </b-form>
     </b-modal>
-    <b-modal ref="previewCase5Modal" title="预览采购辅助分析报表" size="xl" hide-footer>
+    <b-modal ref="previewCase5Modal" title="预览采购辅助分析报表" size="huge" hide-footer>
       <b-table-simple striped hover small id="preview-table">
         <b-thead>
           <b-tr>
@@ -572,13 +624,13 @@
             <b-th scope="col">商品名称</b-th>
             <b-th scope="col">规格名称</b-th>
             <b-th scope="col">供应商</b-th>
-            <b-th scope="col">X个月销量</b-th>
-            <b-th scope="col">Y个月销量</b-th>
+            <b-th scope="col">{{ timeQuantumX }}个月销量</b-th>
+            <b-th scope="col">{{ timeQuantumY }}个月销量</b-th>
             <b-th scope="col">库存量</b-th>
-            <b-th scope="col">库存/X个月销量</b-th>
-            <b-th scope="col">库存/Y个月销量</b-th>
-            <b-th scope="col">库存/X个月折算销量</b-th>
-            <b-th scope="col">库存/Y个月折算销量</b-th>
+            <b-th scope="col">库存/{{ timeQuantumX }}个月销量</b-th>
+            <b-th scope="col">库存/{{ timeQuantumY }}个月销量</b-th>
+            <b-th scope="col">库存/{{ timeQuantumX }}个月折算销量</b-th>
+            <b-th scope="col">库存/{{ timeQuantumY }}个月折算销量</b-th>
             <b-th scope="col">拟定进货量</b-th>
             <b-th scope="col">单个重量/g</b-th>
             <b-th scope="col">小计重量/kg</b-th>
@@ -761,6 +813,13 @@
 #added-skus-table-operate-btn {
   text-align: right;
 }
+
+@media (min-width: 992px) {
+  .modal .modal-huge {
+    width: 90% !important;;
+    max-width: 90% !important;
+  }
+}
 </style>
 
 <script>
@@ -772,6 +831,7 @@ export default {
   data () {
     return {
       serverBaseURL: process.env.SERVER_BASE_URL,
+      dateReg: /^20[2-3][0-9]-(0[1-9]|1[0-2])$/,
       customDateSelection: '',
       stDateSelection: '',
       edDateSelection: '',
@@ -786,7 +846,6 @@ export default {
       classification2Selection: '',
       productSeriesOptions: [],
       productSeriesSelection: '',
-      // TODO： 支持“全部”选项检索
       stopStatusOptions: [
         { value: '在用', text: '在用' },
         { value: '停用', text: '停用' },
@@ -814,18 +873,11 @@ export default {
       supplierNameOptions: [],
       supplierNameSelections: [],
       supplierNameSelection: '',
+      previewCase2: {
+        previewTable: []
+      },
       previewCase3: {
-        stDate: '',
-        edDate: '',
-        productCode: '',
-        specificationCode: '',
-        productName: '',
-        specificationName: '',
-        stInventoryQty: 0,
-        purchaseQty: 0,
-        saleQty: 0,
-        edInventoryQty: 0,
-        jitInventory: 0
+        previewTable: []
       },
       previewCase4: {
         previewTable: []
@@ -849,9 +901,13 @@ export default {
       ],
       thresholdSSR: '4',
       inventories: [],
+      inventoriesNum: 0,
       inventoriesTotal: 0,
       shouldOpenSidebar: false,
       addedSkus: [],
+      pageJump: 1,
+      pageCurr: 0,
+      pageTotal: 0,
       pageOffset: 0,
       pageOffsetMax: 0,
       uploadCSVFile: null,
@@ -878,7 +934,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '内部服务错误!'
+          this.message = '内部服务错误！'
           this.showMessage = true
         })
     },
@@ -890,7 +946,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '内部服务错误!'
+          this.message = '内部服务错误！'
           this.showMessage = true
         })
     },
@@ -898,11 +954,17 @@ export default {
       axios.get(this.serverBaseURL + `/api/v1/inventories?page.offset=${this.pageOffset}&page.limit=20`)
         .then((res) => {
           this.inventories = res.data.inventories
+          this.inventoriesNum = res.data.inventories.length
+          if (this.inventoriesNum > 0) {
+            this.pageCurr = this.pageOffset / 20 + 1
+          } else {
+            this.pageCurr = 0
+          }
         })
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '内部服务错误!'
+          this.message = '内部服务错误！'
           this.showMessage = true
         })
     },
@@ -911,11 +973,16 @@ export default {
         .then((res) => {
           this.inventoriesTotal = res.data.inventories_total
           this.pageOffsetMax = this.inventoriesTotal - this.inventoriesTotal % 20
+          if (this.inventoriesTotal > 0) {
+            this.pageTotal = this.pageOffsetMax / 20 + 1
+          } else {
+            this.pageTotal = 0
+          }
         })
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '内部服务错误!'
+          this.message = '内部服务错误！'
           this.showMessage = true
         })
     },
@@ -933,17 +1000,8 @@ export default {
       this.beAggregatedSelection = '参与'
       this.isImportSelection = '全部'
       this.supplierNameSelection = ''
-      this.previewCase3.stDate = ''
-      this.previewCase3.edDate = ''
-      this.previewCase3.productCode = ''
-      this.previewCase3.specificationCode = ''
-      this.previewCase3.productName = ''
-      this.previewCase3.specificationName = ''
-      this.previewCase3.stInventoryQty = 0
-      this.previewCase3.purchaseQty = 0
-      this.previewCase3.saleQty = 0
-      this.previewCase3.edInventoryQty = 0
-      this.previewCase3.jitInventory = 0
+      this.previewCase2.previewTable = []
+      this.previewCase3.previewTable = []
       this.previewCase4.previewTable = []
       this.previewCase5.previewTable = []
       this.previewCase6.previewTable = []
@@ -955,6 +1013,13 @@ export default {
       this.projectedPurchase = '12'
       this.reducedBtnOption = 'open'
       this.thresholdSSR = '4'
+      this.uploadCSVFileForCase6 = null
+      this.demandTable = null
+    },
+    importCSVFileClose () {
+      this.$refs.processingModal.hide()
+      this.setDefaultDate()
+      this.uploadCSVFile = null
     },
     importCSVFile (formData, date) {
       let config = {
@@ -967,10 +1032,14 @@ export default {
           if (res.data.status === 'success') {
             this.listInventories()
             this.getInventoriesTotal()
-            this.message = date + '数据导入成功!'
+            if (res.data.msg.length > 0) {
+              this.message = date + '数据导入成功！' + res.data.msg
+            } else {
+              this.message = date + '数据导入成功！'
+            }
             this.showMessage = true
           } else if (res.data.status === 'repetition') {
-            this.message = '导入失败! 数据表格重复导入！'
+            this.message = '导入失败！数据表格重复导入！'
             this.showMessage = true
           } else if (res.data.status === 'new SKUs') {
             this.message = '禁止导入，有新增SKU！'
@@ -978,26 +1047,32 @@ export default {
             this.addedSkus = res.data.added_skus
             this.shouldOpenSidebar = true
           } else {
-            this.message = '导入失败! 数据表格格式有变更，请人工复合！'
+            this.message = '导入失败！数据表格格式有变更，请人工复合！'
             this.showMessage = true
           }
+          this.importCSVFileClose()
         })
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '导入失败!'
+          this.message = '导入失败！'
           this.showMessage = true
+          this.importCSVFileClose()
         })
     },
     onImport (evt) {
       evt.preventDefault()
-      this.$refs.importCSVFileModal.hide()
-      let formData = new FormData()
-      formData.append('file', this.uploadCSVFile, this.uploadCSVFile.name)
-      formData.append('import_date', this.customDateSelection)
-      this.importCSVFile(formData, this.customDateSelection)
-      this.setDefaultDate()
-      this.uploadCSVFile = null
+      if (this.dateReg.test(this.customDateSelection)) {
+        this.$refs.importCSVFileModal.hide()
+        this.$refs.processingModal.show()
+        let formData = new FormData()
+        formData.append('file', this.uploadCSVFile, this.uploadCSVFile.name)
+        formData.append('import_date', this.customDateSelection)
+        this.importCSVFile(formData, this.customDateSelection)
+      } else {
+        this.message = '日期格式有误！'
+        this.showMessage = true
+      }
     },
     onCancel (evt) {
       evt.preventDefault()
@@ -1005,74 +1080,113 @@ export default {
       this.setDefaultDate()
       this.uploadCSVFile = null
     },
-    // 销售报表（按分类汇总）
+    // ------------------------------ 销售报表（按分类汇总） ------------------------------
     onExportCase1 (evt) {
-      // 确定导出销售报表（按分类汇总）
       evt.preventDefault()
       this.$refs.exportFileCase1Modal.hide()
       const payload = {}
       this.exportReportFileCase1(payload)
+      // 恢复默认设置
       this.initExportForm()
     },
     onCancelExportCase1 (evt) {
-      // 取消导出销售报表（按分类汇总）
       evt.preventDefault()
       this.$refs.exportFileCase1Modal.hide()
+      // 恢复默认设置
       this.initExportForm()
     },
-    // 销售报表（按系列汇总）
-    onExportCase2 (evt) {
-      // 确定导出销售报表（按系列汇总）
-      evt.preventDefault()
-      this.$refs.exportFileCase2Modal.hide()
-      const payload = {
-        st_date: this.stDateSelection,
-        ed_date: this.edDateSelection
-      }
-      this.prepareExportReportFile('/api/v1/case2/prepare', payload)
-      this.initExportForm()
+    // ------------------------------ 销售报表（按系列汇总） ------------------------------
+    previewReportFileCase2Close () {
+      this.$refs.processingModal.hide()
     },
-    onCancelExportCase2 (evt) {
-      // 取消导出销售报表（按系列汇总）
-      evt.preventDefault()
-      this.$refs.exportFileCase2Modal.hide()
-      this.initExportForm()
-    },
-    // 销售报表（按单个SKU汇总）
-    previewReportFileCase3 (payload) {
-      axios.post(this.serverBaseURL + '/api/v1/case3/preview', payload)
+    previewReportFileCase2 (payload) {
+      axios.post(this.serverBaseURL + '/api/v1/case2/preview', payload)
         .then((res) => {
           if (res.data.status === 'success') {
-            this.previewCase3.stDate = res.data.st_date
-            this.previewCase3.edDate = res.data.ed_date
-            this.previewCase3.productCode = res.data.product_code
-            this.previewCase3.specificationCode = res.data.specification_code
-            this.previewCase3.productName = res.data.product_name
-            this.previewCase3.specificationName = res.data.specification_name
-            this.previewCase3.stInventoryQty = res.data.st_inventory_qty
-            this.previewCase3.purchaseQty = res.data.purchase_qty
-            this.previewCase3.saleQty = res.data.sale_qty
-            this.previewCase3.edInventoryQty = res.data.ed_inventory_qty
-            this.previewCase3.jitInventory = res.data.jit_inventory
-            this.$refs.previewCase3Modal.show()
-          } else {
-            this.message = '预览失败! 不存在指定的库存条目.'
+            this.previewCase2.previewTable = res.data.preview_table
+            this.$refs.previewCase2Modal.show()
+          } else if (res.data.status === 'not found') {
+            this.message = '预览失败！不存在指定的库存条目。'
             this.showMessage = true
           }
+          this.previewReportFileCase2Close()
         })
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '预览失败!'
+          this.message = '预览失败！'
           this.showMessage = true
+          this.previewReportFileCase2Close()
+        })
+    },
+    onPreviewCase2 (evt) {
+      evt.preventDefault()
+      if ((this.stDateSelection === '') || (this.edDateSelection === '')) {
+        this.message = '起始日期/截止日期不能为空！'
+        this.showMessage = true
+      } else if (this.dateReg.test(this.stDateSelection) && this.dateReg.test(this.edDateSelection)) {
+        this.$refs.processingModal.show()
+        const payload = {
+          st_date: this.stDateSelection,
+          ed_date: this.edDateSelection
+        }
+        this.previewReportFileCase2(payload)
+      } else {
+        this.message = '日期格式有误！'
+        this.showMessage = true
+      }
+    },
+    onCancelPreviewCase2 (evt) {
+      evt.preventDefault()
+      this.$refs.previewCase2Modal.hide()
+    },
+    onExportCase2 (evt) {
+      evt.preventDefault()
+      this.$refs.previewCase2Modal.hide()
+      this.$refs.exportFileCase2Modal.hide()
+      this.$refs.processingModal.show()
+      const payload = {
+        preview_table: this.previewCase2.previewTable
+      }
+      this.prepareExportReportFile('/api/v1/case2/prepare', payload)
+    },
+    onCancelExportCase2 (evt) {
+      evt.preventDefault()
+      this.$refs.exportFileCase2Modal.hide()
+      // 恢复默认设置
+      this.initExportForm()
+    },
+    // ------------------------------ 销售报表（按单个SKU汇总） ------------------------------
+    previewReportFileCase3Close () {
+      this.$refs.processingModal.hide()
+    },
+    previewReportFileCase3 (payload) {
+      axios.post(this.serverBaseURL + '/api/v1/case3/preview', payload)
+        .then((res) => {
+          if (res.data.status === 'success') {
+            this.previewCase3.previewTable = res.data.preview_table
+            this.$refs.previewCase3Modal.show()
+          } else if (res.data.status === 'not found') {
+            this.message = '预览失败！不存在指定的库存条目。'
+            this.showMessage = true
+          }
+          this.previewReportFileCase3Close()
+        })
+        .catch((error) => {
+          // eslint-disable-next-line
+          console.log(error)
+          this.message = '预览失败！'
+          this.showMessage = true
+          this.previewReportFileCase3Close()
         })
     },
     onPreviewCase3 (evt) {
       evt.preventDefault()
       if ((this.stDateSelection === '') || (this.edDateSelection === '')) {
-        this.message = '起始日期/截止日期不能为空!'
+        this.message = '起始日期/截止日期不能为空！'
         this.showMessage = true
-      } else {
+      } else if (this.dateReg.test(this.stDateSelection) && this.dateReg.test(this.edDateSelection)) {
+        this.$refs.processingModal.show()
         const payload = {
           st_date: this.stDateSelection,
           ed_date: this.edDateSelection,
@@ -1090,44 +1204,44 @@ export default {
           supplier_name: this.supplierNameSelection
         }
         this.previewReportFileCase3(payload)
+      } else {
+        this.message = '日期格式有误！'
+        this.showMessage = true
       }
-      this.initExportForm()
     },
     onCancelPreviewCase3 (evt) {
       evt.preventDefault()
       this.$refs.previewCase3Modal.hide()
-      this.initExportForm()
     },
     onExportCase3 (evt) {
-      // 确定下载销售报表（按单个SKU汇总）
       evt.preventDefault()
       this.$refs.previewCase3Modal.hide()
       this.$refs.exportFileCase3Modal.hide()
+      this.$refs.processingModal.show()
       const payload = {
-        st_date: this.previewCase3.stDate,
-        ed_date: this.previewCase3.edDate,
-        specification_code: this.previewCase3.specificationCode
+        preview_table: this.previewCase3.previewTable
       }
       this.prepareExportReportFile('/api/v1/case3/prepare', payload)
-      this.initExportForm()
     },
     onCancelExportCase3 (evt) {
-      // 取消下载销售报表（按单个SKU汇总）
       evt.preventDefault()
       this.$refs.exportFileCase3Modal.hide()
+      // 恢复默认设置
       this.initExportForm()
     },
-    // 滞销品报表
+    // ------------------------------ 滞销品报表 ------------------------------
     onExportCase4 (evt) {
-      // 确定导出滞销品报表
       evt.preventDefault()
       this.$refs.previewCase4Modal.hide()
       this.$refs.exportFileCase4Modal.hide()
+      this.$refs.processingModal.show()
       const payload = {
         preview_table: this.previewCase4.previewTable
       }
       this.prepareExportReportFile('/api/v1/case4/prepare', payload)
-      this.initExportForm()
+    },
+    previewReportFileCase4Close () {
+      this.$refs.processingModal.hide()
     },
     previewReportFileCase4 (payload) {
       axios.post(this.serverBaseURL + '/api/v1/case4/preview', payload)
@@ -1136,23 +1250,25 @@ export default {
             this.previewCase4.previewTable = res.data.preview_table
             this.$refs.previewCase4Modal.show()
           } else {
-            this.message = '预览失败! 不存在指定的库存条目.'
+            this.message = '预览失败！不存在指定的库存条目。'
             this.showMessage = true
           }
+          this.previewReportFileCase4Close()
         })
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '预览失败!'
+          this.message = '预览失败！'
           this.showMessage = true
+          this.previewReportFileCase4Close()
         })
     },
     onPreviewCase4 (evt) {
       evt.preventDefault()
       if ((this.stDateSelection === '') || (this.edDateSelection === '')) {
-        this.message = '起始日期/截止日期不能为空!'
+        this.message = '起始日期/截止日期不能为空！'
         this.showMessage = true
-      } else {
+      } else if (this.dateReg.test(this.stDateSelection) && this.dateReg.test(this.edDateSelection)) {
         const payload = {
           st_date: this.stDateSelection,
           ed_date: this.edDateSelection,
@@ -1168,21 +1284,27 @@ export default {
           threshold_ssr: this.thresholdSSR,
           reduced_btn_option: this.reducedBtnOption
         }
+        this.$refs.processingModal.show()
         this.previewReportFileCase4(payload)
+      } else {
+        this.message = '日期格式有误！'
+        this.showMessage = true
       }
     },
     onCancelPreviewCase4 (evt) {
       evt.preventDefault()
       this.$refs.previewCase4Modal.hide()
-      this.initExportForm()
     },
     onCancelExportCase4 (evt) {
-      // 取消导出滞销品报表
       evt.preventDefault()
       this.$refs.exportFileCase4Modal.hide()
+      // 恢复默认设置
       this.initExportForm()
     },
-    // 采购辅助分析报表
+    // ------------------------------ 采购辅助分析报表 ------------------------------
+    previewReportFileCase5WayClose () {
+      this.$refs.processingModal.hide()
+    },
     previewReportFileCase5Way (url, payload) {
       axios.post(this.serverBaseURL + url, payload)
         .then((res) => {
@@ -1190,19 +1312,22 @@ export default {
             this.previewCase5.previewTable = res.data.preview_table
             this.$refs.previewCase5Modal.show()
           } else {
-            this.message = '预览失败! 不存在指定的库存条目.'
+            this.message = '预览失败！不存在指定的库存条目。'
             this.showMessage = true
           }
+          this.previewReportFileCase5WayClose()
         })
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '预览失败!'
+          this.message = '预览失败！'
           this.showMessage = true
+          this.previewReportFileCase5WayClose()
         })
     },
     onPreviewCase5Pattern1 (evt) {
       evt.preventDefault()
+      this.$refs.processingModal.show()
       const payload = {
         supplier_name: this.supplierNameSelection,
         time_quantum_x: this.timeQuantumX,
@@ -1218,6 +1343,7 @@ export default {
     },
     onPreviewCase5Pattern2 (evt) {
       evt.preventDefault()
+      this.$refs.processingModal.show()
       const payload = {
         supplier_name: this.supplierNameSelection,
         time_quantum_x: this.timeQuantumX,
@@ -1234,37 +1360,35 @@ export default {
     onCancelPreviewCase5 (evt) {
       evt.preventDefault()
       this.$refs.previewCase5Modal.hide()
-      this.initExportForm()
     },
     onExportCase5 (evt) {
-      // 确定导出采购辅助分析报表
       evt.preventDefault()
       this.$refs.previewCase5Modal.hide()
       this.$refs.exportFileCase5Modal.hide()
+      this.$refs.processingModal.show()
       const payload = {
+        time_quantum_x: this.timeQuantumX,
+        time_quantum_y: this.timeQuantumY,
         preview_table: this.previewCase5.previewTable
       }
       this.prepareExportReportFile('/api/v1/case5/prepare', payload)
-      this.initExportForm()
     },
     onCancelExportCase5 (evt) {
-      // 取消导出采购辅助分析报表
       evt.preventDefault()
       this.$refs.exportFileCase5Modal.hide()
+      // 恢复默认设置
       this.initExportForm()
     },
-    // 体积、重量计算汇总单
+    // ------------------------------ 体积、重量计算汇总单 ------------------------------
     onImportForCase6 (evt) {
       evt.preventDefault()
+      this.$refs.processingModal.show()
       let formData = new FormData()
       formData.append('file', this.uploadCSVFileForCase6, this.uploadCSVFileForCase6.name)
       this.importCSVFileForCase6(formData)
     },
-    onCancelExportCase6 (evt) {
-      evt.preventDefault()
-      this.$refs.exportFileCase6Modal.hide()
-      this.uploadCSVFileForCase6 = null
-      this.demandTable = []
+    importCSVFileForCase6Close () {
+      this.$refs.processingModal.hide()
     },
     importCSVFileForCase6 (formData) {
       let config = {
@@ -1274,28 +1398,34 @@ export default {
       }
       axios.post(this.serverBaseURL + '/api/v1/case6/upload', formData, config)
         .then((res) => {
-          this.message = '导入成功!'
+          this.message = '导入成功！'
           this.showMessage = true
           this.demandTable = res.data.demand_table
+          this.importCSVFileForCase6Close()
         })
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '导入失败!'
+          this.message = '导入失败！'
           this.showMessage = true
+          this.importCSVFileForCase6Close()
         })
     },
     onPreviewCase6 (evt) {
       evt.preventDefault()
       if (this.demandTable.length === 0) {
-        this.message = '请先加载需求表!'
+        this.message = '请先加载需求表！'
         this.showMessage = true
       } else {
+        this.$refs.processingModal.show()
         const payload = {
           demand_table: this.demandTable
         }
         this.previewReportFileCase6(payload)
       }
+    },
+    previewReportFileCase6Close () {
+      this.$refs.processingModal.hide()
     },
     previewReportFileCase6 (payload) {
       axios.post(this.serverBaseURL + '/api/v1/case6/preview', payload)
@@ -1305,51 +1435,68 @@ export default {
             this.previewCase6.previewSummaryTable = res.data.preview_summary_table
             this.$refs.previewCase6Modal.show()
           } else {
-            this.message = '预览失败! 不存在指定的商品条目.'
+            this.message = '预览失败！不存在指定的商品条目。'
             this.showMessage = true
           }
+          this.previewReportFileCase6Close()
         })
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '预览失败!'
+          this.message = '预览失败！'
           this.showMessage = true
+          this.previewReportFileCase6Close()
         })
     },
     onExportCase6 (evt) {
-      // 确定下载体积、重量计算汇总单
       evt.preventDefault()
       this.$refs.previewCase6Modal.hide()
       this.$refs.exportFileCase6Modal.hide()
+      this.$refs.processingModal.show()
       const payload = {
         preview_table: this.previewCase6.previewTable,
         preview_summary_table: this.previewCase6.previewSummaryTable
       }
       this.prepareExportReportFile('/api/v1/case6/prepare', payload)
-      this.initExportForm()
     },
     onCancelPreviewCase6 (evt) {
       evt.preventDefault()
       this.$refs.previewCase6Modal.hide()
+    },
+    onCancelExportCase6 (evt) {
+      evt.preventDefault()
+      this.$refs.exportFileCase6Modal.hide()
+      // 恢复默认设置
+      this.initExportForm()
+    },
+    // ------------------------------ 文件统一下载 ------------------------------
+    prepareExportReportFileClose () {
+      this.$refs.processingModal.hide()
+      // 恢复默认设置
       this.initExportForm()
     },
     prepareExportReportFile (url, payload) {
-      this.$refs.processingModal.show()
       axios.post(this.serverBaseURL + url, payload)
         .then((res) => {
-          this.exportReportFile(res.data.server_send_queue_file, res.data.output_file)
+          if (res.data.status === 'success') {
+            this.exportReportFile(res.data.server_send_queue_file, res.data.output_file)
+          } else if (res.data.status === 'not found') {
+            this.message = '没有满足要求的数据条目！'
+            this.showMessage = true
+          }
+          this.prepareExportReportFileClose()
         })
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '下载失败!'
+          this.message = '下载失败！'
           this.showMessage = true
+          this.prepareExportReportFileClose()
         })
     },
     exportReportFile (queryFile, saveFile) {
       axios.get(this.serverBaseURL + '/api/v1/download/' + queryFile)
         .then((res) => {
-          this.$refs.processingModal.hide()
           const evt = document.createEvent('MouseEvents')
           var docUrl = document.createElement('a')
           docUrl.download = saveFile
@@ -1358,17 +1505,17 @@ export default {
           // TODO: 替换为支持的解决方案
           evt.initEvent('click', true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null)
           docUrl.dispatchEvent(evt)
-          this.message = '下载成功! 保存为本地文件<' + saveFile + '>.'
+          this.message = '下载成功！保存为本地文件<' + saveFile + '>。'
           this.showMessage = true
         })
         .catch((error) => {
-          this.$refs.processingModal.hide()
           // eslint-disable-next-line
           console.log(error)
-          this.message = '下载失败!'
+          this.message = '下载失败！'
           this.showMessage = true
         })
     },
+    // ------------------------------ 新增SKU下载 ------------------------------
     preDownloadAddedSKUs (payload) {
       axios.post(this.serverBaseURL + '/api/v1/addedskus/prepare', payload)
         .then((res) => {
@@ -1377,7 +1524,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '下载失败!'
+          this.message = '下载失败！'
           this.showMessage = true
         })
     },
@@ -1392,13 +1539,13 @@ export default {
           // TODO: 替换为支持的解决方案
           evt.initEvent('click', true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null)
           docUrl.dispatchEvent(evt)
-          this.message = '下载成功! 保存为本地文件<' + saveFile + '>.'
+          this.message = '下载成功！保存为本地文件<' + saveFile + '>。'
           this.showMessage = true
         })
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '下载失败!'
+          this.message = '下载失败！'
           this.showMessage = true
         })
     },
@@ -1416,6 +1563,21 @@ export default {
       this.shouldOpenSidebar = false
       this.addedSkus = []
     },
+    // ------------------------------ 翻页 ------------------------------
+    onFirstPage (evt) {
+      evt.preventDefault()
+      this.pageOffset = 0
+      this.listInventories()
+    },
+    onJumpPage (evt) {
+      evt.preventDefault()
+      if (this.pageJump <= 0 || this.pageJump > this.pageTotal) {
+        this.pageOffset = 0
+      } else {
+        this.pageOffset = (this.pageJump - 1) * 20
+      }
+      this.listInventories()
+    },
     onPrevPage (evt) {
       evt.preventDefault()
       this.pageOffset -= 20
@@ -1426,10 +1588,16 @@ export default {
       this.pageOffset += 20
       this.listInventories()
     },
+    onLastPage (evt) {
+      evt.preventDefault()
+      this.pageOffset = this.pageOffsetMax
+      this.listInventories()
+    },
+    // ------------------------------ 设置默认日期值 ------------------------------
     setDefaultDate () {
       var today = new Date()
       var year = today.getFullYear() * 1
-      var month = today.getMonth() * 1 + 1
+      var month = today.getMonth() * 1
       // 为导入时间设置默认值
       if (month >= 10) {
         this.customDateSelection = year.toString() + '-' + month.toString()
