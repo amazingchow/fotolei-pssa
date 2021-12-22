@@ -40,6 +40,7 @@ if type(_rets) is list and len(_rets) > 0:
     for ret in _rets:
         INVENTORIES_UPDATE_LOOKUP_TABLE[generate_digest("{} | {}".format(ret[0], ret[1]))] = True
     logger.info("Insert {} INVENTORIES_UPDATEs into INVENTORIES_UPDATE_LOOKUP_TABLE!!!".format(len(INVENTORIES_UPDATE_LOOKUP_TABLE)))
+BRAND_CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE = {}
 
 ggfilm_server = Flask(__name__)
 ggfilm_server.config.from_object(__name__)
@@ -114,6 +115,8 @@ def upload_products():
             DBConnector.insert(stmt, (csv_reader.line_num - 1,))
         stmt = "INSERT INTO ggfilm.operation_logs (oplog) VALUES (%s);"
         DBConnector.insert(stmt, ("导入{}".format(csv_files[0].filename),))
+
+        update_brand_classification_1_2_association_lookup_table()
 
         load_file_repetition_lookup_table[file_digest] = True
     load_file_repetition_lookup_table.close()
@@ -480,7 +483,6 @@ def update_one_product():
         updates.append("moq = '{}'".format(moq))
     stmt += ", ".join(updates)
     stmt += " WHERE specification_code = '{}';".format(specification_code)
-    print(stmt)
     DBConnector.update(stmt)
 
     response_object = {"status": "success"}
@@ -565,9 +567,9 @@ def list_all_options():
     return jsonify(response_object)
 
 
-# 导出所有可供选择的选项列表的接口
-@ggfilm_server.route("/api/v1/allselections", methods=["GET"])
-def list_all_selections():
+# 导出所有可供选择的品牌列表的接口
+@ggfilm_server.route("/api/v1/brands", methods=["GET"])
+def list_all_brand_selections():
     response_object = {"status": "success"}
 
     stmt = "SELECT DISTINCT brand FROM ggfilm.products;"
@@ -581,55 +583,11 @@ def list_all_selections():
                     if len(brand[0].strip()) > 0
         ]
 
-    stmt = "SELECT DISTINCT classification_1 FROM ggfilm.products;"
-    classification_1_selections = DBConnector.query(stmt)
-    if len(classification_1_selections) == 0:
-        response_object["classification_1_selections"] = []
-    else:
-        response_object["classification_1_selections"] = [
-            {"value": classification_1_selection[0], "text": classification_1_selection[0]} \
-                for classification_1_selection in classification_1_selections \
-                    if len(classification_1_selection[0].strip()) > 0
-        ]
-
-    stmt = "SELECT DISTINCT classification_2 FROM ggfilm.products;"
-    classification_2_selections = DBConnector.query(stmt)
-    if len(classification_2_selections) == 0:
-        response_object["classification_2_selections"] = []
-    else:
-        response_object["classification_2_selections"] = [
-            {"value": classification_2_selection[0], "text": classification_2_selection[0]} \
-                for classification_2_selection in classification_2_selections \
-                    if len(classification_2_selection[0].strip()) > 0
-        ]
-
-    stmt = "SELECT DISTINCT product_series FROM ggfilm.products;"
-    product_series_selections = DBConnector.query(stmt)
-    if len(product_series_selections) == 0:
-        response_object["product_series_selections"] = []
-    else:
-        response_object["product_series_selections"] = [
-            {"value": product_series_selection[0], "text": product_series_selection[0]} \
-                for product_series_selection in product_series_selections \
-                    if len(product_series_selection[0].strip()) > 0
-        ]
-
-    stmt = "SELECT DISTINCT supplier_name FROM ggfilm.products;"
-    supplier_name_selections = DBConnector.query(stmt)
-    if len(supplier_name_selections) == 0:
-        response_object["supplier_name_selections"] = []
-    else:
-        response_object["supplier_name_selections"] = [
-            {"value": supplier_name_selection[0], "text": supplier_name_selection[0]} \
-                for supplier_name_selection in supplier_name_selections \
-                    if len(supplier_name_selection[0].strip()) > 0
-        ]
-
     return jsonify(response_object)
 
 
 # 导出所有可供选择的供应商列表的接口
-@ggfilm_server.route("/api/v1/allselections/suppliers", methods=["GET"])
+@ggfilm_server.route("/api/v1/suppliers", methods=["GET"])
 def list_all_supplier_selections():
     response_object = {"status": "success"}
 
@@ -645,6 +603,41 @@ def list_all_supplier_selections():
         ]
 
     return jsonify(response_object)
+
+
+# 返回关联查询的接口
+@ggfilm_server.route("/api/v1/associations", methods=["POST"])
+def fetch_associations():
+    payload = request.get_json()
+    brand = payload["brand"].strip()
+    classification_1 = payload.get("classification_1", "").strip()
+    classification_2 = payload.get("classification_2", "").strip()
+    product_series = payload.get("product_series", "").strip()
+
+    response_object = {"status": "success"}
+    response_object['classification_1_selections'] = []
+    response_object['classification_2_selections'] = []
+    response_object['product_series_selections'] = []
+    response_object['supplier_name_selections'] = []
+
+    if len(classification_1) == 0:
+        response_object['classification_1_selections'] = \
+            list(BRAND_CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE[brand])
+        return jsonify(response_object)
+    else:
+        if len(classification_2) == 0:
+            response_object['classification_2_selections'] = \
+                list(BRAND_CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE[brand][classification_1])
+            return jsonify(response_object)
+        else:
+            if len(product_series) == 0:
+                response_object['product_series_selections'] = \
+                    list(BRAND_CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE[brand][classification_1][classification_2])
+                return jsonify(response_object)
+            else:
+                response_object['supplier_name_selections'] = \
+                    list(BRAND_CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE[brand][classification_1][classification_2][product_series])
+                return jsonify(response_object)
 
 
 # 获取最近20条操作日志的接口
@@ -1814,6 +1807,34 @@ def do_data_check_for_input_jit_inventories(csv_file: str):
                     break
             line += 1
     return is_valid, err_msg
+
+
+def update_brand_classification_1_2_association_lookup_table():
+    global BRAND_CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE
+    # 品牌 -> 分类1 -> 分类2 -> 产品系列 -> 供应商名称
+
+    BRAND_CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE.clear()
+    stmt = "SELECT brand, classification_1, classification_2, product_series, supplier_name FROM ggfilm.products;"
+    rets = DBConnector.query(stmt)
+    if type(rets) is list and len(rets) > 0:
+        for ret in rets:
+            brand = ret[0]
+            classification_1 = ret[1]
+            classification_2 = ret[2]
+            product_series = ret[3]
+            supplier_name = ret[4]
+            if brand not in BRAND_CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE.keys():
+                BRAND_CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE[brand] = {}
+            if classification_1 not in BRAND_CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE[brand].keys():
+                BRAND_CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE[brand][classification_1] = {}
+            if classification_2 not in BRAND_CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE[brand][classification_1].keys():
+                BRAND_CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE[brand][classification_1][classification_2] = {}
+            if len(product_series) > 0:
+                if product_series not in BRAND_CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE[brand][classification_1][classification_2].keys():
+                    BRAND_CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE[brand][classification_1][classification_2][product_series] = set()
+                if len(supplier_name) > 0:
+                    BRAND_CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE[brand][classification_1][classification_2][product_series].add(supplier_name)
+update_brand_classification_1_2_association_lookup_table()
 
 
 def all_done():

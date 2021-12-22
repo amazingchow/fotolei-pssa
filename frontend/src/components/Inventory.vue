@@ -2,6 +2,19 @@
   <div class="container-fluid">
     <div class="row">
       <div class="col-sm-12">
+        <b-navbar type="dark" variant="success">
+          <b-navbar-nav>
+            <b-nav-item :active="false" href="/product">商品明细库</b-nav-item>
+            <b-nav-item :active="true" href="/">库存明细库</b-nav-item>
+            <b-nav-item :active="false" href="/slist">搜索项列表</b-nav-item>
+            <b-nav-item :active="false" href="/oplog">操作日志</b-nav-item>
+          </b-navbar-nav>
+        </b-navbar>
+      </div>
+    </div>
+    <br/>
+    <div class="row">
+      <div class="col-sm-12">
         <alert :message=message v-if="showMessage"></alert>
         <div id="import-and-export-btn-area">
           <button type="button" class="btn btn-success btn-sm" v-b-modal.csv-file-modal>导入库存数据</button>
@@ -770,7 +783,6 @@
 
 <style>
 #import-and-export-btn-area {
-  margin-top: 10px;
   margin-bottom: 10px;
 }
 
@@ -939,7 +951,7 @@ export default {
         })
     },
     listAllSupplierSelections () {
-      axios.get(this.serverBaseURL + '/api/v1/allselections/suppliers')
+      axios.get(this.serverBaseURL + '/api/v1/suppliers')
         .then((res) => {
           this.supplierNameSelections = res.data.supplier_name_selections
         })

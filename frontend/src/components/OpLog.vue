@@ -1,6 +1,19 @@
 <template>
   <div class="container-fluid">
     <div class="row">
+      <div class="col-sm-12">
+        <b-navbar type="dark" variant="success">
+          <b-navbar-nav>
+            <b-nav-item :active="false" href="/product">商品明细库</b-nav-item>
+            <b-nav-item :active="false" href="/">库存明细库</b-nav-item>
+            <b-nav-item :active="false" href="/slist">搜索项列表</b-nav-item>
+            <b-nav-item :active="true" href="/oplog">操作日志</b-nav-item>
+          </b-navbar-nav>
+        </b-navbar>
+      </div>
+    </div>
+    <br/>
+    <div class="row">
       <div class="col-sm-3">
       </div>
       <div class="col-sm-6">

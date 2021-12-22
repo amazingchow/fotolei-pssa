@@ -13,9 +13,9 @@ CREATE TABLE IF NOT EXISTS ggfilm.products (
     product_length     INT,                   /* 长度/cm */
     product_width      INT,                   /* 宽度/cm */
     product_height     INT,                   /* 高度/cm */
-    is_combined        VARCHAR(32) ,          /* 是否是组合商品 */
-    be_aggregated      VARCHAR(32) ,          /* 是否参与统计 */
-    is_import          VARCHAR(32) ,          /* 是否是进口商品 */
+    is_combined        VARCHAR(32),           /* 是否是组合商品 */
+    be_aggregated      VARCHAR(32),           /* 是否参与统计 */
+    is_import          VARCHAR(32),           /* 是否是进口商品 */
     supplier_name      VARCHAR(128),          /* 供应商名称 */
     purchase_name      VARCHAR(128),          /* 采购名称 */
     jit_inventory      INT,                   /* 实时可用库存 */
