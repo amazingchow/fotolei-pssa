@@ -7,6 +7,8 @@ import pendulum
 import platform
 import os
 import re
+RE_POSITIVE_INT = re.compile(r'^([0-9]*)*$')
+RE_INT = re.compile(r'^[+-]?([0-9]*)*$')
 RE_INT_AND_FLOAT = re.compile(r'^[+-]?([0-9]*)*(\.([0-9]+))?$')
 import shelve
 import shutil
@@ -1409,6 +1411,16 @@ def upload_csv_file_for_case6():
     )
     csv_files[0].save(csv_file)
 
+    if not do_data_schema_validation_for_input_case6_demand_table(csv_file):
+        response_object = {"status": "invalid input data schema"}
+        return jsonify(response_object)
+
+    is_valid, err_msg = do_data_check_for_input_case6_demand_table(csv_file)
+    if not is_valid:
+        response_object = {"status": "invalid input data"}
+        response_object["err_msg"] = err_msg
+        return jsonify(response_object)
+
     demand_table = []
     with open(csv_file, "r", encoding='utf-8-sig') as fd:
         csv_reader = csv.reader(fd, delimiter=",")
@@ -1548,6 +1560,8 @@ def do_data_schema_validation_for_input_products(csv_file: str):
                     is_valid = False
                     break
             break
+    if not is_valid:
+        os.remove(csv_file)
     return is_valid
 
 
@@ -1687,14 +1701,14 @@ def do_intelligent_calibration_for_input_products(csv_file: str):
                     break
                 if len(new_row[18]) == 0:
                     new_row[18] == "0"
-                elif RE_INT_AND_FLOAT.match(new_row[18]) is None:
+                elif RE_INT.match(new_row[18]) is None:
                     is_valid = False
                     err_msg = "'实时可用库存'数据存在非法输入，出现在第{}行。".format(line + 1)
                     logger.error("invalid '实时可用库存': {}".format(new_row[18]))
                     break
                 if len(new_row[19]) == 0:
                     new_row[19] == "1"
-                elif RE_INT_AND_FLOAT.match(new_row[19]) is None:
+                elif RE_POSITIVE_INT.match(new_row[19]) is None:
                     is_valid = False
                     err_msg = "'最小订货单元'数据存在非法输入，出现在第{}行。".format(line + 1)
                     logger.error("invalid '最小订货单元': {}".format(new_row[19]))
@@ -1731,6 +1745,8 @@ def do_data_schema_validation_for_input_inventories(csv_file: str):
                     is_valid = False
                     break
             break
+    if not is_valid:
+        os.remove(csv_file)
     return is_valid
 
 
@@ -1748,7 +1764,7 @@ def do_intelligent_calibration_for_input_inventories(csv_file: str):
         else:
             if len(row[4]) == 0:
                 row[4] == "0"
-            elif RE_INT_AND_FLOAT.match(row[4]) is None:
+            elif RE_INT.match(row[4]) is None:
                 is_valid = False
                 err_msg = "'起始库存数量'数据存在非法输入，出现在第{}行。".format(line + 1)
                 logger.error("invalid '起始库存数量': {}".format(row[4]))
@@ -1762,7 +1778,7 @@ def do_intelligent_calibration_for_input_inventories(csv_file: str):
                 break
             if len(row[6]) == 0:
                 row[6] == "0"
-            elif RE_INT_AND_FLOAT.match(row[6]) is None:
+            elif RE_INT.match(row[6]) is None:
                 is_valid = False
                 err_msg = "'采购数量'数据存在非法输入，出现在第{}行。".format(line + 1)
                 logger.error("invalid '采购数量': {}".format(row[6]))
@@ -1776,7 +1792,7 @@ def do_intelligent_calibration_for_input_inventories(csv_file: str):
                 break
             if len(row[8]) == 0:
                 row[8] == "0"
-            elif RE_INT_AND_FLOAT.match(row[8]) is None:
+            elif RE_INT.match(row[8]) is None:
                 is_valid = False
                 err_msg = "'采购退货数量'数据存在非法输入，出现在第{}行。".format(line + 1)
                 logger.error("invalid '采购退货数量': {}".format(row[8]))
@@ -1790,7 +1806,7 @@ def do_intelligent_calibration_for_input_inventories(csv_file: str):
                 break
             if len(row[10]) == 0:
                 row[10] == "0"
-            elif RE_INT_AND_FLOAT.match(row[10]) is None:
+            elif RE_INT.match(row[10]) is None:
                 is_valid = False
                 err_msg = "'销售数量'数据存在非法输入，出现在第{}行。".format(line + 1)
                 logger.error("invalid '销售数量': {}".format(row[10]))
@@ -1804,7 +1820,7 @@ def do_intelligent_calibration_for_input_inventories(csv_file: str):
                 break
             if len(row[12]) == 0:
                 row[12] == "0"
-            elif RE_INT_AND_FLOAT.match(row[12]) is None:
+            elif RE_INT.match(row[12]) is None:
                 is_valid = False
                 err_msg = "'销售退货数量'数据存在非法输入，出现在第{}行。".format(line + 1)
                 logger.error("invalid '销售退货数量': {}".format(row[12]))
@@ -1818,7 +1834,7 @@ def do_intelligent_calibration_for_input_inventories(csv_file: str):
                 break
             if len(row[14]) == 0:
                 row[14] == "0"
-            elif RE_INT_AND_FLOAT.match(row[14]) is None:
+            elif RE_INT.match(row[14]) is None:
                 is_valid = False
                 err_msg = "'其他变更数量'数据存在非法输入，出现在第{}行。".format(line + 1)
                 logger.error("invalid '其他变更数量': {}".format(row[14]))
@@ -1832,7 +1848,7 @@ def do_intelligent_calibration_for_input_inventories(csv_file: str):
                 break
             if len(row[16]) == 0:
                 row[16] == "0"
-            elif RE_INT_AND_FLOAT.match(row[16]) is None:
+            elif RE_INT.match(row[16]) is None:
                 is_valid = False
                 err_msg = "'截止库存数量'数据存在非法输入，出现在第{}行。".format(line + 1)
                 logger.error("invalid '截止库存数量': {}".format(row[16]))
@@ -1928,6 +1944,8 @@ def do_data_schema_validation_for_input_jit_inventories(csv_file: str):
                     is_valid = False
                     break
             break
+    if not is_valid:
+        os.remove(csv_file)
     return is_valid
 
 
@@ -1939,9 +1957,48 @@ def do_data_check_for_input_jit_inventories(csv_file: str):
         line = 0
         for row in csv_reader:
             if line > 0:
-                if RE_INT_AND_FLOAT.match(row[1]) is None:
+                if RE_INT.match(row[1]) is None:
                     is_valid = False
                     err_msg = "'实时可用库存'数据存在非法输入，出现在第{}行。".format(line + 1)
+                    break
+            line += 1
+    if not is_valid:
+        os.remove(csv_file)
+    return is_valid, err_msg
+
+
+def do_data_schema_validation_for_input_case6_demand_table(csv_file: str):
+    data_schema = [
+        "规格编码", "数量",
+    ]
+    is_valid = True
+    with open(csv_file, "r", encoding='utf-8-sig') as fd:
+        csv_reader = csv.reader(fd, delimiter=",")
+        for row in csv_reader:
+            if len(row) != len(data_schema):
+                is_valid = False
+                break
+            for idx, item in enumerate(row):
+                if item.strip() != data_schema[idx]:
+                    is_valid = False
+                    break
+            break
+    if not is_valid:
+        os.remove(csv_file)
+    return is_valid
+
+
+def do_data_check_for_input_case6_demand_table(csv_file: str):
+    is_valid = True
+    err_msg = ""
+    with open(csv_file, "r", encoding='utf-8-sig') as fd:
+        csv_reader = csv.reader(fd, delimiter=",")
+        line = 0
+        for row in csv_reader:
+            if line > 0:
+                if RE_POSITIVE_INT.match(row[1]) is None:
+                    is_valid = False
+                    err_msg = "'数量'数据存在非法输入，出现在第{}行。".format(line + 1)
                     break
             line += 1
     if not is_valid:

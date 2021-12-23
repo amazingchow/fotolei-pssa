@@ -1420,9 +1420,22 @@ export default {
       }
       axios.post(this.serverBaseURL + '/api/v1/case6/upload', formData, config)
         .then((res) => {
-          this.message = '导入成功！'
-          this.showMessage = true
-          this.demandTable = res.data.demand_table
+          if (res.data.status === 'success') {
+            if (res.data.demand_table.length > 0) {
+              this.message = '导入成功！'
+              this.showMessage = true
+              this.demandTable = res.data.demand_table
+            } else {
+              this.message = '导入成功！需求表是空的！'
+              this.showMessage = true
+            }
+          } else if (res.data.status === 'invalid input data schema') {
+            this.message = '导入失败！需求表格式有变更，请人工复核！'
+            this.showMessage = true
+          } else if (res.data.status === 'invalid input data') {
+            this.message = '导入失败！' + res.data.err_msg
+            this.showMessage = true
+          }
           this.importCSVFileForCase6Close()
         })
         .catch((error) => {
