@@ -144,10 +144,76 @@
         </b-form>
       </b-form>
     </b-modal>
-    <b-modal ref="customizeCase1Modal" id="customize-case1-modal" title="自定义销售报表（按分类汇总）样式" hide-footer>
+    <b-modal ref="customizeCase1Modal" id="customize-case1-modal" title="自定义销售报表（按分类汇总）样式" size="huge" hide-footer>
       <b-form>
         <b-form>
           <b-card bg-variant="light">
+            <b-form-group
+              label="参与统计的'分类1'"
+              label-size="sm"
+              label-align-sm="right"
+              label-cols-sm="2"
+            >
+              <b-form-tags
+                v-model="customizeCase1.classification1_tags"
+                separator=" "
+                placeholder="输入标签（空格键确定）"
+                remove-on-delete
+                no-add-on-enter
+              ></b-form-tags>
+            </b-form-group>
+            <b-form-group
+              label="参与统计的'分类1/分类2'"
+              label-size="sm"
+              label-align-sm="right"
+              label-cols-sm="2"
+            >
+              <b-form-tags
+                v-model="customizeCase1.classification1_classification2_tags"
+                separator=" "
+                placeholder="输入标签（空格键确定）"
+                remove-on-delete
+                no-add-on-enter
+              ></b-form-tags>
+            </b-form-group>
+            <b-form-group
+              label="销售top必选（分类1）"
+              label-size="sm"
+              label-align-sm="right"
+              label-cols-sm="2"
+            >
+              <b-form-tags
+                v-model="customizeCase1.classification1_topk_tags"
+                separator=" "
+                placeholder="输入标签（空格键确定）"
+                remove-on-delete
+                no-add-on-enter
+              ></b-form-tags>
+            </b-form-group>
+            <b-form-group
+              label="参与统计的品牌"
+              label-size="sm"
+              label-align-sm="right"
+              label-cols-sm="2"
+            >
+              <b-form-tags
+                v-model="customizeCase1.brand_tags"
+                separator=" "
+                placeholder="输入标签（空格键确定）"
+                remove-on-delete
+                no-add-on-enter
+              ></b-form-tags>
+            </b-form-group>
+            <b-form-group
+              label="销售top必选（品牌）"
+              label-size="sm"
+              label-align-sm="right"
+              label-cols-sm="2"
+            >
+              <b-form-input
+                v-model="customizeCase1.brand_topk_tag"
+              ></b-form-input>
+            </b-form-group>
             <div id="inventory-table-operate-btn" class="w-100 d-block">
               <b-button variant="dark" @click="onSaveCustomizeCase1">保存</b-button>
               <b-button variant="dark" @click="onCancelSaveCustomizeCase1">取消</b-button>
@@ -919,6 +985,45 @@ export default {
       supplierNameOptions: [],
       supplierNameSelections: [],
       supplierNameSelection: '',
+      customizeCase1: {
+        classification1_tags: ['数码', '传统耗材'],
+        classification1_classification2_tags: [
+          '数码|背带',
+          '数码|包&收纳',
+          '数码|快挂',
+          '传统耗材|暗房冲洗设备',
+          '传统耗材|胶片',
+          '传统耗材|页片',
+          '传统耗材|相纸',
+          '传统耗材|彩色药水',
+          '传统耗材|黑白药水',
+          '传统耗材|底片收纳保护',
+          '传统耗材|翻拍器',
+          '传统耗材|放大机类',
+          '传统耗材|胶片相机'
+        ],
+        classification1_topk_tags: ['数码|top2', '传统耗材|top10'],
+        brand_tags: [
+          '百得信',
+          '宝图',
+          '福马',
+          '富士',
+          '柯达',
+          '派森',
+          '上海',
+          '泰特诺',
+          '伊尔福',
+          'adox',
+          'jobo',
+          'lab-box',
+          'osiris',
+          'poilotfoto'
+        ],
+        brand_topk_tag: 'top10'
+      },
+      previewCase1: {
+        previewTable: []
+      },
       previewCase2: {
         previewTable: []
       },
@@ -1129,13 +1234,16 @@ export default {
     },
     // ------------------------------ 销售报表（按分类汇总） ------------------------------
     onCustomizeCase1 (evt) {
-
+      evt.preventDefault()
+      this.$refs.customizeCase1Modal.show()
     },
     onSaveCustomizeCase1 (evt) {
-
+      evt.preventDefault()
+      this.$refs.customizeCase1Modal.hide()
     },
     onCancelSaveCustomizeCase1 (evt) {
-
+      evt.preventDefault()
+      this.$refs.customizeCase1Modal.hide()
     },
     onPreviewCase1 (evt) {
 
