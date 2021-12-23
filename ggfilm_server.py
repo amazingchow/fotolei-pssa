@@ -1403,11 +1403,16 @@ ORDER BY create_time DESC LIMIT {};".format(specification_code, time_quantum_y)
         for _, v in cache.items():
             if len(v.keys()) == 20:
                 preview_table.append(v)
-        response_object = {"status": "success"}
-        response_object["preview_table"] = preview_table
+        if len(preview_table) > 0:
+            response_object = {"status": "success"}
+            response_object["preview_table"] = preview_table
+            return jsonify(response_object)
+        else:
+            response_object = {"status": "not found"}
+            return jsonify(response_object)
     else:
         response_object = {"status": "not found"}
-    return jsonify(response_object)
+        return jsonify(response_object)
 
 
 # 预下载"采购辅助分析报表"的接口
@@ -1792,6 +1797,10 @@ def do_intelligent_calibration_for_input_inventories(csv_file: str):
     csv_reader = csv.reader(fr, delimiter=",")
     fw = open(csv_file + ".tmp", "w", encoding='utf-8-sig')
     csv_writer = csv.writer(fw, delimiter=",")
+
+    is_valid = True
+    err_msg = ""
+
     line = 0
     for row in csv_reader:
         if line == 0:
@@ -2076,7 +2085,7 @@ def update_brand_classification_1_2_association_lookup_table():
             classification_2 = ret[2]
             if classification_1 not in CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE.keys():
                 CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE[classification_1] = set()
-            CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE[classification_1].add("{}/{}".format(classification_1, classification_2))
+            CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE[classification_1].add("{}|{}".format(classification_1, classification_2))
     # 品牌 -> 分类2
     BRAND_CLASSIFICATION_2_ASSOCIATION_LOOKUP_TABLE.clear()
     if type(rets) is list and len(rets) > 0:
@@ -2085,7 +2094,7 @@ def update_brand_classification_1_2_association_lookup_table():
             classification_2 = ret[2]
             if brand not in BRAND_CLASSIFICATION_2_ASSOCIATION_LOOKUP_TABLE.keys():
                 BRAND_CLASSIFICATION_2_ASSOCIATION_LOOKUP_TABLE[brand] = set()
-            BRAND_CLASSIFICATION_2_ASSOCIATION_LOOKUP_TABLE[brand].add("{}-{}".format(brand, classification_2))
+            BRAND_CLASSIFICATION_2_ASSOCIATION_LOOKUP_TABLE[brand].add("{}|{}".format(brand, classification_2))
 
 
 update_brand_classification_1_2_association_lookup_table()
