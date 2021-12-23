@@ -1,6 +1,5 @@
 <template>
   <div id="app">
-    <br>
     <router-view/>
   </div>
 </template>
@@ -13,8 +12,8 @@ export default {
 
 <style>
 #app {
-  margin-top: 0px;
-  margin-bottom: 0px;
+  margin-top: 0;
+  margin-bottom: 0;
   margin-left: 20px;
   margin-right: 20px;
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
