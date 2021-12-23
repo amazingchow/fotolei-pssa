@@ -500,7 +500,7 @@
             label-align-sm="right"
             label-cols-sm="3"
           >
-            <b-form-radio-group v-model="reducedBtnOption" :options="reducedBtnOptions"></b-form-radio-group>
+            <b-form-checkbox v-model="reducedBtnOption" switch></b-form-checkbox>
           </b-form-group>
           <div id="inventory-table-operate-btn" class="w-100 d-block">
             <b-button variant="dark" @click="onPreviewCase4">预览报表</b-button>
@@ -602,7 +602,7 @@
             label-align-sm="right"
             label-cols-sm="5"
           >
-            <b-form-radio-group v-model="reducedBtnOption" :options="reducedBtnOptions"></b-form-radio-group>
+            <b-form-checkbox v-model="reducedBtnOption" switch></b-form-checkbox>
           </b-form-group>
           <b-form-group
             label="STOP状态?"
@@ -906,11 +906,7 @@ export default {
       timeQuantumY: '12',
       thresholdY: '1',
       projectedPurchase: '12',
-      reducedBtnOption: 'open',
-      reducedBtnOptions: [
-        { text: '开', value: 'open' },
-        { text: '关', value: 'close' }
-      ],
+      reducedBtnOption: true,
       thresholdSSR: '4',
       inventories: [],
       inventoriesNum: 0,
@@ -1023,7 +1019,7 @@ export default {
       this.timeQuantumY = '12'
       this.thresholdY = '1'
       this.projectedPurchase = '12'
-      this.reducedBtnOption = 'open'
+      this.reducedBtnOption = true
       this.thresholdSSR = '4'
       this.uploadCSVFileForCase6 = null
       this.demandTable = null

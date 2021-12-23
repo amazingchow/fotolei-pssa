@@ -1017,7 +1017,7 @@ def export_report_file_case4():
     is_import = payload.get("is_import", "全部").strip()
     supplier_name = payload.get("supplier_name", "").strip()
     threshold_ssr = int(payload.get("threshold_ssr", "4"))
-    reduced_btn_option = payload.get("reduced_btn_option", "open")
+    reduced_btn_option = payload.get("reduced_btn_option", True)
 
     stmt = "SELECT * FROM ggfilm.products WHERE "
     selections = []
@@ -1062,7 +1062,7 @@ ORDER BY create_time ASC;".format(
                 sale_qty_x_months = 0
                 for inner_ret in inner_rets:
                     sale_qty_x_months += inner_ret[11]
-                if reduced_btn_option == "open":
+                if reduced_btn_option:
                     reduced_months = 0
                     for inner_ret in inner_rets:
                         if inner_ret[5] == 0 and inner_ret[17] == 0:
@@ -1181,7 +1181,7 @@ def preview_report_file_case5():
     time_quantum_y = int(payload.get("time_quantum_y", "12"))
     threshold_y = int(payload.get("threshold_y", "1"))
     projected_purchase = int(payload.get("projected_purchase", "12"))
-    reduced_btn_option = payload.get("reduced_btn_option", "open")
+    reduced_btn_option = payload.get("reduced_btn_option", True)
     stop_status = payload.get("stop_status", "全部")
     be_aggregated = payload.get("be_aggregated", "全部")
 
@@ -1253,7 +1253,7 @@ ORDER BY create_time DESC LIMIT {};".format(specification_code, time_quantum_y)
                 for inner_ret in inner_rets:
                     cache[specification_code]["sale_qty_y_months"] += inner_ret[2]
                 # 计算X个月折算销量 + Y个月折算销量
-                if reduced_btn_option == "open":
+                if reduced_btn_option:
                     reduced_months = 0
                     for inner_ret in inner_rets[time_quantum_y - time_quantum_x:]:
                         if inner_ret[0] == 0 and inner_ret[1] == 0:
@@ -1313,7 +1313,7 @@ ORDER BY create_time DESC LIMIT {};".format(specification_code, time_quantum_y)
                         cache[specification_code]["inventory_divided_by_reduced_sale_qty_y_months"] = \
                             float("{:.3f}".format(cache[specification_code]["inventory"] / cache[specification_code]["reduced_sale_qty_y_months"]))
                 # 计算拟定进货量
-                if reduced_btn_option == "open":
+                if reduced_btn_option:
                     if type(cache[specification_code]["inventory_divided_by_reduced_sale_qty_x_months"]) is str or \
                         (type(cache[specification_code]["inventory_divided_by_reduced_sale_qty_x_months"]) is float and \
                             cache[specification_code]["inventory_divided_by_reduced_sale_qty_x_months"] <= threshold_x) or \
