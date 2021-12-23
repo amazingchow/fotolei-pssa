@@ -2,7 +2,7 @@
   <div class="container-fluid">
     <div class="row">
       <div class="col-sm-12">
-        <b-navbar type="dark" variant="success">
+        <b-navbar type="dark" variant="dark">
           <b-navbar-nav>
             <b-nav-item :active="true" href="/product">商品明细库</b-nav-item>
             <b-nav-item :active="false" href="/">库存明细库</b-nav-item>
@@ -17,10 +17,10 @@
       <div class="col-sm-12">
         <alert :message=message v-if="showMessage"></alert>
         <div id="import-and-export-btn-area">
-          <button type="button" class="btn btn-success btn-sm" v-b-modal.product-csv-file-modal>导入商品明细</button>
-          <button type="button" class="btn btn-success btn-sm" v-b-modal.jit-inventory-csv-file-modal>导入即时库存</button>
-          <button type="button" class="btn btn-success btn-sm" v-b-modal.products-clean-all-modal>删除商品明细</button>
-          <button type="button" class="btn btn-success btn-sm" v-b-modal.update-one-product-modal>更新商品明细</button>
+          <button type="button" class="btn btn-secondary btn-sm" v-b-modal.product-csv-file-modal>导入商品明细</button>
+          <button type="button" class="btn btn-secondary btn-sm" v-b-modal.jit-inventory-csv-file-modal>导入即时库存</button>
+          <button type="button" class="btn btn-secondary btn-sm" v-b-modal.products-clean-all-modal>删除商品明细</button>
+          <button type="button" class="btn btn-secondary btn-sm" v-b-modal.update-one-product-modal>更新商品明细</button>
         </div>
         <b-table-simple striped hover small id="product-table">
           <b-thead>
@@ -68,12 +68,12 @@
           </b-tfoot>
         </b-table-simple>
         <div id="pagination-btn-area">
-          <button class="btn btn-success btn-sm" v-on:click="onFirstPage">首页</button>
-          <button class="btn btn-success btn-sm" :disabled="pageOffset==0" v-on:click="onPrevPage">前一页</button>
+          <button class="btn btn-secondary btn-sm" v-on:click="onFirstPage">首页</button>
+          <button class="btn btn-secondary btn-sm" :disabled="pageOffset==0" v-on:click="onPrevPage">前一页</button>
           <input v-model="pageJump" type="number" min="0" step="1" placeholder="1" style="width: 10ch;" />
-          <button class="btn btn-success btn-sm" v-on:click="onJumpPage">快捷跳转</button>
-          <button class="btn btn-success btn-sm" :disabled="pageOffset==pageOffsetMax" v-on:click="onNextPage">后一页</button>
-          <button class="btn btn-success btn-sm" v-on:click="onLastPage">尾页</button>
+          <button class="btn btn-secondary btn-sm" v-on:click="onJumpPage">快捷跳转</button>
+          <button class="btn btn-secondary btn-sm" :disabled="pageOffset==pageOffsetMax" v-on:click="onNextPage">后一页</button>
+          <button class="btn btn-secondary btn-sm" v-on:click="onLastPage">尾页</button>
         </div>
       </div>
     </div>

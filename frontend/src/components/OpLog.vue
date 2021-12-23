@@ -2,7 +2,7 @@
   <div class="container-fluid">
     <div class="row">
       <div class="col-sm-12">
-        <b-navbar type="dark" variant="success">
+        <b-navbar type="dark" variant="dark">
           <b-navbar-nav>
             <b-nav-item :active="false" href="/product">商品明细库</b-nav-item>
             <b-nav-item :active="false" href="/">库存明细库</b-nav-item>

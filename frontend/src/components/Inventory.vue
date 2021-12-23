@@ -2,7 +2,7 @@
   <div class="container-fluid">
     <div class="row">
       <div class="col-sm-12">
-        <b-navbar type="dark" variant="success">
+        <b-navbar type="dark" variant="dark">
           <b-navbar-nav>
             <b-nav-item :active="false" href="/product">商品明细库</b-nav-item>
             <b-nav-item :active="true" href="/">库存明细库</b-nav-item>
@@ -17,8 +17,8 @@
       <div class="col-sm-12">
         <alert :message=message v-if="showMessage"></alert>
         <div id="import-and-export-btn-area">
-          <button type="button" class="btn btn-success btn-sm" v-b-modal.csv-file-modal>导入库存数据</button>
-          <b-dropdown text="导出定制报表" variant="success" size="sm">
+          <button type="button" class="btn btn-secondary btn-sm" v-b-modal.csv-file-modal>导入库存数据</button>
+          <b-dropdown text="导出定制报表" variant="secondary" size="sm">
             <b-dropdown-header id="dropdown-header-1"><strong>销售报表</strong></b-dropdown-header>
             <b-dropdown-item-button aria-describedby="dropdown-header-1" variant="secondary" v-b-modal.export-file-case1-modal>
               按分类汇总导出
@@ -82,12 +82,12 @@
           </b-tfoot>
         </b-table-simple>
         <div id="pagination-btn-area">
-          <button class="btn btn-success btn-sm" v-on:click="onFirstPage">首页</button>
-          <button class="btn btn-success btn-sm" :disabled="pageOffset==0" v-on:click="onPrevPage">前一页</button>
+          <button class="btn btn-secondary btn-sm" v-on:click="onFirstPage">首页</button>
+          <button class="btn btn-secondary btn-sm" :disabled="pageOffset==0" v-on:click="onPrevPage">前一页</button>
           <input v-model="pageJump" type="number" min="0" step="1" placeholder="1" style="width: 10ch;" />
-          <button class="btn btn-success btn-sm" v-on:click="onJumpPage">快捷跳转</button>
-          <button class="btn btn-success btn-sm" :disabled="pageOffset==pageOffsetMax" v-on:click="onNextPage">后一页</button>
-          <button class="btn btn-success btn-sm" v-on:click="onLastPage">尾页</button>
+          <button class="btn btn-secondary btn-sm" v-on:click="onJumpPage">快捷跳转</button>
+          <button class="btn btn-secondary btn-sm" :disabled="pageOffset==pageOffsetMax" v-on:click="onNextPage">后一页</button>
+          <button class="btn btn-secondary btn-sm" v-on:click="onLastPage">尾页</button>
         </div>
       </div>
     </div>

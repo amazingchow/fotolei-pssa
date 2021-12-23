@@ -2,7 +2,7 @@
   <div class="container-fluid">
     <div class="row">
       <div class="col-sm-12">
-        <b-navbar type="dark" variant="success">
+        <b-navbar type="dark" variant="dark">
           <b-navbar-nav>
             <b-nav-item :active="false" href="/product">商品明细库</b-nav-item>
             <b-nav-item :active="false" href="/">库存明细库</b-nav-item>
@@ -26,21 +26,21 @@
       <div class="col-sm-4">
       </div>
       <div class="col-sm-1" style="margin-right: 0; padding-right: 0;">
-        <b-card bg-variant="success" style="height: 600px;">
+        <b-card bg-variant="dark" style="height: 600px;">
           <b-form-group class="selection-area">
-            <b-avatar variant="warning" size="5em">品牌</b-avatar>
+            <b-avatar variant="secondary" size="6em">品牌</b-avatar>
           </b-form-group>
           <b-form-group class="selection-area">
-            <b-avatar variant="warning" size="5em">分类1</b-avatar>
+            <b-avatar variant="secondary" size="6em">分类1</b-avatar>
           </b-form-group>
           <b-form-group class="selection-area">
-            <b-avatar variant="warning" size="5em">分类2</b-avatar>
+            <b-avatar variant="secondary" size="6em">分类2</b-avatar>
           </b-form-group>
           <b-form-group class="selection-area">
-            <b-avatar variant="warning" size="5em">产品系列</b-avatar>
+            <b-avatar variant="secondary" size="6em">产品系列</b-avatar>
           </b-form-group>
           <b-form-group class="selection-area">
-            <b-avatar variant="warning" size="5em">供应商名称</b-avatar>
+            <b-avatar variant="secondary" size="6em">供应商名称</b-avatar>
           </b-form-group>
         </b-card>
       </div>
