@@ -2031,6 +2031,8 @@ def update_brand_classification_1_2_association_lookup_table():
                     BRAND_CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE[brand][classification_1][classification_2][product_series] = set()
                 if len(supplier_name) > 0:
                     BRAND_CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE[brand][classification_1][classification_2][product_series].add(supplier_name)
+
+
 update_brand_classification_1_2_association_lookup_table()
 
 
