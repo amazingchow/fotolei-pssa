@@ -43,6 +43,8 @@ if type(_rets) is list and len(_rets) > 0:
         INVENTORIES_UPDATE_LOOKUP_TABLE[generate_digest("{} | {}".format(ret[0], ret[1]))] = True
     logger.info("Insert {} INVENTORIES_UPDATEs into INVENTORIES_UPDATE_LOOKUP_TABLE!!!".format(len(INVENTORIES_UPDATE_LOOKUP_TABLE)))
 BRAND_CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE = {}
+CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE = {}
+BRAND_CLASSIFICATION_2_ASSOCIATION_LOOKUP_TABLE = {}
 
 ggfilm_server = Flask(__name__)
 ggfilm_server.config.from_object(__name__)
@@ -588,6 +590,25 @@ def list_all_brand_selections():
     return jsonify(response_object)
 
 
+# 导出所有可供选择的分类1的接口
+@ggfilm_server.route("/api/v1/classification1", methods=["GET"])
+def list_all_classification_1_selections():
+    response_object = {"status": "success"}
+
+    stmt = "SELECT DISTINCT classification_1 FROM ggfilm.products;"
+    classification_1_selections = DBConnector.query(stmt)
+    if len(classification_1_selections) == 0:
+        response_object["classification_1_selections"] = []
+    else:
+        response_object["classification_1_selections"] = [
+            {"value": classification_1[0], "text": classification_1[0]} \
+                for classification_1 in classification_1_selections \
+                    if len(classification_1[0].strip()) > 0
+        ]
+
+    return jsonify(response_object)
+
+
 # 导出所有可供选择的供应商列表的接口
 @ggfilm_server.route("/api/v1/suppliers", methods=["GET"])
 def list_all_supplier_selections():
@@ -608,8 +629,8 @@ def list_all_supplier_selections():
 
 
 # 返回关联查询的接口
-@ggfilm_server.route("/api/v1/associations", methods=["POST"])
-def fetch_associations():
+@ggfilm_server.route("/api/v1/associations/bc1c2", methods=["POST"])
+def fetch_associations_bc1c2():
     payload = request.get_json()
     brand = payload["brand"].strip()
     classification_1 = payload.get("classification_1", "").strip()
@@ -642,6 +663,30 @@ def fetch_associations():
                 return jsonify(response_object)
 
 
+# 返回关联查询的接口
+@ggfilm_server.route("/api/v1/associations/c1c2", methods=["POST"])
+def fetch_associations_c1c2():
+    payload = request.get_json()
+    classification_1 = payload["classification_1"].strip()
+
+    response_object = {"status": "success"}
+    response_object['classification_2_selections'] = \
+        list(CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE[classification_1])
+    return jsonify(response_object)
+
+
+# 返回关联查询的接口
+@ggfilm_server.route("/api/v1/associations/bc2", methods=["POST"])
+def fetch_associations_bc2():
+    payload = request.get_json()
+    brand = payload["brand"].strip()
+
+    response_object = {"status": "success"}
+    response_object['classification_2_selections'] = \
+        list(BRAND_CLASSIFICATION_2_ASSOCIATION_LOOKUP_TABLE[brand])
+    return jsonify(response_object)
+
+
 # 获取最近20条操作日志的接口
 @ggfilm_server.route("/api/v1/oplogs", methods=["GET"])
 def get_oplogs():
@@ -658,9 +703,9 @@ def get_oplogs():
     return jsonify(response_object)
 
 
-# 导出销售报表（按分类汇总）的接口
-@ggfilm_server.route("/api/v1/case1/download", methods=["POST"])
-def export_report_file_case1():
+# 预览"销售报表（按分类汇总）"的接口
+@ggfilm_server.route("/api/v1/case1/preview", methods=["POST"])
+def preview_report_file_case1():
     return jsonify("导出销售报表（按分类汇总）")
 
 
@@ -1592,22 +1637,12 @@ def do_data_check_for_input_products(csv_file: str):
 
 
 def do_intelligent_calibration_for_input_products(csv_file: str):
-    # 1. 表格里面存在中文逗号，程序需要做下智能矫正
-    fr = open(csv_file, "r", encoding='utf-8-sig')
-    fw = open(csv_file + ".tmp", "w", encoding='utf-8-sig')
-    for line in fr.readlines():
-        line = line.replace("，", ",")
-        fw.write(line)
-    fw.close()
-    fr.close()
-    shutil.move(csv_file + ".tmp", csv_file)
-
-    # 2.1. 表格里面存在很多空行（但是有占位符），程序需要做下智能矫正
-    # 2.2. 表格里面存在很多只有逗号的行，程序需要做下智能矫正
-    # 2.3. “品牌”，“分类1”，“分类2”，“产品系列”，“供应商名称”，“采购名称”存在“0”这种输入，程序需要做下智能矫正
-    # 2.4.1. “STOP状态”，“组合商品”，“参与统计”，“进口商品”存在“0”或”1“这种输入，程序需要做下智能矫正
-    # 2.4.2. “STOP状态”，“组合商品”，“参与统计”，“进口商品”存在非法输入，程序不需要做智能矫正，直接返回错误
-    # 2.5. “重量”，“长度”，“宽度”，“高度”，“实时可用库存“，“最小订货单元”存在非法输入，程序不需要做智能矫正，直接返回错误
+    # 1. 表格里面存在很多空行（但是有占位符），程序需要做下智能矫正
+    # 2. 表格里面存在很多只有逗号的行，程序需要做下智能矫正
+    # 3. “品牌”，“分类1”，“分类2”，“产品系列”，“供应商名称”，“采购名称”存在“0”这种输入，程序需要做下智能矫正
+    # 4.1. “STOP状态”，“组合商品”，“参与统计”，“进口商品”存在“0”或”1“这种输入，程序需要做下智能矫正
+    # 4.2. “STOP状态”，“组合商品”，“参与统计”，“进口商品”存在非法输入，程序不需要做智能矫正，直接返回错误
+    # 5. “重量”，“长度”，“宽度”，“高度”，“实时可用库存“，“最小订货单元”存在非法输入，程序不需要做智能矫正，直接返回错误
     is_valid = True
     err_msg = ""
 
@@ -2008,8 +2043,10 @@ def do_data_check_for_input_case6_demand_table(csv_file: str):
 
 def update_brand_classification_1_2_association_lookup_table():
     global BRAND_CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE
-    # 品牌 -> 分类1 -> 分类2 -> 产品系列 -> 供应商名称
+    global CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE
+    global BRAND_CLASSIFICATION_2_ASSOCIATION_LOOKUP_TABLE
 
+    # 品牌 -> 分类1 -> 分类2 -> 产品系列 -> 供应商名称
     BRAND_CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE.clear()
     stmt = "SELECT brand, classification_1, classification_2, product_series, supplier_name FROM ggfilm.products;"
     rets = DBConnector.query(stmt)
@@ -2031,6 +2068,24 @@ def update_brand_classification_1_2_association_lookup_table():
                     BRAND_CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE[brand][classification_1][classification_2][product_series] = set()
                 if len(supplier_name) > 0:
                     BRAND_CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE[brand][classification_1][classification_2][product_series].add(supplier_name)
+    # 分类1 -> 分类2
+    CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE.clear()
+    if type(rets) is list and len(rets) > 0:
+        for ret in rets:
+            classification_1 = ret[1]
+            classification_2 = ret[2]
+            if classification_1 not in CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE.keys():
+                CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE[classification_1] = set()
+            CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE[classification_1].add("{}/{}".format(classification_1, classification_2))
+    # 品牌 -> 分类2
+    BRAND_CLASSIFICATION_2_ASSOCIATION_LOOKUP_TABLE.clear()
+    if type(rets) is list and len(rets) > 0:
+        for ret in rets:
+            brand = ret[0]
+            classification_2 = ret[2]
+            if brand not in BRAND_CLASSIFICATION_2_ASSOCIATION_LOOKUP_TABLE.keys():
+                BRAND_CLASSIFICATION_2_ASSOCIATION_LOOKUP_TABLE[brand] = set()
+            BRAND_CLASSIFICATION_2_ASSOCIATION_LOOKUP_TABLE[brand].add("{}-{}".format(brand, classification_2))
 
 
 update_brand_classification_1_2_association_lookup_table()
