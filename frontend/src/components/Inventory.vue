@@ -1075,12 +1075,17 @@ export default {
     onImport (evt) {
       evt.preventDefault()
       if (this.dateReg.test(this.customDateSelection)) {
-        this.$refs.importCSVFileModal.hide()
-        this.$refs.processingModal.show()
-        let formData = new FormData()
-        formData.append('file', this.uploadCSVFile, this.uploadCSVFile.name)
-        formData.append('import_date', this.customDateSelection)
-        this.importCSVFile(formData, this.customDateSelection)
+        if (this.uploadCSVFile === null) {
+          this.message = '输入文件不能为空！'
+          this.showMessage = true
+        } else {
+          this.$refs.importCSVFileModal.hide()
+          this.$refs.processingModal.show()
+          let formData = new FormData()
+          formData.append('file', this.uploadCSVFile, this.uploadCSVFile.name)
+          formData.append('import_date', this.customDateSelection)
+          this.importCSVFile(formData, this.customDateSelection)
+        }
       } else {
         this.message = '日期格式有误！'
         this.showMessage = true
@@ -1394,10 +1399,15 @@ export default {
     // ------------------------------ 体积、重量计算汇总单 ------------------------------
     onImportForCase6 (evt) {
       evt.preventDefault()
-      this.$refs.processingModal.show()
-      let formData = new FormData()
-      formData.append('file', this.uploadCSVFileForCase6, this.uploadCSVFileForCase6.name)
-      this.importCSVFileForCase6(formData)
+      if (this.uploadCSVFileForCase6 === null) {
+        this.message = '输入文件不能为空！'
+        this.showMessage = true
+      } else {
+        this.$refs.processingModal.show()
+        let formData = new FormData()
+        formData.append('file', this.uploadCSVFileForCase6, this.uploadCSVFileForCase6.name)
+        this.importCSVFileForCase6(formData)
+      }
     },
     importCSVFileForCase6Close () {
       this.$refs.processingModal.hide()
