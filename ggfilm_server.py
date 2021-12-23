@@ -7,7 +7,7 @@ import pendulum
 import platform
 import os
 import re
-RE_INT = re.compile(r'^([1-9]\d*|0)$')
+RE_INT_AND_FLOAT = re.compile(r'^[+-]?([0-9]*)*(\.([0-9]+))?$')
 import shelve
 import shutil
 import sys
@@ -1593,7 +1593,7 @@ def do_intelligent_calibration_for_input_products(csv_file: str):
     # 2.3. “品牌”，“分类1”，“分类2”，“产品系列”，“供应商名称”，“采购名称”存在“0”这种输入，程序需要做下智能矫正
     # 2.4.1. “STOP状态”，“组合商品”，“参与统计”，“进口商品”存在“0”或”1“这种输入，程序需要做下智能矫正
     # 2.4.2. “STOP状态”，“组合商品”，“参与统计”，“进口商品”存在非法输入，程序不需要做智能矫正，直接返回错误
-    # 2.5. “实时可用库存“，“最小订货单元”存在非法输入，程序不需要做智能矫正，直接返回错误
+    # 2.5. “重量”，“长度”，“宽度”，“高度”，“实时可用库存“，“最小订货单元”存在非法输入，程序不需要做智能矫正，直接返回错误
     is_valid = True
     err_msg = ""
 
@@ -1657,16 +1657,44 @@ def do_intelligent_calibration_for_input_products(csv_file: str):
                         err_msg = "'进口商品'数据存在非法输入，出现在第{}行。".format(line + 1)
                         logger.error("invalid '进口商品': {}".format(new_row[15]))
                         break
+                if len(new_row[9]) == 0:
+                    new_row[9] == "0"
+                elif RE_INT_AND_FLOAT.match(new_row[9]) is None:
+                    is_valid = False
+                    err_msg = "'重量'数据存在非法输入，出现在第{}行。".format(line + 1)
+                    logger.error("invalid '重量': {}".format(new_row[9]))
+                    break
+                if len(new_row[10]) == 0:
+                    new_row[10] == "0"
+                elif RE_INT_AND_FLOAT.match(new_row[10]) is None:
+                    is_valid = False
+                    err_msg = "'长度'数据存在非法输入，出现在第{}行。".format(line + 1)
+                    logger.error("invalid '长度': {}".format(new_row[10]))
+                    break
+                if len(new_row[11]) == 0:
+                    new_row[11] == "0"
+                elif RE_INT_AND_FLOAT.match(new_row[11]) is None:
+                    is_valid = False
+                    err_msg = "'宽度'数据存在非法输入，出现在第{}行。".format(line + 1)
+                    logger.error("invalid '宽度': {}".format(new_row[11]))
+                    break
+                if len(new_row[12]) == 0:
+                    new_row[12] == "0"
+                elif RE_INT_AND_FLOAT.match(new_row[12]) is None:
+                    is_valid = False
+                    err_msg = "'高度'数据存在非法输入，出现在第{}行。".format(line + 1)
+                    logger.error("invalid '高度': {}".format(new_row[12]))
+                    break
                 if len(new_row[18]) == 0:
                     new_row[18] == "0"
-                elif RE_INT.match(new_row[18]) is None:
+                elif RE_INT_AND_FLOAT.match(new_row[18]) is None:
                     is_valid = False
                     err_msg = "'实时可用库存'数据存在非法输入，出现在第{}行。".format(line + 1)
                     logger.error("invalid '实时可用库存': {}".format(new_row[18]))
                     break
                 if len(new_row[19]) == 0:
                     new_row[19] == "1"
-                elif RE_INT.match(new_row[19]) is None:
+                elif RE_INT_AND_FLOAT.match(new_row[19]) is None:
                     is_valid = False
                     err_msg = "'最小订货单元'数据存在非法输入，出现在第{}行。".format(line + 1)
                     logger.error("invalid '最小订货单元': {}".format(new_row[19]))
@@ -1707,7 +1735,8 @@ def do_data_schema_validation_for_input_inventories(csv_file: str):
 
 
 def do_intelligent_calibration_for_input_inventories(csv_file: str):
-    # 表格里面某些数据行存在多余的逗号，程序需要做下智能矫正
+    # 1. 表格里面某些数据行存在多余的逗号，程序需要做下智能矫正
+    # 2. “起始库存数量”，“起始库存总额”，等数据项存在非法输入，程序不需要做智能矫正，直接返回错误
     fr = open(csv_file, "r", encoding='utf-8-sig')
     csv_reader = csv.reader(fr, delimiter=",")
     fw = open(csv_file + ".tmp", "w", encoding='utf-8-sig')
@@ -1717,6 +1746,111 @@ def do_intelligent_calibration_for_input_inventories(csv_file: str):
         if line == 0:
             csv_writer.writerow(row)
         else:
+            if len(row[4]) == 0:
+                row[4] == "0"
+            elif RE_INT_AND_FLOAT.match(row[4]) is None:
+                is_valid = False
+                err_msg = "'起始库存数量'数据存在非法输入，出现在第{}行。".format(line + 1)
+                logger.error("invalid '起始库存数量': {}".format(row[4]))
+                break
+            if len(row[5]) == 0:
+                row[5] == "0"
+            elif RE_INT_AND_FLOAT.match(row[5]) is None:
+                is_valid = False
+                err_msg = "'起始库存总额'数据存在非法输入，出现在第{}行。".format(line + 1)
+                logger.error("invalid '起始库存总额': {}".format(row[5]))
+                break
+            if len(row[6]) == 0:
+                row[6] == "0"
+            elif RE_INT_AND_FLOAT.match(row[6]) is None:
+                is_valid = False
+                err_msg = "'采购数量'数据存在非法输入，出现在第{}行。".format(line + 1)
+                logger.error("invalid '采购数量': {}".format(row[6]))
+                break
+            if len(row[7]) == 0:
+                row[7] == "0"
+            elif RE_INT_AND_FLOAT.match(row[7]) is None:
+                is_valid = False
+                err_msg = "'采购总额'数据存在非法输入，出现在第{}行。".format(line + 1)
+                logger.error("invalid '采购总额': {}".format(row[7]))
+                break
+            if len(row[8]) == 0:
+                row[8] == "0"
+            elif RE_INT_AND_FLOAT.match(row[8]) is None:
+                is_valid = False
+                err_msg = "'采购退货数量'数据存在非法输入，出现在第{}行。".format(line + 1)
+                logger.error("invalid '采购退货数量': {}".format(row[8]))
+                break
+            if len(row[9]) == 0:
+                row[9] == "0"
+            elif RE_INT_AND_FLOAT.match(row[9]) is None:
+                is_valid = False
+                err_msg = "'采购退货总额'数据存在非法输入，出现在第{}行。".format(line + 1)
+                logger.error("invalid '采购退货总额': {}".format(row[9]))
+                break
+            if len(row[10]) == 0:
+                row[10] == "0"
+            elif RE_INT_AND_FLOAT.match(row[10]) is None:
+                is_valid = False
+                err_msg = "'销售数量'数据存在非法输入，出现在第{}行。".format(line + 1)
+                logger.error("invalid '销售数量': {}".format(row[10]))
+                break
+            if len(row[11]) == 0:
+                row[11] == "0"
+            elif RE_INT_AND_FLOAT.match(row[11]) is None:
+                is_valid = False
+                err_msg = "'销售总额'数据存在非法输入，出现在第{}行。".format(line + 1)
+                logger.error("invalid '销售总额': {}".format(row[11]))
+                break
+            if len(row[12]) == 0:
+                row[12] == "0"
+            elif RE_INT_AND_FLOAT.match(row[12]) is None:
+                is_valid = False
+                err_msg = "'销售退货数量'数据存在非法输入，出现在第{}行。".format(line + 1)
+                logger.error("invalid '销售退货数量': {}".format(row[12]))
+                break
+            if len(row[13]) == 0:
+                row[13] == "0"
+            elif RE_INT_AND_FLOAT.match(row[13]) is None:
+                is_valid = False
+                err_msg = "'销售退货总额'数据存在非法输入，出现在第{}行。".format(line + 1)
+                logger.error("invalid '销售退货总额': {}".format(row[13]))
+                break
+            if len(row[14]) == 0:
+                row[14] == "0"
+            elif RE_INT_AND_FLOAT.match(row[14]) is None:
+                is_valid = False
+                err_msg = "'其他变更数量'数据存在非法输入，出现在第{}行。".format(line + 1)
+                logger.error("invalid '其他变更数量': {}".format(row[14]))
+                break
+            if len(row[15]) == 0:
+                row[15] == "0"
+            elif RE_INT_AND_FLOAT.match(row[15]) is None:
+                is_valid = False
+                err_msg = "'其他变更总额'数据存在非法输入，出现在第{}行。".format(line + 1)
+                logger.error("invalid '其他变更总额': {}".format(row[15]))
+                break
+            if len(row[16]) == 0:
+                row[16] == "0"
+            elif RE_INT_AND_FLOAT.match(row[16]) is None:
+                is_valid = False
+                err_msg = "'截止库存数量'数据存在非法输入，出现在第{}行。".format(line + 1)
+                logger.error("invalid '截止库存数量': {}".format(row[16]))
+                break
+            if len(row[17]) == 0:
+                row[17] == "0"
+            elif RE_INT_AND_FLOAT.match(row[17]) is None:
+                is_valid = False
+                err_msg = "'截止库存总额'数据存在非法输入，出现在第{}行。".format(line + 1)
+                logger.error("invalid '截止库存总额': {}".format(row[17]))
+                break
+            if len(row[18]) == 0:
+                row[18] == "0"
+            elif RE_INT_AND_FLOAT.match(row[18]) is None:
+                is_valid = False
+                err_msg = "'销售单价'数据存在非法输入，出现在第{}行。".format(line + 1)
+                logger.error("invalid '销售单价': {}".format(row[18]))
+                break
             if len(row) < 19:
                 while len(row) < 19:
                     row.append("0")
@@ -1727,6 +1861,10 @@ def do_intelligent_calibration_for_input_inventories(csv_file: str):
     fw.close()
     fr.close()
     shutil.move(csv_file + ".tmp", csv_file)
+
+    if not is_valid:
+        os.remove(csv_file)
+    return is_valid, err_msg
 
 
 def add_date_for_input_inventories(csv_file: str, import_date: str):
@@ -1801,11 +1939,13 @@ def do_data_check_for_input_jit_inventories(csv_file: str):
         line = 0
         for row in csv_reader:
             if line > 0:
-                if RE_INT.match(row[1]) is None:
+                if RE_INT_AND_FLOAT.match(row[1]) is None:
                     is_valid = False
                     err_msg = "'实时可用库存'数据存在非法输入，出现在第{}行。".format(line + 1)
                     break
             line += 1
+    if not is_valid:
+        os.remove(csv_file)
     return is_valid, err_msg
 
 
