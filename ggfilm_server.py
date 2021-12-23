@@ -7,7 +7,9 @@ import pendulum
 import platform
 import os
 import re
-RE_INT = re.compile(r'^([1-9]\d*|0)$')
+RE_POSITIVE_INT = re.compile(r'^([0-9]*)*$')
+RE_INT = re.compile(r'^[+-]?([0-9]*)*$')
+RE_INT_AND_FLOAT = re.compile(r'^[+-]?([0-9]*)*(\.([0-9]+))?$')
 import shelve
 import shutil
 import sys
@@ -41,6 +43,8 @@ if type(_rets) is list and len(_rets) > 0:
         INVENTORIES_UPDATE_LOOKUP_TABLE[generate_digest("{} | {}".format(ret[0], ret[1]))] = True
     logger.info("Insert {} INVENTORIES_UPDATEs into INVENTORIES_UPDATE_LOOKUP_TABLE!!!".format(len(INVENTORIES_UPDATE_LOOKUP_TABLE)))
 BRAND_CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE = {}
+CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE = {}
+BRAND_CLASSIFICATION_2_ASSOCIATION_LOOKUP_TABLE = {}
 
 ggfilm_server = Flask(__name__)
 ggfilm_server.config.from_object(__name__)
@@ -586,6 +590,25 @@ def list_all_brand_selections():
     return jsonify(response_object)
 
 
+# 导出所有可供选择的分类1的接口
+@ggfilm_server.route("/api/v1/classification1", methods=["GET"])
+def list_all_classification_1_selections():
+    response_object = {"status": "success"}
+
+    stmt = "SELECT DISTINCT classification_1 FROM ggfilm.products;"
+    classification_1_selections = DBConnector.query(stmt)
+    if len(classification_1_selections) == 0:
+        response_object["classification_1_selections"] = []
+    else:
+        response_object["classification_1_selections"] = [
+            {"value": classification_1[0], "text": classification_1[0]} \
+                for classification_1 in classification_1_selections \
+                    if len(classification_1[0].strip()) > 0
+        ]
+
+    return jsonify(response_object)
+
+
 # 导出所有可供选择的供应商列表的接口
 @ggfilm_server.route("/api/v1/suppliers", methods=["GET"])
 def list_all_supplier_selections():
@@ -606,8 +629,8 @@ def list_all_supplier_selections():
 
 
 # 返回关联查询的接口
-@ggfilm_server.route("/api/v1/associations", methods=["POST"])
-def fetch_associations():
+@ggfilm_server.route("/api/v1/associations/bc1c2", methods=["POST"])
+def fetch_associations_bc1c2():
     payload = request.get_json()
     brand = payload["brand"].strip()
     classification_1 = payload.get("classification_1", "").strip()
@@ -640,6 +663,30 @@ def fetch_associations():
                 return jsonify(response_object)
 
 
+# 返回关联查询的接口
+@ggfilm_server.route("/api/v1/associations/c1c2", methods=["POST"])
+def fetch_associations_c1c2():
+    payload = request.get_json()
+    classification_1 = payload["classification_1"].strip()
+
+    response_object = {"status": "success"}
+    response_object['classification_2_selections'] = \
+        list(CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE[classification_1])
+    return jsonify(response_object)
+
+
+# 返回关联查询的接口
+@ggfilm_server.route("/api/v1/associations/bc2", methods=["POST"])
+def fetch_associations_bc2():
+    payload = request.get_json()
+    brand = payload["brand"].strip()
+
+    response_object = {"status": "success"}
+    response_object['classification_2_selections'] = \
+        list(BRAND_CLASSIFICATION_2_ASSOCIATION_LOOKUP_TABLE[brand])
+    return jsonify(response_object)
+
+
 # 获取最近20条操作日志的接口
 @ggfilm_server.route("/api/v1/oplogs", methods=["GET"])
 def get_oplogs():
@@ -656,9 +703,9 @@ def get_oplogs():
     return jsonify(response_object)
 
 
-# 导出销售报表（按分类汇总）的接口
-@ggfilm_server.route("/api/v1/case1/download", methods=["POST"])
-def export_report_file_case1():
+# 预览"销售报表（按分类汇总）"的接口
+@ggfilm_server.route("/api/v1/case1/preview", methods=["POST"])
+def preview_report_file_case1():
     return jsonify("导出销售报表（按分类汇总）")
 
 
@@ -1015,7 +1062,7 @@ def export_report_file_case4():
     is_import = payload.get("is_import", "全部").strip()
     supplier_name = payload.get("supplier_name", "").strip()
     threshold_ssr = int(payload.get("threshold_ssr", "4"))
-    reduced_btn_option = payload.get("reduced_btn_option", "open")
+    reduced_btn_option = payload.get("reduced_btn_option", True)
 
     stmt = "SELECT * FROM ggfilm.products WHERE "
     selections = []
@@ -1060,7 +1107,7 @@ ORDER BY create_time ASC;".format(
                 sale_qty_x_months = 0
                 for inner_ret in inner_rets:
                     sale_qty_x_months += inner_ret[11]
-                if reduced_btn_option == "open":
+                if reduced_btn_option:
                     reduced_months = 0
                     for inner_ret in inner_rets:
                         if inner_ret[5] == 0 and inner_ret[17] == 0:
@@ -1179,7 +1226,7 @@ def preview_report_file_case5():
     time_quantum_y = int(payload.get("time_quantum_y", "12"))
     threshold_y = int(payload.get("threshold_y", "1"))
     projected_purchase = int(payload.get("projected_purchase", "12"))
-    reduced_btn_option = payload.get("reduced_btn_option", "open")
+    reduced_btn_option = payload.get("reduced_btn_option", True)
     stop_status = payload.get("stop_status", "全部")
     be_aggregated = payload.get("be_aggregated", "全部")
 
@@ -1251,7 +1298,7 @@ ORDER BY create_time DESC LIMIT {};".format(specification_code, time_quantum_y)
                 for inner_ret in inner_rets:
                     cache[specification_code]["sale_qty_y_months"] += inner_ret[2]
                 # 计算X个月折算销量 + Y个月折算销量
-                if reduced_btn_option == "open":
+                if reduced_btn_option:
                     reduced_months = 0
                     for inner_ret in inner_rets[time_quantum_y - time_quantum_x:]:
                         if inner_ret[0] == 0 and inner_ret[1] == 0:
@@ -1311,7 +1358,7 @@ ORDER BY create_time DESC LIMIT {};".format(specification_code, time_quantum_y)
                         cache[specification_code]["inventory_divided_by_reduced_sale_qty_y_months"] = \
                             float("{:.3f}".format(cache[specification_code]["inventory"] / cache[specification_code]["reduced_sale_qty_y_months"]))
                 # 计算拟定进货量
-                if reduced_btn_option == "open":
+                if reduced_btn_option:
                     if type(cache[specification_code]["inventory_divided_by_reduced_sale_qty_x_months"]) is str or \
                         (type(cache[specification_code]["inventory_divided_by_reduced_sale_qty_x_months"]) is float and \
                             cache[specification_code]["inventory_divided_by_reduced_sale_qty_x_months"] <= threshold_x) or \
@@ -1408,6 +1455,16 @@ def upload_csv_file_for_case6():
         os.path.expanduser("~"), csv_file_sha256
     )
     csv_files[0].save(csv_file)
+
+    if not do_data_schema_validation_for_input_case6_demand_table(csv_file):
+        response_object = {"status": "invalid input data schema"}
+        return jsonify(response_object)
+
+    is_valid, err_msg = do_data_check_for_input_case6_demand_table(csv_file)
+    if not is_valid:
+        response_object = {"status": "invalid input data"}
+        response_object["err_msg"] = err_msg
+        return jsonify(response_object)
 
     demand_table = []
     with open(csv_file, "r", encoding='utf-8-sig') as fd:
@@ -1548,6 +1605,8 @@ def do_data_schema_validation_for_input_products(csv_file: str):
                     is_valid = False
                     break
             break
+    if not is_valid:
+        os.remove(csv_file)
     return is_valid
 
 
@@ -1578,22 +1637,12 @@ def do_data_check_for_input_products(csv_file: str):
 
 
 def do_intelligent_calibration_for_input_products(csv_file: str):
-    # 1. 表格里面存在中文逗号，程序需要做下智能矫正
-    fr = open(csv_file, "r", encoding='utf-8-sig')
-    fw = open(csv_file + ".tmp", "w", encoding='utf-8-sig')
-    for line in fr.readlines():
-        line = line.replace("，", ",")
-        fw.write(line)
-    fw.close()
-    fr.close()
-    shutil.move(csv_file + ".tmp", csv_file)
-
-    # 2.1. 表格里面存在很多空行（但是有占位符），程序需要做下智能矫正
-    # 2.2. 表格里面存在很多只有逗号的行，程序需要做下智能矫正
-    # 2.3. “品牌”，“分类1”，“分类2”，“产品系列”，“供应商名称”，“采购名称”存在“0”这种输入，程序需要做下智能矫正
-    # 2.4.1. “STOP状态”，“组合商品”，“参与统计”，“进口商品”存在“0”或”1“这种输入，程序需要做下智能矫正
-    # 2.4.2. “STOP状态”，“组合商品”，“参与统计”，“进口商品”存在非法输入，程序不需要做智能矫正，直接返回错误
-    # 2.5. “实时可用库存“，“最小订货单元”存在非法输入，程序不需要做智能矫正，直接返回错误
+    # 1. 表格里面存在很多空行（但是有占位符），程序需要做下智能矫正
+    # 2. 表格里面存在很多只有逗号的行，程序需要做下智能矫正
+    # 3. “品牌”，“分类1”，“分类2”，“产品系列”，“供应商名称”，“采购名称”存在“0”这种输入，程序需要做下智能矫正
+    # 4.1. “STOP状态”，“组合商品”，“参与统计”，“进口商品”存在“0”或”1“这种输入，程序需要做下智能矫正
+    # 4.2. “STOP状态”，“组合商品”，“参与统计”，“进口商品”存在非法输入，程序不需要做智能矫正，直接返回错误
+    # 5. “重量”，“长度”，“宽度”，“高度”，“实时可用库存“，“最小订货单元”存在非法输入，程序不需要做智能矫正，直接返回错误
     is_valid = True
     err_msg = ""
 
@@ -1657,6 +1706,34 @@ def do_intelligent_calibration_for_input_products(csv_file: str):
                         err_msg = "'进口商品'数据存在非法输入，出现在第{}行。".format(line + 1)
                         logger.error("invalid '进口商品': {}".format(new_row[15]))
                         break
+                if len(new_row[9]) == 0:
+                    new_row[9] == "0"
+                elif RE_INT_AND_FLOAT.match(new_row[9]) is None:
+                    is_valid = False
+                    err_msg = "'重量'数据存在非法输入，出现在第{}行。".format(line + 1)
+                    logger.error("invalid '重量': {}".format(new_row[9]))
+                    break
+                if len(new_row[10]) == 0:
+                    new_row[10] == "0"
+                elif RE_INT_AND_FLOAT.match(new_row[10]) is None:
+                    is_valid = False
+                    err_msg = "'长度'数据存在非法输入，出现在第{}行。".format(line + 1)
+                    logger.error("invalid '长度': {}".format(new_row[10]))
+                    break
+                if len(new_row[11]) == 0:
+                    new_row[11] == "0"
+                elif RE_INT_AND_FLOAT.match(new_row[11]) is None:
+                    is_valid = False
+                    err_msg = "'宽度'数据存在非法输入，出现在第{}行。".format(line + 1)
+                    logger.error("invalid '宽度': {}".format(new_row[11]))
+                    break
+                if len(new_row[12]) == 0:
+                    new_row[12] == "0"
+                elif RE_INT_AND_FLOAT.match(new_row[12]) is None:
+                    is_valid = False
+                    err_msg = "'高度'数据存在非法输入，出现在第{}行。".format(line + 1)
+                    logger.error("invalid '高度': {}".format(new_row[12]))
+                    break
                 if len(new_row[18]) == 0:
                     new_row[18] == "0"
                 elif RE_INT.match(new_row[18]) is None:
@@ -1666,7 +1743,7 @@ def do_intelligent_calibration_for_input_products(csv_file: str):
                     break
                 if len(new_row[19]) == 0:
                     new_row[19] == "1"
-                elif RE_INT.match(new_row[19]) is None:
+                elif RE_POSITIVE_INT.match(new_row[19]) is None:
                     is_valid = False
                     err_msg = "'最小订货单元'数据存在非法输入，出现在第{}行。".format(line + 1)
                     logger.error("invalid '最小订货单元': {}".format(new_row[19]))
@@ -1703,11 +1780,14 @@ def do_data_schema_validation_for_input_inventories(csv_file: str):
                     is_valid = False
                     break
             break
+    if not is_valid:
+        os.remove(csv_file)
     return is_valid
 
 
 def do_intelligent_calibration_for_input_inventories(csv_file: str):
-    # 表格里面某些数据行存在多余的逗号，程序需要做下智能矫正
+    # 1. 表格里面某些数据行存在多余的逗号，程序需要做下智能矫正
+    # 2. “起始库存数量”，“起始库存总额”，等数据项存在非法输入，程序不需要做智能矫正，直接返回错误
     fr = open(csv_file, "r", encoding='utf-8-sig')
     csv_reader = csv.reader(fr, delimiter=",")
     fw = open(csv_file + ".tmp", "w", encoding='utf-8-sig')
@@ -1717,6 +1797,111 @@ def do_intelligent_calibration_for_input_inventories(csv_file: str):
         if line == 0:
             csv_writer.writerow(row)
         else:
+            if len(row[4]) == 0:
+                row[4] == "0"
+            elif RE_INT.match(row[4]) is None:
+                is_valid = False
+                err_msg = "'起始库存数量'数据存在非法输入，出现在第{}行。".format(line + 1)
+                logger.error("invalid '起始库存数量': {}".format(row[4]))
+                break
+            if len(row[5]) == 0:
+                row[5] == "0"
+            elif RE_INT_AND_FLOAT.match(row[5]) is None:
+                is_valid = False
+                err_msg = "'起始库存总额'数据存在非法输入，出现在第{}行。".format(line + 1)
+                logger.error("invalid '起始库存总额': {}".format(row[5]))
+                break
+            if len(row[6]) == 0:
+                row[6] == "0"
+            elif RE_INT.match(row[6]) is None:
+                is_valid = False
+                err_msg = "'采购数量'数据存在非法输入，出现在第{}行。".format(line + 1)
+                logger.error("invalid '采购数量': {}".format(row[6]))
+                break
+            if len(row[7]) == 0:
+                row[7] == "0"
+            elif RE_INT_AND_FLOAT.match(row[7]) is None:
+                is_valid = False
+                err_msg = "'采购总额'数据存在非法输入，出现在第{}行。".format(line + 1)
+                logger.error("invalid '采购总额': {}".format(row[7]))
+                break
+            if len(row[8]) == 0:
+                row[8] == "0"
+            elif RE_INT.match(row[8]) is None:
+                is_valid = False
+                err_msg = "'采购退货数量'数据存在非法输入，出现在第{}行。".format(line + 1)
+                logger.error("invalid '采购退货数量': {}".format(row[8]))
+                break
+            if len(row[9]) == 0:
+                row[9] == "0"
+            elif RE_INT_AND_FLOAT.match(row[9]) is None:
+                is_valid = False
+                err_msg = "'采购退货总额'数据存在非法输入，出现在第{}行。".format(line + 1)
+                logger.error("invalid '采购退货总额': {}".format(row[9]))
+                break
+            if len(row[10]) == 0:
+                row[10] == "0"
+            elif RE_INT.match(row[10]) is None:
+                is_valid = False
+                err_msg = "'销售数量'数据存在非法输入，出现在第{}行。".format(line + 1)
+                logger.error("invalid '销售数量': {}".format(row[10]))
+                break
+            if len(row[11]) == 0:
+                row[11] == "0"
+            elif RE_INT_AND_FLOAT.match(row[11]) is None:
+                is_valid = False
+                err_msg = "'销售总额'数据存在非法输入，出现在第{}行。".format(line + 1)
+                logger.error("invalid '销售总额': {}".format(row[11]))
+                break
+            if len(row[12]) == 0:
+                row[12] == "0"
+            elif RE_INT.match(row[12]) is None:
+                is_valid = False
+                err_msg = "'销售退货数量'数据存在非法输入，出现在第{}行。".format(line + 1)
+                logger.error("invalid '销售退货数量': {}".format(row[12]))
+                break
+            if len(row[13]) == 0:
+                row[13] == "0"
+            elif RE_INT_AND_FLOAT.match(row[13]) is None:
+                is_valid = False
+                err_msg = "'销售退货总额'数据存在非法输入，出现在第{}行。".format(line + 1)
+                logger.error("invalid '销售退货总额': {}".format(row[13]))
+                break
+            if len(row[14]) == 0:
+                row[14] == "0"
+            elif RE_INT.match(row[14]) is None:
+                is_valid = False
+                err_msg = "'其他变更数量'数据存在非法输入，出现在第{}行。".format(line + 1)
+                logger.error("invalid '其他变更数量': {}".format(row[14]))
+                break
+            if len(row[15]) == 0:
+                row[15] == "0"
+            elif RE_INT_AND_FLOAT.match(row[15]) is None:
+                is_valid = False
+                err_msg = "'其他变更总额'数据存在非法输入，出现在第{}行。".format(line + 1)
+                logger.error("invalid '其他变更总额': {}".format(row[15]))
+                break
+            if len(row[16]) == 0:
+                row[16] == "0"
+            elif RE_INT.match(row[16]) is None:
+                is_valid = False
+                err_msg = "'截止库存数量'数据存在非法输入，出现在第{}行。".format(line + 1)
+                logger.error("invalid '截止库存数量': {}".format(row[16]))
+                break
+            if len(row[17]) == 0:
+                row[17] == "0"
+            elif RE_INT_AND_FLOAT.match(row[17]) is None:
+                is_valid = False
+                err_msg = "'截止库存总额'数据存在非法输入，出现在第{}行。".format(line + 1)
+                logger.error("invalid '截止库存总额': {}".format(row[17]))
+                break
+            if len(row[18]) == 0:
+                row[18] == "0"
+            elif RE_INT_AND_FLOAT.match(row[18]) is None:
+                is_valid = False
+                err_msg = "'销售单价'数据存在非法输入，出现在第{}行。".format(line + 1)
+                logger.error("invalid '销售单价': {}".format(row[18]))
+                break
             if len(row) < 19:
                 while len(row) < 19:
                     row.append("0")
@@ -1727,6 +1912,10 @@ def do_intelligent_calibration_for_input_inventories(csv_file: str):
     fw.close()
     fr.close()
     shutil.move(csv_file + ".tmp", csv_file)
+
+    if not is_valid:
+        os.remove(csv_file)
+    return is_valid, err_msg
 
 
 def add_date_for_input_inventories(csv_file: str, import_date: str):
@@ -1790,6 +1979,8 @@ def do_data_schema_validation_for_input_jit_inventories(csv_file: str):
                     is_valid = False
                     break
             break
+    if not is_valid:
+        os.remove(csv_file)
     return is_valid
 
 
@@ -1806,13 +1997,56 @@ def do_data_check_for_input_jit_inventories(csv_file: str):
                     err_msg = "'实时可用库存'数据存在非法输入，出现在第{}行。".format(line + 1)
                     break
             line += 1
+    if not is_valid:
+        os.remove(csv_file)
+    return is_valid, err_msg
+
+
+def do_data_schema_validation_for_input_case6_demand_table(csv_file: str):
+    data_schema = [
+        "规格编码", "数量",
+    ]
+    is_valid = True
+    with open(csv_file, "r", encoding='utf-8-sig') as fd:
+        csv_reader = csv.reader(fd, delimiter=",")
+        for row in csv_reader:
+            if len(row) != len(data_schema):
+                is_valid = False
+                break
+            for idx, item in enumerate(row):
+                if item.strip() != data_schema[idx]:
+                    is_valid = False
+                    break
+            break
+    if not is_valid:
+        os.remove(csv_file)
+    return is_valid
+
+
+def do_data_check_for_input_case6_demand_table(csv_file: str):
+    is_valid = True
+    err_msg = ""
+    with open(csv_file, "r", encoding='utf-8-sig') as fd:
+        csv_reader = csv.reader(fd, delimiter=",")
+        line = 0
+        for row in csv_reader:
+            if line > 0:
+                if RE_POSITIVE_INT.match(row[1]) is None:
+                    is_valid = False
+                    err_msg = "'数量'数据存在非法输入，出现在第{}行。".format(line + 1)
+                    break
+            line += 1
+    if not is_valid:
+        os.remove(csv_file)
     return is_valid, err_msg
 
 
 def update_brand_classification_1_2_association_lookup_table():
     global BRAND_CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE
-    # 品牌 -> 分类1 -> 分类2 -> 产品系列 -> 供应商名称
+    global CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE
+    global BRAND_CLASSIFICATION_2_ASSOCIATION_LOOKUP_TABLE
 
+    # 品牌 -> 分类1 -> 分类2 -> 产品系列 -> 供应商名称
     BRAND_CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE.clear()
     stmt = "SELECT brand, classification_1, classification_2, product_series, supplier_name FROM ggfilm.products;"
     rets = DBConnector.query(stmt)
@@ -1834,6 +2068,26 @@ def update_brand_classification_1_2_association_lookup_table():
                     BRAND_CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE[brand][classification_1][classification_2][product_series] = set()
                 if len(supplier_name) > 0:
                     BRAND_CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE[brand][classification_1][classification_2][product_series].add(supplier_name)
+    # 分类1 -> 分类2
+    CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE.clear()
+    if type(rets) is list and len(rets) > 0:
+        for ret in rets:
+            classification_1 = ret[1]
+            classification_2 = ret[2]
+            if classification_1 not in CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE.keys():
+                CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE[classification_1] = set()
+            CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE[classification_1].add("{}/{}".format(classification_1, classification_2))
+    # 品牌 -> 分类2
+    BRAND_CLASSIFICATION_2_ASSOCIATION_LOOKUP_TABLE.clear()
+    if type(rets) is list and len(rets) > 0:
+        for ret in rets:
+            brand = ret[0]
+            classification_2 = ret[2]
+            if brand not in BRAND_CLASSIFICATION_2_ASSOCIATION_LOOKUP_TABLE.keys():
+                BRAND_CLASSIFICATION_2_ASSOCIATION_LOOKUP_TABLE[brand] = set()
+            BRAND_CLASSIFICATION_2_ASSOCIATION_LOOKUP_TABLE[brand].add("{}-{}".format(brand, classification_2))
+
+
 update_brand_classification_1_2_association_lookup_table()
 
 

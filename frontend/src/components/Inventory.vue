@@ -6,7 +6,7 @@
           <b-navbar-nav>
             <b-nav-item :active="false" href="/product">商品明细库</b-nav-item>
             <b-nav-item :active="true" href="/">库存明细库</b-nav-item>
-            <b-nav-item :active="false" href="/slist">搜索项列表</b-nav-item>
+            <b-nav-item :active="false" href="/slist">辅助查询</b-nav-item>
             <b-nav-item :active="false" href="/oplog">操作日志</b-nav-item>
           </b-navbar-nav>
         </b-navbar>
@@ -116,11 +116,44 @@
       </b-form>
     </b-modal>
     <b-modal ref="exportFileCase1Modal" id="export-file-case1-modal" title="导出销售报表（按分类汇总）" hide-footer>
-      <b-form @submit="onExportCase1" @reset="onCancelExportCase1">
-        <div id="inventory-table-operate-btn" class="w-100 d-block">
-          <b-button type="submit" variant="dark">导出</b-button>
-          <b-button type="reset" variant="dark">取消</b-button>
-        </div>
+      <b-form>
+        <b-form>
+          <b-card bg-variant="light">
+            <b-form-group
+              label="起始日期"
+              label-size="sm"
+              label-align-sm="right"
+              label-cols-sm="3"
+            >
+              <b-form-input v-model="stDateSelectionForCase1" placeholder="YYYY-MM"></b-form-input>
+            </b-form-group>
+            <b-form-group
+              label="截止日期"
+              label-size="sm"
+              label-align-sm="right"
+              label-cols-sm="3"
+            >
+              <b-form-input v-model="edDateSelection" placeholder="YYYY-MM"></b-form-input>
+            </b-form-group>
+            <div id="inventory-table-operate-btn" class="w-100 d-block">
+              <b-button variant="dark" @click="onCustomizeCase1">自定义报表</b-button>
+              <b-button variant="dark" @click="onPreviewCase1">预览报表</b-button>
+              <b-button variant="dark" @click="onCancelExportCase1">取消</b-button>
+            </div>
+          </b-card>
+        </b-form>
+      </b-form>
+    </b-modal>
+    <b-modal ref="customizeCase1Modal" id="customize-case1-modal" title="自定义销售报表（按分类汇总）样式" hide-footer>
+      <b-form>
+        <b-form>
+          <b-card bg-variant="light">
+            <div id="inventory-table-operate-btn" class="w-100 d-block">
+              <b-button variant="dark" @click="onSaveCustomizeCase1">保存</b-button>
+              <b-button variant="dark" @click="onCancelSaveCustomizeCase1">取消</b-button>
+            </div>
+          </b-card>
+        </b-form>
       </b-form>
     </b-modal>
     <b-modal ref="exportFileCase2Modal" id="export-file-case2-modal" title="导出销售报表（按系列汇总）" hide-footer>
@@ -500,7 +533,7 @@
             label-align-sm="right"
             label-cols-sm="3"
           >
-            <b-form-radio-group v-model="reducedBtnOption" :options="reducedBtnOptions"></b-form-radio-group>
+            <b-form-checkbox v-model="reducedBtnOption" switch></b-form-checkbox>
           </b-form-group>
           <div id="inventory-table-operate-btn" class="w-100 d-block">
             <b-button variant="dark" @click="onPreviewCase4">预览报表</b-button>
@@ -602,7 +635,7 @@
             label-align-sm="right"
             label-cols-sm="5"
           >
-            <b-form-radio-group v-model="reducedBtnOption" :options="reducedBtnOptions"></b-form-radio-group>
+            <b-form-checkbox v-model="reducedBtnOption" switch></b-form-checkbox>
           </b-form-group>
           <b-form-group
             label="STOP状态?"
@@ -845,6 +878,7 @@ export default {
       serverBaseURL: process.env.SERVER_BASE_URL,
       dateReg: /^20[2-3][0-9]-(0[1-9]|1[0-2])$/,
       customDateSelection: '',
+      stDateSelectionForCase1: '',
       stDateSelection: '',
       edDateSelection: '',
       productCodeSelection: '',
@@ -906,11 +940,7 @@ export default {
       timeQuantumY: '12',
       thresholdY: '1',
       projectedPurchase: '12',
-      reducedBtnOption: 'open',
-      reducedBtnOptions: [
-        { text: '开', value: 'open' },
-        { text: '关', value: 'close' }
-      ],
+      reducedBtnOption: true,
       thresholdSSR: '4',
       inventories: [],
       inventoriesNum: 0,
@@ -1023,7 +1053,7 @@ export default {
       this.timeQuantumY = '12'
       this.thresholdY = '1'
       this.projectedPurchase = '12'
-      this.reducedBtnOption = 'open'
+      this.reducedBtnOption = true
       this.thresholdSSR = '4'
       this.uploadCSVFileForCase6 = null
       this.demandTable = null
@@ -1098,6 +1128,21 @@ export default {
       this.uploadCSVFile = null
     },
     // ------------------------------ 销售报表（按分类汇总） ------------------------------
+    onCustomizeCase1 (evt) {
+
+    },
+    onSaveCustomizeCase1 (evt) {
+
+    },
+    onCancelSaveCustomizeCase1 (evt) {
+
+    },
+    onPreviewCase1 (evt) {
+
+    },
+    onCancelPreviewCase1 (evt) {
+
+    },
     onExportCase1 (evt) {
       evt.preventDefault()
       this.$refs.exportFileCase1Modal.hide()
@@ -1420,9 +1465,22 @@ export default {
       }
       axios.post(this.serverBaseURL + '/api/v1/case6/upload', formData, config)
         .then((res) => {
-          this.message = '导入成功！'
-          this.showMessage = true
-          this.demandTable = res.data.demand_table
+          if (res.data.status === 'success') {
+            if (res.data.demand_table.length > 0) {
+              this.message = '导入成功！'
+              this.showMessage = true
+              this.demandTable = res.data.demand_table
+            } else {
+              this.message = '导入成功！需求表是空的！'
+              this.showMessage = true
+            }
+          } else if (res.data.status === 'invalid input data schema') {
+            this.message = '导入失败！需求表格式有变更，请人工复核！'
+            this.showMessage = true
+          } else if (res.data.status === 'invalid input data') {
+            this.message = '导入失败！' + res.data.err_msg
+            this.showMessage = true
+          }
           this.importCSVFileForCase6Close()
         })
         .catch((error) => {
@@ -1627,14 +1685,15 @@ export default {
         this.customDateSelection = year.toString() + '-0' + month.toString()
       }
       // 为起始时间设置默认值
+      this.stDateSelectionForCase1 = this.customDateSelection
       var stYear
       var stMonth
-      if (month - 3 < 0) {
+      if (month - 2 < 0) {
         stYear = year - 1
-        stMonth = month - 3 + 12
+        stMonth = month - 2 + 12
       } else {
         stYear = year
-        stMonth = month - 3
+        stMonth = month - 2
       }
       if (stMonth >= 10) {
         this.stDateSelection = stYear.toString() + '-' + stMonth.toString()
@@ -1642,20 +1701,7 @@ export default {
         this.stDateSelection = stYear.toString() + '-0' + stMonth.toString()
       }
       // 为截止时间设置默认值
-      var edYear
-      var edMonth
-      if (month - 1 < 0) {
-        edYear = year - 1
-        edMonth = month - 1 + 12
-      } else {
-        edYear = year
-        edMonth = month - 1
-      }
-      if (edMonth >= 10) {
-        this.edDateSelection = edYear.toString() + '-' + edMonth.toString()
-      } else {
-        this.edDateSelection = edYear.toString() + '-0' + edMonth.toString()
-      }
+      this.edDateSelection = this.customDateSelection
     }
   },
   created () {
