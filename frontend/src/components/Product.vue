@@ -704,11 +704,16 @@ export default {
     },
     onImportProducts (evt) {
       evt.preventDefault()
-      this.$refs.importProductCSVFileModal.hide()
-      this.$refs.processingModal.show()
-      let formData = new FormData()
-      formData.append('file', this.uploadProductCSVFile, this.uploadProductCSVFile.name)
-      this.importProductCSVFile(formData)
+      if (this.uploadProductCSVFile === null) {
+        this.message = '输入文件不能为空！'
+        this.showMessage = true
+      } else {
+        this.$refs.importProductCSVFileModal.hide()
+        this.$refs.processingModal.show()
+        let formData = new FormData()
+        formData.append('file', this.uploadProductCSVFile, this.uploadProductCSVFile.name)
+        this.importProductCSVFile(formData)
+      }
     },
     onCancelImportProducts (evt) {
       evt.preventDefault()
@@ -717,11 +722,16 @@ export default {
     },
     onImportJITInventory (evt) {
       evt.preventDefault()
-      this.$refs.importJITInventoryCSVFileModal.hide()
-      this.$refs.processingModal.show()
-      let formData = new FormData()
-      formData.append('file', this.uploadJITInventoryCSVFile, this.uploadJITInventoryCSVFile.name)
-      this.importJITInventoryCSVFile(formData)
+      if (this.uploadJITInventoryCSVFile === null) {
+        this.message = '输入文件不能为空！'
+        this.showMessage = true
+      } else {
+        this.$refs.importJITInventoryCSVFileModal.hide()
+        this.$refs.processingModal.show()
+        let formData = new FormData()
+        formData.append('file', this.uploadJITInventoryCSVFile, this.uploadJITInventoryCSVFile.name)
+        this.importJITInventoryCSVFile(formData)
+      }
     },
     onCancelImportJITInventory (evt) {
       evt.preventDefault()
