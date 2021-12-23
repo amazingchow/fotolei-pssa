@@ -706,6 +706,75 @@ def get_oplogs():
 # 预览"销售报表（按分类汇总）"的接口
 @ggfilm_server.route("/api/v1/case1/preview", methods=["POST"])
 def preview_report_file_case1():
+    payload = request.get_json()
+    # 起始日期和截止日期用于过滤掉时间条件不符合的记录项
+    st_date = payload.get("st_date", "").strip()
+    ed_date = payload.get("ed_date", "").strip()
+    if (st_date > ed_date):
+        response_object = {"status": "not found"}
+        return jsonify(response_object)
+
+    ui_classification1_tags = payload.get("ui_classification1_tags", [])
+    for tag in ui_classification1_tags:
+        if tag not in CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE.keys():
+            response_object = {"status": "invalid tag"}
+            response_object["err_msg"] = "参与统计的分类1：{}不存在！".format(tag)
+            return jsonify(response_object)
+    ui_classification1_classification2_tags = payload.get("ui_classification1_classification2_tags", [])
+    for tag in ui_classification1_classification2_tags:
+        c1_tag, c2_tag = tag.split("|")
+        if c1_tag not in CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE.keys():
+            response_object = {"status": "invalid tag"}
+            response_object["err_msg"] = "参与统计的分类1|分类2 - 分类1：{}不存在！".format(c1_tag)
+            return jsonify(response_object)
+        if tag not in CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE[c1_tag]:
+            response_object = {"status": "invalid tag"}
+            response_object["err_msg"] = "参与统计的分类1|分类2 - 分类2：{}不存在！".format(c2_tag)
+            return jsonify(response_object)
+    ui_classification1_topk_tags = payload.get("ui_classification1_topk_tags", [])
+    for tag in ui_classification1_topk_tags:
+        c1_tag, topk_tag = tag.split("|")
+        if c1_tag not in CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE.keys():
+            response_object = {"status": "invalid tag"}
+            response_object["err_msg"] = "销售top必选（分类1）- 分类1：{}不存在！".format(c1_tag)
+            return jsonify(response_object)
+        if not topk_tag.startswith("top"):
+            response_object = {"status": "invalid tag"}
+            response_object["err_msg"] = "销售top必选（分类1）- topk：{}格式不正确！".format(topk_tag)
+            return jsonify(response_object)
+        topk = topk_tag.lstrip("top")
+        if RE_POSITIVE_INT.match(topk) is None:
+            response_object = {"status": "invalid tag"}
+            response_object["err_msg"] = "销售top必选（分类1）- topk：{}格式不正确！".format(topk_tag)
+            return jsonify(response_object)
+    ui_brand_tags = payload.get("ui_brand_tags", [])
+    for tag in ui_brand_tags:
+        if tag not in BRAND_CLASSIFICATION_2_ASSOCIATION_LOOKUP_TABLE.keys():
+            response_object = {"status": "invalid tag"}
+            response_object["err_msg"] = "参与统计的品牌：{}不存在！".format(tag)
+            return jsonify(response_object)
+    ui_brand_topk_tag = payload.get("ui_brand_topk_tag", "")
+    if not ui_brand_topk_tag.startswith("top"):
+        response_object = {"status": "invalid tag"}
+        response_object["err_msg"] = "销售top必选（品牌）- topk：{}格式不正确！".format(ui_brand_topk_tag)
+        return jsonify(response_object)
+    topk = ui_brand_topk_tag.lstrip("top")
+    if RE_POSITIVE_INT.match(topk) is None:
+        response_object = {"status": "invalid tag"}
+        response_object["err_msg"] = "销售top必选（品牌）- topk：{}格式不正确！".format(ui_brand_topk_tag)
+        return jsonify(response_object)
+    ui_brand_classification2_tags = payload.get("ui_brand_classification2_tags", [])
+    for tag in ui_brand_classification2_tags:
+        brand_tag, c2_tag = tag.split("|")
+        if brand_tag not in CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE.keys():
+            response_object = {"status": "invalid tag"}
+            response_object["err_msg"] = "参与统计的品牌|分类2 - 品牌：{}不存在！".format(brand_tag)
+            return jsonify(response_object)
+        if tag not in CLASSIFICATION_1_2_ASSOCIATION_LOOKUP_TABLE[brand_tag]:
+            response_object = {"status": "invalid tag"}
+            response_object["err_msg"] = "参与统计的品牌|分类2 - 分类2：{}不存在！".format(c2_tag)
+            return jsonify(response_object)
+
     return jsonify("导出销售报表（按分类汇总）")
 
 

@@ -163,7 +163,7 @@
               ></b-form-tags>
             </b-form-group>
             <b-form-group
-              label="参与统计的'分类1/分类2'"
+              label="参与统计的'分类1|分类2'"
               label-size="sm"
               label-align-sm="right"
               label-cols-sm="2"
@@ -213,6 +213,20 @@
               <b-form-input
                 v-model="customizeCase1.brand_topk_tag"
               ></b-form-input>
+            </b-form-group>
+            <b-form-group
+              label="参与统计的'品牌|分类2'"
+              label-size="sm"
+              label-align-sm="right"
+              label-cols-sm="2"
+            >
+              <b-form-tags
+                v-model="customizeCase1.brand_classification2_tags"
+                separator=" "
+                placeholder="输入标签（空格键确定）"
+                remove-on-delete
+                no-add-on-enter
+              ></b-form-tags>
             </b-form-group>
             <div id="inventory-table-operate-btn" class="w-100 d-block">
               <b-button variant="dark" @click="onSaveCustomizeCase1">保存</b-button>
@@ -1019,7 +1033,8 @@ export default {
           'osiris',
           'poilotfoto'
         ],
-        brand_topk_tag: 'top10'
+        brand_topk_tag: 'top10',
+        brand_classification2_tags: []
       },
       previewCase1: {
         previewTable: []
@@ -1147,6 +1162,7 @@ export default {
       this.beAggregatedSelection = '参与'
       this.isImportSelection = '全部'
       this.supplierNameSelection = ''
+      this.previewCase1.previewTable = []
       this.previewCase2.previewTable = []
       this.previewCase3.previewTable = []
       this.previewCase4.previewTable = []
@@ -1244,9 +1260,92 @@ export default {
     onCancelSaveCustomizeCase1 (evt) {
       evt.preventDefault()
       this.$refs.customizeCase1Modal.hide()
+      this.customizeCase1 = {
+        classification1_tags: ['数码', '传统耗材'],
+        classification1_classification2_tags: [
+          '数码|背带',
+          '数码|包&收纳',
+          '数码|快挂',
+          '传统耗材|暗房冲洗设备',
+          '传统耗材|胶片',
+          '传统耗材|页片',
+          '传统耗材|相纸',
+          '传统耗材|彩色药水',
+          '传统耗材|黑白药水',
+          '传统耗材|底片收纳保护',
+          '传统耗材|翻拍器',
+          '传统耗材|放大机类',
+          '传统耗材|胶片相机'
+        ],
+        classification1_topk_tags: ['数码|top2', '传统耗材|top10'],
+        brand_tags: [
+          '百得信',
+          '宝图',
+          '福马',
+          '富士',
+          '柯达',
+          '派森',
+          '上海',
+          '泰特诺',
+          '伊尔福',
+          'adox',
+          'jobo',
+          'lab-box',
+          'osiris',
+          'poilotfoto'
+        ],
+        brand_topk_tag: 'top10',
+        brand_classification2_tags: []
+      }
+    },
+    previewReportFileCase1Close () {
+      this.$refs.processingModal.hide()
+    },
+    previewReportFileCase1 (payload) {
+      axios.post(this.serverBaseURL + '/api/v1/case1/preview', payload)
+        .then((res) => {
+          if (res.data.status === 'success') {
+            this.previewCase1.previewTable = res.data.preview_table
+            this.$refs.previewCase1Modal.show()
+          } else if (res.data.status === 'not found') {
+            this.message = '预览失败！不存在指定的库存条目。'
+            this.showMessage = true
+          } else if (res.data.status === 'invalid tag') {
+            this.message = res.data.err_msg
+            this.showMessage = true
+          }
+          this.previewReportFileCase1Close()
+        })
+        .catch((error) => {
+          // eslint-disable-next-line
+          console.log(error)
+          this.message = '预览失败！'
+          this.showMessage = true
+          this.previewReportFileCase1Close()
+        })
     },
     onPreviewCase1 (evt) {
-
+      evt.preventDefault()
+      if ((this.stDateSelection === '') || (this.edDateSelection === '')) {
+        this.message = '起始日期/截止日期不能为空！'
+        this.showMessage = true
+      } else if (this.dateReg.test(this.stDateSelection) && this.dateReg.test(this.edDateSelection)) {
+        this.$refs.processingModal.show()
+        const payload = {
+          st_date: this.stDateSelection,
+          ed_date: this.edDateSelection,
+          ui_classification1_tags: this.customizeCase1.classification1_tags,
+          ui_classification1_classification2_tags: this.customizeCase1.classification1_classification2_tags,
+          ui_classification1_topk_tags: this.customizeCase1.classification1_topk_tags,
+          ui_brand_tags: this.customizeCase1.brand_tags,
+          ui_brand_topk_tag: this.customizeCase1.brand_topk_tag,
+          ui_brand_classification2_tags: this.customizeCase1.brand_classification2_tags
+        }
+        this.previewReportFileCase1(payload)
+      } else {
+        this.message = '日期格式有误！'
+        this.showMessage = true
+      }
     },
     onCancelPreviewCase1 (evt) {
 
