@@ -18,6 +18,7 @@
         <alert :message=message v-if="showMessage"></alert>
         <div id="import-and-export-btn-area">
           <button type="button" class="btn btn-secondary btn-sm" v-b-modal.csv-file-modal>导入库存数据</button>
+          <button type="button" class="btn btn-secondary btn-sm" v-b-modal.inventories-clean-all-modal>删除库存明细</button>
           <b-dropdown text="导出定制报表" variant="secondary" size="sm">
             <b-dropdown-header id="dropdown-header-1"><strong>销售报表</strong></b-dropdown-header>
             <b-dropdown-item-button aria-describedby="dropdown-header-1" variant="secondary" v-b-modal.export-file-case1-modal>
@@ -115,6 +116,31 @@
         </div>
       </b-form>
     </b-modal>
+    <b-modal ref="CleanAllInventoriesModal" id="inventories-clean-all-modal" title="删除全量库存明细" hide-footer>
+      <b-form @submit="onCleanAllInventories" @reset="onCancelCleanAllInventories">
+        <b-form-group
+          label="管理员账号"
+          label-size="sm"
+          label-align-sm="right"
+          label-cols-sm="3"
+        >
+          <b-form-input v-model="adminUsr"></b-form-input>
+        </b-form-group>
+        <b-form-group
+          label="管理员密码"
+          label-size="sm"
+          label-align-sm="right"
+          label-cols-sm="3"
+        >
+          <b-form-input v-model="adminPwd" type="password"></b-form-input>
+        </b-form-group>
+        <br/>
+        <div id="inventory-table-operate-btn" class="w-100 d-block">
+          <b-button type="submit" variant="dark">删除</b-button>
+          <b-button type="reset" variant="dark">取消</b-button>
+        </div>
+      </b-form>
+    </b-modal>
     <b-modal ref="exportFileCase1Modal" id="export-file-case1-modal" title="导出销售报表（按分类汇总）" hide-footer>
       <b-form>
         <b-form>
@@ -163,7 +189,7 @@
               ></b-form-tags>
             </b-form-group>
             <b-form-group
-              label="参与统计的'分类1/分类2'"
+              label="参与统计的'分类1|分类2'"
               label-size="sm"
               label-align-sm="right"
               label-cols-sm="2"
@@ -213,6 +239,20 @@
               <b-form-input
                 v-model="customizeCase1.brand_topk_tag"
               ></b-form-input>
+            </b-form-group>
+            <b-form-group
+              label="参与统计的'品牌|分类2'"
+              label-size="sm"
+              label-align-sm="right"
+              label-cols-sm="2"
+            >
+              <b-form-tags
+                v-model="customizeCase1.brand_classification2_tags"
+                separator=" "
+                placeholder="输入标签（空格键确定）"
+                remove-on-delete
+                no-add-on-enter
+              ></b-form-tags>
             </b-form-group>
             <div id="inventory-table-operate-btn" class="w-100 d-block">
               <b-button variant="dark" @click="onSaveCustomizeCase1">保存</b-button>
@@ -943,6 +983,8 @@ export default {
     return {
       serverBaseURL: process.env.SERVER_BASE_URL,
       dateReg: /^20[2-3][0-9]-(0[1-9]|1[0-2])$/,
+      adminUsr: '',
+      adminPwd: '',
       customDateSelection: '',
       stDateSelectionForCase1: '',
       stDateSelection: '',
@@ -1019,7 +1061,8 @@ export default {
           'osiris',
           'poilotfoto'
         ],
-        brand_topk_tag: 'top10'
+        brand_topk_tag: 'top10',
+        brand_classification2_tags: []
       },
       previewCase1: {
         previewTable: []
@@ -1147,6 +1190,7 @@ export default {
       this.beAggregatedSelection = '参与'
       this.isImportSelection = '全部'
       this.supplierNameSelection = ''
+      this.previewCase1.previewTable = []
       this.previewCase2.previewTable = []
       this.previewCase3.previewTable = []
       this.previewCase4.previewTable = []
@@ -1232,6 +1276,55 @@ export default {
       this.setDefaultDate()
       this.uploadCSVFile = null
     },
+    cleanAllInventoriesClose () {
+      this.$refs.processingModal.hide()
+      this.inventories = []
+      this.inventoriesNum = 0
+      this.inventoriesTotal = 0
+      this.pageJump = 1
+      this.pageCurr = 0
+      this.pageTotal = 0
+      this.pageOffset = 0
+      this.pageOffsetMax = 0
+      this.adminUsr = ''
+      this.adminPwd = ''
+    },
+    cleanAllInventories (payload) {
+      axios.post(this.serverBaseURL + '/api/v1/inventories/clean', payload)
+        .then((res) => {
+          if (res.data.status === 'success') {
+            this.message = '删除成功！'
+            this.showMessage = true
+          } else if (res.data.status === 'invalid input data') {
+            this.message = '删除失败，管理员账号或密码错误！'
+            this.showMessage = true
+          }
+          this.cleanAllInventoriesClose()
+        })
+        .catch((error) => {
+          // eslint-disable-next-line
+          console.log(error)
+          this.message = '导入失败!'
+          this.showMessage = true
+          this.cleanAllInventoriesClose()
+        })
+    },
+    onCleanAllInventories (evt) {
+      evt.preventDefault()
+      this.$refs.CleanAllInventoriesModal.hide()
+      this.$refs.processingModal.show()
+      const payload = {
+        admin_usr: this.adminUsr,
+        admin_pwd: this.adminPwd
+      }
+      this.cleanAllInventories(payload)
+    },
+    onCancelCleanAllInventories (evt) {
+      evt.preventDefault()
+      this.$refs.CleanAllInventoriesModal.hide()
+      this.adminUsr = ''
+      this.adminPwd = ''
+    },
     // ------------------------------ 销售报表（按分类汇总） ------------------------------
     onCustomizeCase1 (evt) {
       evt.preventDefault()
@@ -1244,9 +1337,92 @@ export default {
     onCancelSaveCustomizeCase1 (evt) {
       evt.preventDefault()
       this.$refs.customizeCase1Modal.hide()
+      this.customizeCase1 = {
+        classification1_tags: ['数码', '传统耗材'],
+        classification1_classification2_tags: [
+          '数码|背带',
+          '数码|包&收纳',
+          '数码|快挂',
+          '传统耗材|暗房冲洗设备',
+          '传统耗材|胶片',
+          '传统耗材|页片',
+          '传统耗材|相纸',
+          '传统耗材|彩色药水',
+          '传统耗材|黑白药水',
+          '传统耗材|底片收纳保护',
+          '传统耗材|翻拍器',
+          '传统耗材|放大机类',
+          '传统耗材|胶片相机'
+        ],
+        classification1_topk_tags: ['数码|top2', '传统耗材|top10'],
+        brand_tags: [
+          '百得信',
+          '宝图',
+          '福马',
+          '富士',
+          '柯达',
+          '派森',
+          '上海',
+          '泰特诺',
+          '伊尔福',
+          'adox',
+          'jobo',
+          'lab-box',
+          'osiris',
+          'poilotfoto'
+        ],
+        brand_topk_tag: 'top10',
+        brand_classification2_tags: []
+      }
+    },
+    previewReportFileCase1Close () {
+      this.$refs.processingModal.hide()
+    },
+    previewReportFileCase1 (payload) {
+      axios.post(this.serverBaseURL + '/api/v1/case1/preview', payload)
+        .then((res) => {
+          if (res.data.status === 'success') {
+            this.previewCase1.previewTable = res.data.preview_table
+            this.$refs.previewCase1Modal.show()
+          } else if (res.data.status === 'not found') {
+            this.message = '预览失败！不存在指定的库存条目。'
+            this.showMessage = true
+          } else if (res.data.status === 'invalid tag') {
+            this.message = res.data.err_msg
+            this.showMessage = true
+          }
+          this.previewReportFileCase1Close()
+        })
+        .catch((error) => {
+          // eslint-disable-next-line
+          console.log(error)
+          this.message = '预览失败！'
+          this.showMessage = true
+          this.previewReportFileCase1Close()
+        })
     },
     onPreviewCase1 (evt) {
-
+      evt.preventDefault()
+      if ((this.stDateSelection === '') || (this.edDateSelection === '')) {
+        this.message = '起始日期/截止日期不能为空！'
+        this.showMessage = true
+      } else if (this.dateReg.test(this.stDateSelection) && this.dateReg.test(this.edDateSelection)) {
+        this.$refs.processingModal.show()
+        const payload = {
+          st_date: this.stDateSelection,
+          ed_date: this.edDateSelection,
+          ui_classification1_tags: this.customizeCase1.classification1_tags,
+          ui_classification1_classification2_tags: this.customizeCase1.classification1_classification2_tags,
+          ui_classification1_topk_tags: this.customizeCase1.classification1_topk_tags,
+          ui_brand_tags: this.customizeCase1.brand_tags,
+          ui_brand_topk_tag: this.customizeCase1.brand_topk_tag,
+          ui_brand_classification2_tags: this.customizeCase1.brand_classification2_tags
+        }
+        this.previewReportFileCase1(payload)
+      } else {
+        this.message = '日期格式有误！'
+        this.showMessage = true
+      }
     },
     onCancelPreviewCase1 (evt) {
 
