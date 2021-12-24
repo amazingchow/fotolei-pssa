@@ -170,6 +170,21 @@
         </b-form>
       </b-form>
     </b-modal>
+    <b-modal ref="previewCase1Modal" title="预览销售报表（按分类汇总）" size="xl" hide-footer>
+      <b-table-simple striped hover small id="preview-table">
+        <b-tbody>
+          <b-tr v-for="(item, index) in previewCase1.previewTable" :key="index">
+            <b-td>{{ item[0] }}</b-td>
+            <b-td>{{ item[1] }}</b-td>
+            <b-td>{{ item[2] }}</b-td>
+          </b-tr>
+        </b-tbody>
+      </b-table-simple>
+      <div id="inventory-table-operate-btn" class="w-100 d-block">
+        <b-button variant="dark" @click="onExportCase1">下载报表</b-button>
+        <b-button variant="dark" @click="onCancelPreviewCase1">取消</b-button>
+      </div>
+    </b-modal>
     <b-modal ref="customizeCase1Modal" id="customize-case1-modal" title="自定义销售报表（按分类汇总）样式" size="huge" hide-footer>
       <b-form>
         <b-form>
@@ -290,7 +305,7 @@
         </b-form>
       </b-form>
     </b-modal>
-    <b-modal ref="previewCase2Modal" title="预览销售报表（按分类汇总）" size="huge" hide-footer>
+    <b-modal ref="previewCase2Modal" title="预览销售报表（按系列汇总）" size="huge" hide-footer>
       <b-table-simple striped hover small id="preview-table">
         <b-thead>
           <b-tr>
@@ -1425,15 +1440,18 @@ export default {
       }
     },
     onCancelPreviewCase1 (evt) {
-
+      evt.preventDefault()
+      this.$refs.previewCase1Modal.hide()
     },
     onExportCase1 (evt) {
       evt.preventDefault()
+      this.$refs.previewCase1Modal.hide()
       this.$refs.exportFileCase1Modal.hide()
-      const payload = {}
-      this.exportReportFileCase1(payload)
-      // 恢复默认设置
-      this.initExportForm()
+      this.$refs.processingModal.show()
+      const payload = {
+        preview_table: this.previewCase1.previewTable
+      }
+      this.prepareExportReportFile('/api/v1/case1/prepare', payload)
     },
     onCancelExportCase1 (evt) {
       evt.preventDefault()

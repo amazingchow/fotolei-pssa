@@ -18,13 +18,13 @@ from collections import defaultdict
 sys.path.append(os.path.abspath("./db"))
 from db.mysqlcli import MySQLConnector
 sys.path.append(os.path.abspath("./utils"))
-from utils.utils import generate_file_digest, generate_digest
+from utils.utils import cost_count, generate_file_digest, generate_digest
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 
 
 logging.basicConfig(level=logging.INFO, format="[%(asctime)s][%(levelname)s] %(message)s")
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("FlaskApp")
 
 SKU_LOOKUP_TABLE = defaultdict(bool)
 INVENTORIES_UPDATE_LOOKUP_TABLE = defaultdict(bool)
@@ -53,12 +53,14 @@ CORS(ggfilm_server, resources={r"/api/*": {"origins": "*"}})
 
 # 探活接口
 @ggfilm_server.route("/api/v1/keepalive", methods=["GET"])
+@cost_count
 def keepalive():
     return jsonify("alive")
 
 
 # 载入"商品明细数据报表"的接口
 @ggfilm_server.route("/api/v1/products/upload", methods=["POST"])
+@cost_count
 def upload_products():
     csv_files = request.files.getlist("file")
     csv_file_sha256 = generate_digest("{}_{}".format(int(time.time()), csv_files[0].filename))
@@ -129,6 +131,7 @@ def upload_products():
 
 # 载入"实时可用库存报表"的接口
 @ggfilm_server.route("/api/v1/jitinventory/upload", methods=["POST"])
+@cost_count
 def upload_jit_inventory_data():
     csv_files = request.files.getlist("file")
     csv_file = "{}/ggfilm-server/jit_inventory/{}_{}".format(
@@ -178,6 +181,7 @@ def upload_jit_inventory_data():
 
 # 预下载"新增SKU数据表"的接口
 @ggfilm_server.route("/api/v1/addedskus/prepare", methods=["POST"])
+@cost_count
 def prepare_added_skus():
     payload = request.get_json()
     added_skus = payload.get("added_skus", [])
@@ -201,6 +205,7 @@ def prepare_added_skus():
 
 # 载入"库存数据报表"的接口
 @ggfilm_server.route("/api/v1/inventories/upload", methods=["POST"])
+@cost_count
 def upload_inventories():
     csv_files = request.files.getlist("file")
     import_date = request.form.get("import_date", "")
@@ -279,6 +284,7 @@ def upload_inventories():
 
 # 获取总商品条目量的接口
 @ggfilm_server.route("/api/v1/products/total", methods=["GET"])
+@cost_count
 def get_products_total():
     stmt = "SELECT SUM(total) FROM ggfilm.product_summary;"
     ret = DBConnector.query(stmt)
@@ -292,6 +298,7 @@ def get_products_total():
 
 # 获取所有商品条目的接口, 带有翻页功能
 @ggfilm_server.route("/api/v1/products", methods=["GET"])
+@cost_count
 def list_products():
     page_offset = request.args.get("page.offset")
     page_limit = request.args.get("page.limit")
@@ -314,6 +321,7 @@ FROM ggfilm.products ORDER BY specification_code LIMIT {}, {};".format(
 
 # 删除所有商品条目的接口
 @ggfilm_server.route("/api/v1/products/clean", methods=["POST"])
+@cost_count
 def clean_all_products():
     payload = request.get_json()
     admin_usr = payload.get("admin_usr", "").strip()
@@ -374,6 +382,7 @@ CREATE TABLE IF NOT EXISTS ggfilm.product_summary (
 
 # 删除所有库存条目的接口
 @ggfilm_server.route("/api/v1/inventories/clean", methods=["POST"])
+@cost_count
 def clean_all_inventories():
     payload = request.get_json()
     admin_usr = payload.get("admin_usr", "").strip()
@@ -433,6 +442,7 @@ CREATE TABLE IF NOT EXISTS ggfilm.inventory_summary (
 
 # 获取一条商品条目的接口
 @ggfilm_server.route("/api/v1/products/one", methods=["GET"])
+@cost_count
 def pick_one_product():
     specification_code = request.args.get("specification_code")
     if not SKU_LOOKUP_TABLE.get(specification_code, False):
@@ -476,6 +486,7 @@ FROM ggfilm.products WHERE specification_code = '{}';".format(specification_code
 
 # 更新一条商品条目的接口
 @ggfilm_server.route("/api/v1/products/update", methods=["POST"])
+@cost_count
 def update_one_product():
     payload = request.get_json()
 
@@ -554,6 +565,7 @@ def update_one_product():
 
 # 获取总库存条目量的接口
 @ggfilm_server.route("/api/v1/inventories/total", methods=["GET"])
+@cost_count
 def get_inventories_total():
     stmt = "SELECT SUM(total) FROM ggfilm.inventory_summary;"
     ret = DBConnector.query(stmt)
@@ -567,6 +579,7 @@ def get_inventories_total():
 
 # 获取所有库存条目的接口, 带有翻页功能
 @ggfilm_server.route("/api/v1/inventories", methods=["GET"])
+@cost_count
 def list_inventories():
     page_offset = request.args.get("page.offset")
     page_limit = request.args.get("page.limit")
@@ -589,6 +602,7 @@ FROM ggfilm.inventories ORDER BY create_time DESC LIMIT {}, {};".format(
 
 # 导出所有可供选择的选项列表的接口
 @ggfilm_server.route("/api/v1/alloptions", methods=["GET"])
+@cost_count
 def list_all_options():
     response_object = {"status": "success"}
 
@@ -632,6 +646,7 @@ def list_all_options():
 
 # 导出所有可供选择的品牌列表的接口
 @ggfilm_server.route("/api/v1/brands", methods=["GET"])
+@cost_count
 def list_all_brand_selections():
     response_object = {"status": "success"}
 
@@ -651,6 +666,7 @@ def list_all_brand_selections():
 
 # 导出所有可供选择的分类1的接口
 @ggfilm_server.route("/api/v1/classification1", methods=["GET"])
+@cost_count
 def list_all_classification_1_selections():
     response_object = {"status": "success"}
 
@@ -670,6 +686,7 @@ def list_all_classification_1_selections():
 
 # 导出所有可供选择的供应商列表的接口
 @ggfilm_server.route("/api/v1/suppliers", methods=["GET"])
+@cost_count
 def list_all_supplier_selections():
     response_object = {"status": "success"}
 
@@ -689,6 +706,7 @@ def list_all_supplier_selections():
 
 # 返回关联查询的接口
 @ggfilm_server.route("/api/v1/associations/bc1c2", methods=["POST"])
+@cost_count
 def fetch_associations_bc1c2():
     payload = request.get_json()
     brand = payload["brand"].strip()
@@ -724,6 +742,7 @@ def fetch_associations_bc1c2():
 
 # 返回关联查询的接口
 @ggfilm_server.route("/api/v1/associations/c1c2", methods=["POST"])
+@cost_count
 def fetch_associations_c1c2():
     payload = request.get_json()
     classification_1 = payload["classification_1"].strip()
@@ -736,6 +755,7 @@ def fetch_associations_c1c2():
 
 # 返回关联查询的接口
 @ggfilm_server.route("/api/v1/associations/bc2", methods=["POST"])
+@cost_count
 def fetch_associations_bc2():
     payload = request.get_json()
     brand = payload["brand"].strip()
@@ -748,6 +768,7 @@ def fetch_associations_bc2():
 
 # 获取最近20条操作日志的接口
 @ggfilm_server.route("/api/v1/oplogs", methods=["GET"])
+@cost_count
 def get_oplogs():
     stmt = "SELECT oplog, DATE_FORMAT(create_time, '%Y-%m-%d %H-%i-%s') FROM ggfilm.operation_logs ORDER BY create_time DESC LIMIT 20;"
     rets = DBConnector.query(stmt)
@@ -762,8 +783,53 @@ def get_oplogs():
     return jsonify(response_object)
 
 
+'''
+预览效果
+
+202X年XX月~202X年XX月
+-------------------------------------------------------------------
+总销售额		          占比
+-------------------------------------------------------------------
+龟龟销售额
+-------------------------------------------------------------------
+2店销售额  
+-------------------------------------------------------------------
+数码类目销售额
+-------------------------------------------------------------------
+背带
+数码/包&收纳
+数码/快挂 
+-------------------------------------------------------------------
+传统类目销售额
+-------------------------------------------------------------------
+暗房冲洗设备
+胶片     
+页片
+相纸
+彩色药水 
+黑白药水		   
+底片收纳保护		
+翻拍器 
+放大机类	   
+胶片相机
+机械快门线/纽
+-------------------------------------------------------------------
+各品牌销售额
+-------------------------------------------------------------------
+巅峰设计  
+cam-in  	
+poilotfoto
+-------------------------------------------------------------------
+各品牌-分类2销售额
+-------------------------------------------------------------------
+伊尔福-黑白药水
+伊尔福-相纸	
+'''
+
+
 # 预览"销售报表（按分类汇总）"的接口
 @ggfilm_server.route("/api/v1/case1/preview", methods=["POST"])
+@cost_count
 def preview_report_file_case1():
     payload = request.get_json()
     # 起始日期和截止日期用于过滤掉时间条件不符合的记录项
@@ -834,7 +900,86 @@ def preview_report_file_case1():
             response_object["err_msg"] = "参与统计的品牌|分类2 - 分类2：{}不存在！".format(c2_tag)
             return jsonify(response_object)
 
-    return jsonify("导出销售报表（按分类汇总）")
+    response_object = {"status": "success"}
+    preview_table = []
+    preview_table.append(["{} ~ {}销售报表".format(st_date, ed_date), "", ""])
+    # 计算202X年XX月~202X年XX月的总销售额
+    preview_table.append(["总销售额", "xxx", "占比"])
+    # 计算龟龟销售额
+    preview_table.append(["龟龟销售额", "xxx", "xx%"])
+    # 计算2店销售额
+    preview_table.append(["2店销售额", "xxx", "xx%"])
+    # 计算数码类目销售额
+    preview_table.append(["数码类目销售额", "xxx", "xx%"])
+    # 计算分类1为数码，分类2为背带的销售额
+    preview_table.append(["背带", "xxx", "xx%"])
+    # 计算分类1为数码，分类2为包&收纳的销售额
+    preview_table.append(["包&收纳", "xxx", "xx%"])
+    # 计算分类1为数码，分类2为快挂的销售额
+    preview_table.append(["快挂", "xxx", "xx%"])
+    # 计算传统类目销售额
+    preview_table.append(["传统类目销售额", "xxx", "xx%"])
+    # 计算分类1为传统耗材，分类2为暗房冲洗设备的销售额
+    preview_table.append(["暗房冲洗设备", "xxx", "xx%"])
+    # 计算分类1为传统耗材，分类2为胶片的销售额
+    preview_table.append(["胶片", "xxx", "xx%"])
+    # 计算分类1为传统耗材，分类2为页片的销售额
+    preview_table.append(["页片", "xxx", "xx%"])
+    # 计算分类1为传统耗材，分类2为相纸的销售额
+    preview_table.append(["相纸", "xxx", "xx%"])
+    # 计算分类1为传统耗材，分类2为彩色药水的销售额
+    preview_table.append(["彩色药水", "xxx", "xx%"])
+    # 计算分类1为传统耗材，分类2为黑白药水的销售额
+    preview_table.append(["黑白药水", "xxx", "xx%"])
+    # 计算分类1为传统耗材，分类2为底片收纳保护的销售额
+    preview_table.append(["底片收纳保护", "xxx", "xx%"])
+    # 计算分类1为传统耗材，分类2为翻拍器的销售额
+    preview_table.append(["翻拍器", "xxx", "xx%"])
+    # 计算分类1为传统耗材，分类2为放大机类的销售额
+    preview_table.append(["放大机类", "xxx", "xx%"])
+    # 计算分类1为传统耗材，分类2为胶片相机的销售额
+    preview_table.append(["胶片相机", "xxx", "xx%"])
+    # 计算分类1为传统耗材，分类2为机械快门线/纽的销售额
+    preview_table.append(["机械快门线/纽", "xxx", "xx%"])
+    # 计算各品牌销售额
+    preview_table.append(["各品牌销售额", "xxx", "xx%"])
+    # 品牌为巅峰设计的销售额
+    preview_table.append(["巅峰设计", "xxx", "xx%"])
+    # 品牌为cam-in的销售额
+    preview_table.append(["cam-in", "xxx", "xx%"])
+    # 品牌为poilotfoto的销售额
+    preview_table.append(["poilotfoto", "xxx", "xx%"])
+    # 计算各品牌-分类2销售额
+    preview_table.append(["各品牌-分类2销售额", "xxx", "xx%"])
+    # 品牌为伊尔福，分类2为黑白药水的销售额
+    preview_table.append(["伊尔福|黑白药水", "xxx", "xx%"])
+    # 品牌为伊尔福，分类2为相纸的销售额
+    preview_table.append(["伊尔福|相纸", "xxx", "xx%"])
+    response_object["preview_table"] = preview_table
+
+    return jsonify(response_object)
+
+
+# 预下载"销售报表（按分类汇总）"的接口
+@ggfilm_server.route("/api/v1/case1/prepare", methods=["POST"])
+@cost_count
+def prepare_report_file_case1():
+    payload = request.get_json()
+    preview_table = payload.get("preview_table", [])
+
+    ts = int(time.time())
+    csv_file_sha256 = generate_digest("销售报表（按分类汇总）_{}.csv".format(ts))
+    csv_file = "{}/ggfilm-server/send_queue/{}".format(os.path.expanduser("~"), csv_file_sha256)
+    output_file = "销售报表（按分类汇总）_{}.csv".format(ts)
+    with open(csv_file, "w", encoding='utf-8-sig') as fd:
+        csv_writer = csv.writer(fd, delimiter=",")
+        for row in preview_table:
+            csv_writer.writerow(row)
+
+    response_object = {"status": "success"}
+    response_object["output_file"] = output_file
+    response_object["server_send_queue_file"] = csv_file_sha256
+    return jsonify(response_object)
 
 
 '''
@@ -852,6 +997,7 @@ def preview_report_file_case1():
 
 # 预览"销售报表（按系列汇总）"的接口
 @ggfilm_server.route("/api/v1/case2/preview", methods=["POST"])
+@cost_count
 def preview_report_file_case2():
     payload = request.get_json()
     # 起始日期和截止日期用于过滤掉时间条件不符合的记录项
@@ -941,6 +1087,7 @@ def preview_report_file_case2():
 
 # 预下载"销售报表（按系列汇总）"的接口
 @ggfilm_server.route("/api/v1/case2/prepare", methods=["POST"])
+@cost_count
 def prepare_report_file_case2():
     payload = request.get_json()
     preview_table = payload.get("preview_table", [])
@@ -987,6 +1134,7 @@ def prepare_report_file_case2():
 
 # 预览"销售报表（按单个SKU汇总）"的接口
 @ggfilm_server.route("/api/v1/case3/preview", methods=["POST"])
+@cost_count
 def preview_report_file_case3():
     payload = request.get_json()
     # 1. 起始日期和截止日期用于过滤掉时间条件不符合的记录项
@@ -1109,6 +1257,7 @@ def preview_report_file_case3():
 
 # 预下载"销售报表（按单个SKU汇总）"的接口
 @ggfilm_server.route("/api/v1/case3/prepare", methods=["POST"])
+@cost_count
 def prepare_report_file_case3():
     payload = request.get_json()
     preview_table = payload.get("preview_table", [])
@@ -1162,6 +1311,7 @@ def prepare_report_file_case3():
 
 # 预览"滞销品报表"的接口
 @ggfilm_server.route("/api/v1/case4/preview", methods=["POST"])
+@cost_count
 def export_report_file_case4():
     payload = request.get_json()
     # 1. 起始日期和截止日期用于过滤掉时间条件不符合的记录项
@@ -1297,6 +1447,7 @@ ORDER BY create_time ASC;".format(
 
 # 预下载"滞销品报表"的接口
 @ggfilm_server.route("/api/v1/case4/prepare", methods=["POST"])
+@cost_count
 def prepare_report_file_case4():
     payload = request.get_json()
     preview_table = payload.get("preview_table", [])
@@ -1345,6 +1496,7 @@ def prepare_report_file_case4():
 
 # 预览"采购辅助分析报表"的接口
 @ggfilm_server.route("/api/v1/case5/preview", methods=["POST"])
+@cost_count
 def preview_report_file_case5():
     way = request.args.get("way", "1")
     payload = request.get_json()
@@ -1545,6 +1697,7 @@ ORDER BY create_time DESC LIMIT {};".format(specification_code, time_quantum_y)
 
 # 预下载"采购辅助分析报表"的接口
 @ggfilm_server.route("/api/v1/case5/prepare", methods=["POST"])
+@cost_count
 def prepare_report_file_case5():
     payload = request.get_json()
     time_quantum_x = int(payload.get("time_quantum_x", "6"))
@@ -1581,6 +1734,7 @@ def prepare_report_file_case5():
 
 # 载入用于计算体积、重量的需求表的接口
 @ggfilm_server.route("/api/v1/case6/upload", methods=["POST"])
+@cost_count
 def upload_csv_file_for_case6():
     csv_files = request.files.getlist("file")
     csv_file_sha256 = generate_digest("{}_{}".format(int(time.time()), csv_files[0].filename))
@@ -1627,6 +1781,7 @@ def upload_csv_file_for_case6():
 
 # 预览"体积、重量计算汇总单"的接口
 @ggfilm_server.route("/api/v1/case6/preview", methods=["POST"])
+@cost_count
 def preview_report_file_case6():
     payload = request.get_json()
     demand_table = payload.get("demand_table", [])
@@ -1677,6 +1832,7 @@ FROM ggfilm.products WHERE specification_code = '{}';".format(item["specificatio
 
 # 预下载"体积、重量计算汇总单"的接口
 @ggfilm_server.route("/api/v1/case6/prepare", methods=["POST"])
+@cost_count
 def prepare_report_file_case6():
     payload = request.get_json()
     preview_table = payload.get("preview_table", [])
@@ -1712,6 +1868,7 @@ def prepare_report_file_case6():
 
 # 下载文件接口
 @ggfilm_server.route("/api/v1/download/<path:filename>", methods=["GET"])
+@cost_count
 def export_report_file_case3(filename):
     return send_from_directory(directory="{}/ggfilm-server/send_queue".format(os.path.expanduser("~")), path=filename)
 
