@@ -18,6 +18,7 @@
         <alert :message=message v-if="showMessage"></alert>
         <div id="import-and-export-btn-area">
           <button type="button" class="btn btn-secondary btn-sm" v-b-modal.csv-file-modal>导入库存数据</button>
+          <button type="button" class="btn btn-secondary btn-sm" v-b-modal.inventories-clean-all-modal>删除库存明细</button>
           <b-dropdown text="导出定制报表" variant="secondary" size="sm">
             <b-dropdown-header id="dropdown-header-1"><strong>销售报表</strong></b-dropdown-header>
             <b-dropdown-item-button aria-describedby="dropdown-header-1" variant="secondary" v-b-modal.export-file-case1-modal>
@@ -111,6 +112,31 @@
         </b-form-group>
         <div id="inventory-table-operate-btn" class="w-100 d-block">
           <b-button type="submit" variant="dark">导入</b-button>
+          <b-button type="reset" variant="dark">取消</b-button>
+        </div>
+      </b-form>
+    </b-modal>
+    <b-modal ref="CleanAllInventoriesModal" id="inventories-clean-all-modal" title="删除全量库存明细" hide-footer>
+      <b-form @submit="onCleanAllInventories" @reset="onCancelCleanAllInventories">
+        <b-form-group
+          label="管理员账号"
+          label-size="sm"
+          label-align-sm="right"
+          label-cols-sm="3"
+        >
+          <b-form-input v-model="adminUsr"></b-form-input>
+        </b-form-group>
+        <b-form-group
+          label="管理员密码"
+          label-size="sm"
+          label-align-sm="right"
+          label-cols-sm="3"
+        >
+          <b-form-input v-model="adminPwd" type="password"></b-form-input>
+        </b-form-group>
+        <br/>
+        <div id="inventory-table-operate-btn" class="w-100 d-block">
+          <b-button type="submit" variant="dark">删除</b-button>
           <b-button type="reset" variant="dark">取消</b-button>
         </div>
       </b-form>
@@ -957,6 +983,8 @@ export default {
     return {
       serverBaseURL: process.env.SERVER_BASE_URL,
       dateReg: /^20[2-3][0-9]-(0[1-9]|1[0-2])$/,
+      adminUsr: '',
+      adminPwd: '',
       customDateSelection: '',
       stDateSelectionForCase1: '',
       stDateSelection: '',
@@ -1247,6 +1275,55 @@ export default {
       this.$refs.importCSVFileModal.hide()
       this.setDefaultDate()
       this.uploadCSVFile = null
+    },
+    cleanAllInventoriesClose () {
+      this.$refs.processingModal.hide()
+      this.inventories = []
+      this.inventoriesNum = 0
+      this.inventoriesTotal = 0
+      this.pageJump = 1
+      this.pageCurr = 0
+      this.pageTotal = 0
+      this.pageOffset = 0
+      this.pageOffsetMax = 0
+      this.adminUsr = ''
+      this.adminPwd = ''
+    },
+    cleanAllInventories (payload) {
+      axios.post(this.serverBaseURL + '/api/v1/inventories/clean', payload)
+        .then((res) => {
+          if (res.data.status === 'success') {
+            this.message = '删除成功！'
+            this.showMessage = true
+          } else if (res.data.status === 'invalid input data') {
+            this.message = '删除失败，管理员账号或密码错误！'
+            this.showMessage = true
+          }
+          this.cleanAllInventoriesClose()
+        })
+        .catch((error) => {
+          // eslint-disable-next-line
+          console.log(error)
+          this.message = '导入失败!'
+          this.showMessage = true
+          this.cleanAllInventoriesClose()
+        })
+    },
+    onCleanAllInventories (evt) {
+      evt.preventDefault()
+      this.$refs.CleanAllInventoriesModal.hide()
+      this.$refs.processingModal.show()
+      const payload = {
+        admin_usr: this.adminUsr,
+        admin_pwd: this.adminPwd
+      }
+      this.cleanAllInventories(payload)
+    },
+    onCancelCleanAllInventories (evt) {
+      evt.preventDefault()
+      this.$refs.CleanAllInventoriesModal.hide()
+      this.adminUsr = ''
+      this.adminPwd = ''
     },
     // ------------------------------ 销售报表（按分类汇总） ------------------------------
     onCustomizeCase1 (evt) {

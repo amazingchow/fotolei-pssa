@@ -372,6 +372,65 @@ CREATE TABLE IF NOT EXISTS ggfilm.product_summary (
         return jsonify(response_object)
 
 
+# 删除所有库存条目的接口
+@ggfilm_server.route("/api/v1/inventories/clean", methods=["POST"])
+def clean_all_inventories():
+    payload = request.get_json()
+    admin_usr = payload.get("admin_usr", "").strip()
+    admin_pwd = payload.get("admin_pwd", "").strip()
+    if admin_usr == "fotolei" and admin_pwd == "asdf5678":
+        stmt = "DROP TABLE IF EXISTS ggfilm.inventories;"
+        DBConnector.drop_table(stmt)
+        stmt = "DROP TABLE IF EXISTS ggfilm.inventory_summary;"
+        DBConnector.drop_table(stmt)
+        stmt = '''
+CREATE TABLE IF NOT EXISTS ggfilm.inventories (
+    id                         INT        NOT NULL AUTO_INCREMENT,
+    product_code               VARCHAR(64)   NOT NULL, /* 商品编码 */
+    product_name               VARCHAR(128)  NOT NULL, /* 商品名称 */
+    specification_code         VARCHAR(64)   NOT NULL, /* 规格编码 */
+    specification_name         VARCHAR(128),           /* 规格名称 */
+    st_inventory_qty           INT,                    /* 起始库存数量 */
+    st_inventory_total         INT,                    /* 起始库存总额 */
+    purchase_qty               INT,                    /* 采购数量 */
+    purchase_total             INT,                    /* 采购总额 */
+    purchase_then_return_qty   INT,                    /* 采购退货数量 */
+    purchase_then_return_total INT,                    /* 采购退货总额 */
+    sale_qty                   INT,                    /* 销售数量 */
+    sale_total                 INT,                    /* 销售总额 */
+    sale_then_return_qty       INT,                    /* 销售退货数量 */
+    sale_then_return_total     INT,                    /* 销售退货总额 */
+    others_qty                 INT,                    /* 其他变更数量 */
+    others_total               INT,                    /* 其他变更总额 */
+    ed_inventory_qty           INT,                    /* 截止库存数量 */
+    ed_inventory_total         INT,                    /* 截止库存总额 */
+    create_time                VARCHAR(10),            /* 年月的格式 */
+    sale_unit_price            FLOAT,                  /* 销售单价 */
+    PRIMARY KEY (id),
+    KEY (product_code, specification_code)
+) ENGINE=InnoDB;
+'''
+        DBConnector.create_table(stmt)
+        stmt = '''
+CREATE TABLE IF NOT EXISTS ggfilm.inventory_summary (
+    id          INT      NOT NULL AUTO_INCREMENT,
+    total       INT      NOT NULL,
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP(),
+    PRIMARY KEY (id)
+) ENGINE=InnoDB;
+'''
+        DBConnector.create_table(stmt)
+        if platform.system() == "Linux":
+            os.remove("./tmp/inventories_load_file_repetition_lookup_table")
+        else:
+            os.remove("./tmp/inventories_load_file_repetition_lookup_table.db")
+        response_object = {"status": "success"}
+        return jsonify(response_object)
+    else:
+        response_object = {"status": "invalid input data"}
+        return jsonify(response_object)
+
+
 # 获取一条商品条目的接口
 @ggfilm_server.route("/api/v1/products/one", methods=["GET"])
 def pick_one_product():
@@ -1742,9 +1801,9 @@ def do_intelligent_calibration_for_input_products(csv_file: str):
                         new_row[i] = ""
                 if new_row[8] != "在用" and new_row[8] != "停用":
                     if len(new_row[8]) == 0 or new_row[8] == "0":
-                        new_row[8] == "停用"
+                        new_row[8] = "停用"
                     elif new_row[8] == "1":
-                        new_row[8] == "在用"
+                        new_row[8] = "在用"
                     else:
                         is_valid = False
                         err_msg = "'STOP状态'数据存在非法输入，出现在第{}行。".format(line + 1)
@@ -1752,9 +1811,9 @@ def do_intelligent_calibration_for_input_products(csv_file: str):
                         break
                 if new_row[13] != "是" and new_row[13] != "否":
                     if len(new_row[13]) == 0 or new_row[13] == "0":
-                        new_row[13] == "否"
+                        new_row[13] = "否"
                     elif new_row[13] == "1":
-                        new_row[13] == "是"
+                        new_row[13] = "是"
                     else:
                         is_valid = False
                         err_msg = "'组合商品'数据存在非法输入，出现在第{}行。".format(line + 1)
@@ -1762,9 +1821,9 @@ def do_intelligent_calibration_for_input_products(csv_file: str):
                         break
                 if new_row[14] != "参与" and new_row[14] != "不参与":
                     if len(new_row[14]) == 0 or new_row[14] == "0":
-                        new_row[14] == "不参与"
+                        new_row[14] = "不参与"
                     elif new_row[14] == "1":
-                        new_row[14] == "参与"
+                        new_row[14] = "参与"
                     else:
                         is_valid = False
                         err_msg = "'参与统计'数据存在非法输入，出现在第{}行。".format(line + 1)
@@ -1772,51 +1831,51 @@ def do_intelligent_calibration_for_input_products(csv_file: str):
                         break
                 if new_row[15] != "进口品" and new_row[15] != "非进口品":
                     if len(new_row[15]) == 0 or new_row[15] == "0":
-                        new_row[15] == "非进口品"
+                        new_row[15] = "非进口品"
                     elif new_row[15] == "1":
-                        new_row[15] == "进口品"
+                        new_row[15] = "进口品"
                     else:
                         is_valid = False
                         err_msg = "'进口商品'数据存在非法输入，出现在第{}行。".format(line + 1)
                         logger.error("invalid '进口商品': {}".format(new_row[15]))
                         break
                 if len(new_row[9]) == 0:
-                    new_row[9] == "0"
+                    new_row[9] = "0"
                 elif RE_INT_AND_FLOAT.match(new_row[9]) is None:
                     is_valid = False
                     err_msg = "'重量'数据存在非法输入，出现在第{}行。".format(line + 1)
                     logger.error("invalid '重量': {}".format(new_row[9]))
                     break
                 if len(new_row[10]) == 0:
-                    new_row[10] == "0"
+                    new_row[10] = "0"
                 elif RE_INT_AND_FLOAT.match(new_row[10]) is None:
                     is_valid = False
                     err_msg = "'长度'数据存在非法输入，出现在第{}行。".format(line + 1)
                     logger.error("invalid '长度': {}".format(new_row[10]))
                     break
                 if len(new_row[11]) == 0:
-                    new_row[11] == "0"
+                    new_row[11] = "0"
                 elif RE_INT_AND_FLOAT.match(new_row[11]) is None:
                     is_valid = False
                     err_msg = "'宽度'数据存在非法输入，出现在第{}行。".format(line + 1)
                     logger.error("invalid '宽度': {}".format(new_row[11]))
                     break
                 if len(new_row[12]) == 0:
-                    new_row[12] == "0"
+                    new_row[12] = "0"
                 elif RE_INT_AND_FLOAT.match(new_row[12]) is None:
                     is_valid = False
                     err_msg = "'高度'数据存在非法输入，出现在第{}行。".format(line + 1)
                     logger.error("invalid '高度': {}".format(new_row[12]))
                     break
                 if len(new_row[18]) == 0:
-                    new_row[18] == "0"
+                    new_row[18] = "0"
                 elif RE_INT.match(new_row[18]) is None:
                     is_valid = False
                     err_msg = "'实时可用库存'数据存在非法输入，出现在第{}行。".format(line + 1)
                     logger.error("invalid '实时可用库存': {}".format(new_row[18]))
                     break
                 if len(new_row[19]) == 0:
-                    new_row[19] == "1"
+                    new_row[19] = "1"
                 elif RE_POSITIVE_INT.match(new_row[19]) is None:
                     is_valid = False
                     err_msg = "'最小订货单元'数据存在非法输入，出现在第{}行。".format(line + 1)
@@ -1876,105 +1935,105 @@ def do_intelligent_calibration_for_input_inventories(csv_file: str):
             csv_writer.writerow(row)
         else:
             if len(row[4]) == 0:
-                row[4] == "0"
+                row[4] = "0"
             elif RE_INT.match(row[4]) is None:
                 is_valid = False
                 err_msg = "'起始库存数量'数据存在非法输入，出现在第{}行。".format(line + 1)
                 logger.error("invalid '起始库存数量': {}".format(row[4]))
                 break
             if len(row[5]) == 0:
-                row[5] == "0"
+                row[5] = "0"
             elif RE_INT_AND_FLOAT.match(row[5]) is None:
                 is_valid = False
                 err_msg = "'起始库存总额'数据存在非法输入，出现在第{}行。".format(line + 1)
                 logger.error("invalid '起始库存总额': {}".format(row[5]))
                 break
             if len(row[6]) == 0:
-                row[6] == "0"
+                row[6] = "0"
             elif RE_INT.match(row[6]) is None:
                 is_valid = False
                 err_msg = "'采购数量'数据存在非法输入，出现在第{}行。".format(line + 1)
                 logger.error("invalid '采购数量': {}".format(row[6]))
                 break
             if len(row[7]) == 0:
-                row[7] == "0"
+                row[7] = "0"
             elif RE_INT_AND_FLOAT.match(row[7]) is None:
                 is_valid = False
                 err_msg = "'采购总额'数据存在非法输入，出现在第{}行。".format(line + 1)
                 logger.error("invalid '采购总额': {}".format(row[7]))
                 break
             if len(row[8]) == 0:
-                row[8] == "0"
+                row[8] = "0"
             elif RE_INT.match(row[8]) is None:
                 is_valid = False
                 err_msg = "'采购退货数量'数据存在非法输入，出现在第{}行。".format(line + 1)
                 logger.error("invalid '采购退货数量': {}".format(row[8]))
                 break
             if len(row[9]) == 0:
-                row[9] == "0"
+                row[9] = "0"
             elif RE_INT_AND_FLOAT.match(row[9]) is None:
                 is_valid = False
                 err_msg = "'采购退货总额'数据存在非法输入，出现在第{}行。".format(line + 1)
                 logger.error("invalid '采购退货总额': {}".format(row[9]))
                 break
             if len(row[10]) == 0:
-                row[10] == "0"
+                row[10] = "0"
             elif RE_INT.match(row[10]) is None:
                 is_valid = False
                 err_msg = "'销售数量'数据存在非法输入，出现在第{}行。".format(line + 1)
                 logger.error("invalid '销售数量': {}".format(row[10]))
                 break
             if len(row[11]) == 0:
-                row[11] == "0"
+                row[11] = "0"
             elif RE_INT_AND_FLOAT.match(row[11]) is None:
                 is_valid = False
                 err_msg = "'销售总额'数据存在非法输入，出现在第{}行。".format(line + 1)
                 logger.error("invalid '销售总额': {}".format(row[11]))
                 break
             if len(row[12]) == 0:
-                row[12] == "0"
+                row[12] = "0"
             elif RE_INT.match(row[12]) is None:
                 is_valid = False
                 err_msg = "'销售退货数量'数据存在非法输入，出现在第{}行。".format(line + 1)
                 logger.error("invalid '销售退货数量': {}".format(row[12]))
                 break
             if len(row[13]) == 0:
-                row[13] == "0"
+                row[13] = "0"
             elif RE_INT_AND_FLOAT.match(row[13]) is None:
                 is_valid = False
                 err_msg = "'销售退货总额'数据存在非法输入，出现在第{}行。".format(line + 1)
                 logger.error("invalid '销售退货总额': {}".format(row[13]))
                 break
             if len(row[14]) == 0:
-                row[14] == "0"
+                row[14] = "0"
             elif RE_INT.match(row[14]) is None:
                 is_valid = False
                 err_msg = "'其他变更数量'数据存在非法输入，出现在第{}行。".format(line + 1)
                 logger.error("invalid '其他变更数量': {}".format(row[14]))
                 break
             if len(row[15]) == 0:
-                row[15] == "0"
+                row[15] = "0"
             elif RE_INT_AND_FLOAT.match(row[15]) is None:
                 is_valid = False
                 err_msg = "'其他变更总额'数据存在非法输入，出现在第{}行。".format(line + 1)
                 logger.error("invalid '其他变更总额': {}".format(row[15]))
                 break
             if len(row[16]) == 0:
-                row[16] == "0"
+                row[16] = "0"
             elif RE_INT.match(row[16]) is None:
                 is_valid = False
                 err_msg = "'截止库存数量'数据存在非法输入，出现在第{}行。".format(line + 1)
                 logger.error("invalid '截止库存数量': {}".format(row[16]))
                 break
             if len(row[17]) == 0:
-                row[17] == "0"
+                row[17] = "0"
             elif RE_INT_AND_FLOAT.match(row[17]) is None:
                 is_valid = False
                 err_msg = "'截止库存总额'数据存在非法输入，出现在第{}行。".format(line + 1)
                 logger.error("invalid '截止库存总额': {}".format(row[17]))
                 break
             if len(row[18]) == 0:
-                row[18] == "0"
+                row[18] = "0"
             elif RE_INT_AND_FLOAT.match(row[18]) is None:
                 is_valid = False
                 err_msg = "'销售单价'数据存在非法输入，出现在第{}行。".format(line + 1)
