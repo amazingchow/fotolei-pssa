@@ -258,7 +258,7 @@ def upload_inventories():
                     "st_inventory_qty, st_inventory_total, purchase_qty, purchase_total, " +
                     "purchase_then_return_qty, purchase_then_return_total, sale_qty, sale_total, " +
                     "sale_then_return_qty, sale_then_return_total, others_qty, others_total, " +
-                    "ed_inventory_qty, ed_inventory_total, sale_unit_price);"
+                    "ed_inventory_qty, ed_inventory_total);"
                 )
 
                 with open(csv_file, "r", encoding='utf-8-sig') as fd:
@@ -414,7 +414,6 @@ CREATE TABLE IF NOT EXISTS ggfilm.inventories (
     ed_inventory_qty           INT,                    /* 截止库存数量 */
     ed_inventory_total         INT,                    /* 截止库存总额 */
     create_time                VARCHAR(10),            /* 年月的格式 */
-    sale_unit_price            FLOAT,                  /* 销售单价 */
     PRIMARY KEY (id),
     KEY (product_code, specification_code)
 ) ENGINE=InnoDB;
@@ -586,7 +585,7 @@ def list_inventories():
 
     stmt = "SELECT specification_code, \
 st_inventory_qty, purchase_qty, purchase_then_return_qty, sale_qty, \
-sale_then_return_qty, others_qty, ed_inventory_qty, create_time, sale_unit_price \
+sale_then_return_qty, others_qty, ed_inventory_qty, create_time \
 FROM ggfilm.inventories ORDER BY create_time DESC LIMIT {}, {};".format(
         page_offset, page_limit)
     inventories = DBConnector.query(stmt)
@@ -2056,7 +2055,7 @@ def do_data_schema_validation_for_input_inventories(csv_file: str):
         "起始库存数量", "起始库存总额", "采购数量", "采购总额",
         "采购退货数量", "采购退货总额", "销售数量", "销售总额",
         "销售退货数量", "销售退货总额", "其他变更数量", "其他变更总额",
-        "截止库存数量", "截止库存总额", "销售单价",
+        "截止库存数量", "截止库存总额",
     ]
     is_valid = True
     with open(csv_file, "r", encoding='utf-8-sig') as fd:
@@ -2189,18 +2188,11 @@ def do_intelligent_calibration_for_input_inventories(csv_file: str):
                 err_msg = "'截止库存总额'数据存在非法输入，出现在第{}行。".format(line + 1)
                 logger.error("invalid '截止库存总额': {}".format(row[17]))
                 break
-            if len(row[18]) == 0:
-                row[18] = "0"
-            elif RE_INT_AND_FLOAT.match(row[18]) is None:
-                is_valid = False
-                err_msg = "'销售单价'数据存在非法输入，出现在第{}行。".format(line + 1)
-                logger.error("invalid '销售单价': {}".format(row[18]))
-                break
-            if len(row) < 19:
-                while len(row) < 19:
+            if len(row) < 18:
+                while len(row) < 18:
                     row.append("0")
-            elif len(row) > 19:
-                row = row[:19]
+            elif len(row) > 18:
+                row = row[:18]
             csv_writer.writerow(row)
         line += 1
     fw.close()
