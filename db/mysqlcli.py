@@ -144,7 +144,17 @@ class MySQLConnector():
             cnx.close()
 
     def delete(self, stmt:str):
-        pass
+        cnx = self.cnxpool.get_connection()
+        cur = cnx.cursor()
+        try:
+            cur.execute(stmt)
+            cnx.commit()
+        except mysql.connector.Error as err:
+            cnx.rollback()
+            logger.error("DELETE err: {}".format(err))
+        finally:
+            cur.close()
+            cnx.close()
 
     def create_table(self, stmt:str):
         cnx = self.cnxpool.get_connection()

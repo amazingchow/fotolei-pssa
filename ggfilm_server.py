@@ -320,7 +320,7 @@ FROM ggfilm.products ORDER BY specification_code LIMIT {}, {};".format(
 
 
 # 删除所有商品条目的接口
-@ggfilm_server.route("/api/v1/products/clean", methods=["POST"])
+@ggfilm_server.route("/api/v1/products/all/clean", methods=["POST"])
 @cost_count
 def clean_all_products():
     payload = request.get_json()
@@ -373,6 +373,24 @@ CREATE TABLE IF NOT EXISTS ggfilm.product_summary (
         else:
             os.remove("./tmp/products_load_file_repetition_lookup_table.db")
         SKU_LOOKUP_TABLE.clear()
+        response_object = {"status": "success"}
+        return jsonify(response_object)
+    else:
+        response_object = {"status": "invalid input data"}
+        return jsonify(response_object)
+
+
+# 删除单条商品条目的接口
+@ggfilm_server.route("/api/v1/products/one/clean", methods=["POST"])
+@cost_count
+def clean_one_product():
+    payload = request.get_json()
+    admin_usr = payload.get("admin_usr", "").strip()
+    admin_pwd = payload.get("admin_pwd", "").strip()
+    specification_code = payload.get("specification_code", "").strip()
+    if admin_usr == "fotolei" and admin_pwd == "asdf5678":
+        stmt = "DELETE FROM ggfilm.products WHERE specification_code = '{}';".format(specification_code)
+        DBConnector.delete(stmt)
         response_object = {"status": "success"}
         return jsonify(response_object)
     else:
@@ -448,11 +466,7 @@ def pick_one_product():
         response_object = {"status": "not found"}
         return response_object
 
-    stmt = "SELECT product_code, product_name, specification_name, \
-brand, classification_1, classification_2, product_series, stop_status, \
-product_weight, product_length, product_width, product_height, \
-is_combined, be_aggregated, is_import, supplier_name, purchase_name, jit_inventory, moq \
-FROM ggfilm.products WHERE specification_code = '{}';".format(specification_code)
+    stmt = "SELECT * FROM ggfilm.products WHERE specification_code = '{}';".format(specification_code)
     products = DBConnector.query(stmt)
 
     response_object = {"status": "success"}
@@ -460,25 +474,26 @@ FROM ggfilm.products WHERE specification_code = '{}';".format(specification_code
         response_object["status"] = "not found"
     else:
         response_object["product"] = {
-            "product_code": products[0][0],
-            "product_name": products[0][1],
-            "specification_name": products[0][2],
-            "brand": products[0][3],
-            "classification_1": products[0][4],
-            "classification_2": products[0][5],
-            "product_series": products[0][6],
-            "stop_status": products[0][7],
-            "product_weight": "{}".format(products[0][8]),
-            "product_length": "{}".format(products[0][9]),
-            "product_width": "{}".format(products[0][10]),
-            "product_height": "{}".format(products[0][11]),
-            "is_combined": products[0][12],
-            "be_aggregated": products[0][13],
-            "is_import": products[0][14],
-            "supplier_name": products[0][15],
-            "purchase_name": products[0][16],
-            "jit_inventory": "{}".format(products[0][17]),
-            "moq": "{}".format(products[0][18]),
+            "id": products[0][0],
+            "product_code": products[0][1],
+            "product_name": products[0][2],
+            "specification_name": products[0][4],
+            "brand": products[0][5],
+            "classification_1": products[0][6],
+            "classification_2": products[0][7],
+            "product_series": products[0][8],
+            "stop_status": products[0][9],
+            "product_weight": "{}".format(products[0][10]),
+            "product_length": "{}".format(products[0][11]),
+            "product_width": "{}".format(products[0][12]),
+            "product_height": "{}".format(products[0][13]),
+            "is_combined": products[0][14],
+            "be_aggregated": products[0][15],
+            "is_import": products[0][16],
+            "supplier_name": products[0][17],
+            "purchase_name": products[0][18],
+            "jit_inventory": "{}".format(products[0][19]),
+            "moq": "{}".format(products[0][20]),
         }
     return jsonify(response_object)
 
@@ -488,12 +503,9 @@ FROM ggfilm.products WHERE specification_code = '{}';".format(specification_code
 @cost_count
 def update_one_product():
     payload = request.get_json()
+    id = payload["id"]
 
     specification_code = payload.get("specification_code", "").strip()
-    if not SKU_LOOKUP_TABLE.get(specification_code, False):
-        response_object = {"status": "not found"}
-        return response_object
-
     product_code = payload.get("product_code", "").strip()
     product_name = payload.get("product_name", "").strip()
     specification_name = payload.get("specification_name", "").strip()
@@ -516,6 +528,8 @@ def update_one_product():
 
     stmt = "UPDATE ggfilm.products SET "
     updates = []
+    if len(specification_code) > 0:
+        updates.append("specification_code = '{}'".format(specification_code))
     if len(product_code) > 0:
         updates.append("product_code = '{}'".format(product_code))
     if len(product_name) > 0:
@@ -555,7 +569,7 @@ def update_one_product():
     if len(moq) > 0:
         updates.append("moq = '{}'".format(moq))
     stmt += ", ".join(updates)
-    stmt += " WHERE specification_code = '{}';".format(specification_code)
+    stmt += " WHERE id = '{}';".format(id)
     DBConnector.update(stmt)
 
     response_object = {"status": "success"}

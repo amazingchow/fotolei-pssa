@@ -18,8 +18,9 @@
         <alert :message=message v-if="showMessage"></alert>
         <div id="import-and-export-btn-area">
           <button type="button" class="btn btn-secondary btn-sm" v-b-modal.product-csv-file-modal>导入商品明细</button>
+          <button type="button" class="btn btn-secondary btn-sm" v-b-modal.products-clean-all-modal>删除全量商品明细</button>
+          <button type="button" class="btn btn-secondary btn-sm" v-b-modal.product-clean-one-modal>删除单条商品明细</button>
           <button type="button" class="btn btn-secondary btn-sm" v-b-modal.jit-inventory-csv-file-modal>导入即时库存</button>
-          <button type="button" class="btn btn-secondary btn-sm" v-b-modal.products-clean-all-modal>删除商品明细</button>
           <button type="button" class="btn btn-secondary btn-sm" v-b-modal.update-one-product-modal>更新商品明细</button>
         </div>
         <b-table-simple striped hover small id="product-table">
@@ -136,6 +137,39 @@
         </div>
       </b-form>
     </b-modal>
+    <b-modal ref="CleanOneProductModal" id="product-clean-one-modal" title="删除单条商品明细" hide-footer>
+      <b-form @submit="onCleanOneProduct" @reset="onCancelCleanOneProduct">
+        <b-form-group
+          label="管理员账号"
+          label-size="sm"
+          label-align-sm="right"
+          label-cols-sm="3"
+        >
+          <b-form-input v-model="adminUsr"></b-form-input>
+        </b-form-group>
+        <b-form-group
+          label="管理员密码"
+          label-size="sm"
+          label-align-sm="right"
+          label-cols-sm="3"
+        >
+          <b-form-input v-model="adminPwd" type="password"></b-form-input>
+        </b-form-group>
+        <b-form-group
+          label="规格编码"
+          label-size="sm"
+          label-align-sm="right"
+          label-cols-sm="3"
+        >
+          <b-form-input v-model="specificationCode"></b-form-input>
+        </b-form-group>
+        <br/>
+        <div id="product-table-operate-btn" class="w-100 d-block">
+          <b-button type="submit" variant="dark">删除</b-button>
+          <b-button type="reset" variant="dark">取消</b-button>
+        </div>
+      </b-form>
+    </b-modal>
     <b-modal ref="updateOneProductModal" id="update-one-product-modal" title="更新某一条商品明细" hide-footer>
       <b-form>
         <b-form-group
@@ -146,7 +180,9 @@
         >
           <b-form-input v-model="updateProduct.specificationCode"></b-form-input>
         </b-form-group>
-        <b-form-text>Tips：通过规格编码加载已有条目，再按需修改条目数据</b-form-text>
+        <b-form-text>提示1：通过规格编码加载已有商品条目，再按需修改条目</b-form-text>
+        <b-form-text>提示2：不要直接修改规格编码，先删除该商品条目，再重新导入来更新规格编码</b-form-text>
+        <hr/>
         <b-form-group
           label="商品编码"
           label-size="sm"
@@ -399,7 +435,9 @@ export default {
       uploadJITInventoryCSVFile: null,
       adminUsr: '',
       adminPwd: '',
+      specificationCode: '',
       updateProduct: {
+        id: '',
         specificationCode: '',
         productCode: '',
         productName: '',
@@ -558,7 +596,7 @@ export default {
       this.adminPwd = ''
     },
     cleanAllProducts (payload) {
-      axios.post(this.serverBaseURL + '/api/v1/products/clean', payload)
+      axios.post(this.serverBaseURL + '/api/v1/products/all/clean', payload)
         .then((res) => {
           if (res.data.status === 'success') {
             this.message = '删除成功！'
@@ -577,6 +615,32 @@ export default {
           this.cleanAllProductsClose()
         })
     },
+    cleanOneProductClose () {
+      this.$refs.processingModal.hide()
+      this.adminUsr = ''
+      this.adminPwd = ''
+      this.specificationCode = ''
+    },
+    cleanOneProduct (payload) {
+      axios.post(this.serverBaseURL + '/api/v1/products/one/clean', payload)
+        .then((res) => {
+          if (res.data.status === 'success') {
+            this.message = '删除成功！'
+            this.showMessage = true
+          } else if (res.data.status === 'invalid input data') {
+            this.message = '删除失败，管理员账号或密码错误！'
+            this.showMessage = true
+          }
+          this.cleanOneProductClose()
+        })
+        .catch((error) => {
+          // eslint-disable-next-line
+          console.log(error)
+          this.message = '导入失败!'
+          this.showMessage = true
+          this.cleanOneProductClose()
+        })
+    },
     loadOldProductDataClose () {
       this.$refs.processingModal.hide()
     },
@@ -584,6 +648,7 @@ export default {
       axios.get(this.serverBaseURL + '/api/v1/products/one?specification_code=' + specificationCode)
         .then((res) => {
           if (res.data.status === 'success') {
+            this.updateProduct.id = res.data.product.id
             this.updateProduct.productCode = res.data.product.product_code
             this.updateProduct.productName = res.data.product.product_name
             this.updateProduct.specificationName = res.data.product.specification_name
@@ -621,6 +686,7 @@ export default {
     },
     updateNewProductDataClose () {
       this.$refs.processingModal.hide()
+      this.updateProduct.id = ''
       this.updateProduct.specificationCode = ''
       this.updateProduct.productCode = ''
       this.updateProduct.productName = ''
@@ -764,6 +830,7 @@ export default {
       this.$refs.updateOneProductModal.hide()
       this.$refs.processingModal.show()
       const payload = {
+        id: this.updateProduct.id,
         specification_code: this.updateProduct.specificationCode,
         product_code: this.updateProduct.productCode,
         product_name: this.updateProduct.productName,
@@ -810,6 +877,24 @@ export default {
       this.updateProduct.purchaseName = ''
       this.updateProduct.jitInventory = ''
       this.updateProduct.moq = ''
+    },
+    onCleanOneProduct (evt) {
+      evt.preventDefault()
+      this.$refs.CleanOneProductModal.hide()
+      this.$refs.processingModal.show()
+      const payload = {
+        admin_usr: this.adminUsr,
+        admin_pwd: this.adminPwd,
+        specification_code: this.specificationCode
+      }
+      this.cleanOneProduct(payload)
+    },
+    onCancelCleanOneProduct (evt) {
+      evt.preventDefault()
+      this.$refs.CleanOneProductModal.hide()
+      this.adminUsr = ''
+      this.adminPwd = ''
+      this.specificationCode = ''
     },
     onDownloadAddedSKUs (evt) {
       evt.preventDefault()
