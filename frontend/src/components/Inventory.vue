@@ -784,7 +784,7 @@
       <b-table-simple striped hover small id="preview-table">
         <b-thead>
           <b-tr>
-            <b-th scope="col">商品编码</b-th>
+            <b-th scope="col">规格编码</b-th>
             <b-th scope="col">品牌</b-th>
             <b-th scope="col">商品名称</b-th>
             <b-th scope="col">规格名称</b-th>
@@ -805,7 +805,7 @@
         </b-thead>
         <b-tbody>
           <b-tr v-for="(item, index) in previewCase5.previewTable" :key="index">
-            <b-td>{{ item.product_code }}</b-td>
+            <b-td>{{ item.specification_code }}</b-td>
             <b-td>{{ item.brand }}</b-td>
             <b-td>{{ item.product_name }}</b-td>
             <b-td>{{ item.specification_name }}</b-td>

@@ -1488,7 +1488,7 @@ def prepare_report_file_case4():
 '''
 预览效果
 
-商品编码 | 品牌 | 商品名称 | 规格名称 | 供应商 | X个月销量 | Y个月销量 | 库存量 | 库存/X个月销量 | 库存/Y个月销量 |
+规格编码 | 品牌 | 商品名称 | 规格名称 | 供应商 | X个月销量 | Y个月销量 | 库存量 | 库存/X个月销量 | 库存/Y个月销量 |
 库存/X个月折算销量 | 库存/Y个月折算销量	| 拟定进货量 | 单个重量/g | 小计重量/kg | 单个体积/cm³ | 小计体积/m³
 '''
 
@@ -1514,7 +1514,7 @@ def preview_report_file_case5():
     stmt = ""
     if way == "1":
         if len(supplier_name) > 0:
-            stmt = "SELECT specification_code, product_code, brand, product_name, specification_name, supplier_name, \
+            stmt = "SELECT specification_code, brand, product_name, specification_name, supplier_name, \
 jit_inventory, product_weight, product_length, product_width, product_height, moq \
 FROM ggfilm.products WHERE supplier_name = '{}'".format(supplier_name)
             if stop_status != "全部":
@@ -1522,7 +1522,7 @@ FROM ggfilm.products WHERE supplier_name = '{}'".format(supplier_name)
             if be_aggregated != "全部":
                 stmt = "{} AND be_aggregated = '{}'".format(stmt, be_aggregated)
         else:
-            stmt = "SELECT specification_code, product_code, brand, product_name, specification_name, supplier_name, \
+            stmt = "SELECT specification_code, brand, product_name, specification_name, supplier_name, \
 jit_inventory, product_weight, product_length, product_width, product_height, moq \
 FROM ggfilm.products"
             if stop_status != "全部":
@@ -1534,11 +1534,11 @@ FROM ggfilm.products"
         stmt = "{};".format(stmt)
     elif way == "2":
         if len(supplier_name) > 0:
-            stmt = "SELECT specification_code, product_code, brand, product_name, specification_name, supplier_name, \
+            stmt = "SELECT specification_code, brand, product_name, specification_name, supplier_name, \
 jit_inventory, product_weight, product_length, product_width, product_height, moq \
 FROM ggfilm.products WHERE supplier_name = '{}';".format(supplier_name)
         else:
-            stmt = "SELECT specification_code, product_code, brand, product_name, specification_name, supplier_name, \
+            stmt = "SELECT specification_code, brand, product_name, specification_name, supplier_name, \
 jit_inventory, product_weight, product_length, product_width, product_height, moq \
 FROM ggfilm.products;"
 
@@ -1552,15 +1552,15 @@ FROM ggfilm.products;"
             specification_code = ret[0]
             specification_code_list.append(specification_code)
             cache[specification_code] = {}
-            cache[specification_code]["product_code"] = ret[1]
-            cache[specification_code]["brand"] = ret[2]
-            cache[specification_code]["product_name"] = ret[3]
-            cache[specification_code]["specification_name"] = ret[4]
-            cache[specification_code]["supplier_name"] = ret[5]
-            cache[specification_code]["inventory"] = ret[6]
-            cache[specification_code]["weight"] = ret[7]
-            cache[specification_code]["volume"] = ret[8] * ret[9] * ret[10]
-            cache[specification_code]["moq"] = ret[11]
+            cache[specification_code]["specification_code"] = specification_code
+            cache[specification_code]["brand"] = ret[1]
+            cache[specification_code]["product_name"] = ret[2]
+            cache[specification_code]["specification_name"] = ret[3]
+            cache[specification_code]["supplier_name"] = ret[4]
+            cache[specification_code]["inventory"] = ret[5]
+            cache[specification_code]["weight"] = ret[6]
+            cache[specification_code]["volume"] = ret[7] * ret[8] * ret[9]
+            cache[specification_code]["moq"] = ret[10]
     if len(specification_code_list) > 0:
         for specification_code in specification_code_list:
             # TODO: 先不考虑进销存条目不足指定月数的情况
@@ -1710,7 +1710,7 @@ def prepare_report_file_case5():
     with open(csv_file, "w", encoding='utf-8-sig') as fd:
         csv_writer = csv.writer(fd, delimiter=",")
         csv_writer.writerow([
-            "商品编码", "品牌", "商品名称", "规格名称", "供应商",
+            "规格编码", "品牌", "商品名称", "规格名称", "供应商",
             "{}个月销量".format(time_quantum_x), "{}个月折算销量".format(time_quantum_x),
             "{}个月销量".format(time_quantum_y), "{}个月折算销量".format(time_quantum_y),
             "库存量", "库存/{}个月销量".format(time_quantum_x),
@@ -1719,7 +1719,7 @@ def prepare_report_file_case5():
         ])
         for item in preview_table:
             csv_writer.writerow([
-                item["product_code"], item["brand"], item["product_name"], item["specification_name"], item["supplier_name"],
+                item["specification_code"], item["brand"], item["product_name"], item["specification_name"], item["supplier_name"],
                 item["sale_qty_x_months"], item["reduced_sale_qty_x_months"], item["sale_qty_y_months"], item["reduced_sale_qty_y_months"],
                 item["inventory"], item["inventory_divided_by_sale_qty_x_months"], item["inventory_divided_by_sale_qty_y_months"], item["projected_purchase"],
                 item["weight"], item["weight_total"], item["volume"], item["volume_total"],
