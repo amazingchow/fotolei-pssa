@@ -217,7 +217,7 @@
           label-align-sm="right"
           label-cols-sm="3"
         >
-          <b-form-input v-model="updateProduct.productWeight"></b-form-input>
+          <b-form-input v-model="updateProduct.productWeight" type="number"></b-form-input>
         </b-form-group>
         <b-form-group
           label="长度/cm"
@@ -225,7 +225,7 @@
           label-align-sm="right"
           label-cols-sm="3"
         >
-          <b-form-input v-model="updateProduct.productLength"></b-form-input>
+          <b-form-input v-model="updateProduct.productLength" type="number"></b-form-input>
         </b-form-group>
         <b-form-group
           label="宽度/cm"
@@ -233,7 +233,7 @@
           label-align-sm="right"
           label-cols-sm="3"
         >
-          <b-form-input v-model="updateProduct.productWidth"></b-form-input>
+          <b-form-input v-model="updateProduct.productWidth" type="number"></b-form-input>
         </b-form-group>
         <b-form-group
           label="高度/cm"
@@ -241,7 +241,7 @@
           label-align-sm="right"
           label-cols-sm="3"
         >
-          <b-form-input v-model="updateProduct.productHeight"></b-form-input>
+          <b-form-input v-model="updateProduct.productHeight" type="number"></b-form-input>
         </b-form-group>
         <b-form-group
           label="组合商品"
@@ -289,7 +289,7 @@
           label-align-sm="right"
           label-cols-sm="3"
         >
-          <b-form-input v-model="updateProduct.jitInventory"></b-form-input>
+          <b-form-input v-model="updateProduct.jitInventory" type="number"></b-form-input>
         </b-form-group>
         <b-form-group
           label="最小订货单元"
@@ -297,7 +297,7 @@
           label-align-sm="right"
           label-cols-sm="3"
         >
-          <b-form-input v-model="updateProduct.moq"></b-form-input>
+          <b-form-input v-model="updateProduct.moq" type="number"></b-form-input>
         </b-form-group>
         <br/>
         <div id="product-table-operate-btn" class="w-100 d-block">
@@ -657,7 +657,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '下载失败!'
+          this.message = '更新失败!'
           this.showMessage = true
           this.updateNewProductDataClose()
         })

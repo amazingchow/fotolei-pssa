@@ -1,5 +1,21 @@
 # -*- coding: utf-8 -*-
 import hashlib
+import logging
+import time
+from functools import wraps
+
+logging.basicConfig(level=logging.INFO, format="[%(asctime)s][%(levelname)s] %(message)s")
+logger = logging.getLogger("FlaskApp")
+
+
+def cost_count(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        start = time.time()
+        t = func(*args, **kwargs)
+        logger.info("%s tooks time: %f secs", func.__name__, time.time()-start)
+        return t
+    return wrapper
 
 
 def generate_file_digest(f: str):

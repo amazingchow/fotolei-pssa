@@ -59,7 +59,6 @@
               <b-th scope="col">销售退货数量</b-th>
               <b-th scope="col">其他变更数量</b-th>
               <b-th scope="col">截止库存数量</b-th>
-              <b-th scope="col">销售单价</b-th>
             </b-tr>
           </b-thead>
           <b-tbody>
@@ -73,12 +72,11 @@
               <b-td>{{ inventory[5] }}</b-td>
               <b-td>{{ inventory[6] }}</b-td>
               <b-td>{{ inventory[7] }}</b-td>
-              <b-td>{{ inventory[9] }}</b-td>
             </b-tr>
           </b-tbody>
           <b-tfoot id="inventory-table-footer">
             <b-tr>
-              <b-td colspan="10" variant="secondary">总共录入<b>{{ inventoriesTotal }}</b>条记录，共计<b>{{ pageTotal }}</b>页，当前展示第<b>{{ pageCurr }}</b>页，共<b>{{ inventoriesNum }}</b>条记录</b-td>
+              <b-td colspan="9" variant="secondary">总共录入<b>{{ inventoriesTotal }}</b>条记录，共计<b>{{ pageTotal }}</b>页，当前展示第<b>{{ pageCurr }}</b>页，共<b>{{ inventoriesNum }}</b>条记录</b-td>
             </b-tr>
           </b-tfoot>
         </b-table-simple>
@@ -169,6 +167,21 @@
           </b-card>
         </b-form>
       </b-form>
+    </b-modal>
+    <b-modal ref="previewCase1Modal" title="预览销售报表（按分类汇总）" size="xl" hide-footer>
+      <b-table-simple striped hover small id="preview-table">
+        <b-tbody>
+          <b-tr v-for="(item, index) in previewCase1.previewTable" :key="index">
+            <b-td>{{ item[0] }}</b-td>
+            <b-td>{{ item[1] }}</b-td>
+            <b-td>{{ item[2] }}</b-td>
+          </b-tr>
+        </b-tbody>
+      </b-table-simple>
+      <div id="inventory-table-operate-btn" class="w-100 d-block">
+        <b-button variant="dark" @click="onExportCase1">下载报表</b-button>
+        <b-button variant="dark" @click="onCancelPreviewCase1">取消</b-button>
+      </div>
     </b-modal>
     <b-modal ref="customizeCase1Modal" id="customize-case1-modal" title="自定义销售报表（按分类汇总）样式" size="huge" hide-footer>
       <b-form>
@@ -290,7 +303,7 @@
         </b-form>
       </b-form>
     </b-modal>
-    <b-modal ref="previewCase2Modal" title="预览销售报表（按分类汇总）" size="huge" hide-footer>
+    <b-modal ref="previewCase2Modal" title="预览销售报表（按系列汇总）" size="huge" hide-footer>
       <b-table-simple striped hover small id="preview-table">
         <b-thead>
           <b-tr>
@@ -771,7 +784,7 @@
       <b-table-simple striped hover small id="preview-table">
         <b-thead>
           <b-tr>
-            <b-th scope="col">商品编码</b-th>
+            <b-th scope="col">规格编码</b-th>
             <b-th scope="col">品牌</b-th>
             <b-th scope="col">商品名称</b-th>
             <b-th scope="col">规格名称</b-th>
@@ -792,7 +805,7 @@
         </b-thead>
         <b-tbody>
           <b-tr v-for="(item, index) in previewCase5.previewTable" :key="index">
-            <b-td>{{ item.product_code }}</b-td>
+            <b-td>{{ item.specification_code }}</b-td>
             <b-td>{{ item.brand }}</b-td>
             <b-td>{{ item.product_name }}</b-td>
             <b-td>{{ item.specification_name }}</b-td>
@@ -1425,15 +1438,18 @@ export default {
       }
     },
     onCancelPreviewCase1 (evt) {
-
+      evt.preventDefault()
+      this.$refs.previewCase1Modal.hide()
     },
     onExportCase1 (evt) {
       evt.preventDefault()
+      this.$refs.previewCase1Modal.hide()
       this.$refs.exportFileCase1Modal.hide()
-      const payload = {}
-      this.exportReportFileCase1(payload)
-      // 恢复默认设置
-      this.initExportForm()
+      this.$refs.processingModal.show()
+      const payload = {
+        preview_table: this.previewCase1.previewTable
+      }
+      this.prepareExportReportFile('/api/v1/case1/prepare', payload)
     },
     onCancelExportCase1 (evt) {
       evt.preventDefault()
