@@ -555,22 +555,20 @@ export default {
       axios.post(this.serverBaseURL + '/api/v1/jitinventory/upload', formData, config)
         .then((res) => {
           if (res.data.status === 'success') {
-            if (res.data.added_skus.length > 0) {
-              this.message = '导入成功，同时有新增SKU'
-              this.showMessage = true
-              this.addedSkus = res.data.added_skus
-              this.shouldOpenSidebar = true
-            } else {
-              this.message = '导入成功!'
-              this.showMessage = true
-              this.listProducts()
-            }
+            this.message = '导入成功!'
+            this.showMessage = true
+            this.listProducts()
           } else if (res.data.status === 'invalid input data schema') {
             this.message = '导入失败！数据表格格式有变更，请人工复核！'
             this.showMessage = true
           } else if (res.data.status === 'invalid input data') {
             this.message = '导入失败！' + res.data.err_msg
             this.showMessage = true
+          } else if (res.data.status === 'failed') {
+            this.message = '导入失败，有新增SKU，请人工复核！'
+            this.showMessage = true
+            this.addedSkus = res.data.added_skus
+            this.shouldOpenSidebar = true
           }
           this.importJITInventoryCSVFileClose()
         })

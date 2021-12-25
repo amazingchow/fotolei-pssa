@@ -156,26 +156,24 @@ def upload_jit_inventory_data():
         line = 0
         for row in csv_reader:
             if line > 0:
-                line += 1
                 if not SKU_LOOKUP_TABLE.get(row[0], False):
                     not_inserted_sku_list.append(row[0])
                 else:
                     sku_inventory_tuple_list.append((row[1], row[0]))
             line += 1
+    if len(not_inserted_sku_list) > 0:
+        response_object = {"status": "failed"}
+        logger.info("There are {} SKUs not inserted".format(len(not_inserted_sku_list)))
+        # 新增sku，需要向用户展示
+        response_object["added_skus"] = not_inserted_sku_list
+        return jsonify(response_object)
 
     stmt = "UPDATE ggfilm.products SET jit_inventory = %s WHERE specification_code = %s;"
     DBConnector.batch_update(stmt, sku_inventory_tuple_list)
-
     stmt = "INSERT INTO ggfilm.operation_logs (oplog) VALUES (%s);"
     DBConnector.insert(stmt, ("导入{}".format(csv_files[0].filename),))
 
     response_object = {"status": "success"}
-    if len(not_inserted_sku_list) > 0:
-        logger.info("There are {} SKUs not inserted".format(len(not_inserted_sku_list)))
-        # 新增sku，需要向用户展示
-        response_object["added_skus"] = not_inserted_sku_list
-    else:
-        response_object["added_skus"] = []
     return jsonify(response_object)
 
 
