@@ -1190,10 +1190,10 @@ def preview_report_file_case3():
                 cache["product_width"] = inner_rets[0][12]
                 cache["product_height"] = inner_rets[0][13]
                 cache["is_combined"] = inner_rets[0][14]
-                cache["is_import"] = inner_rets[0][15]
-                cache["supplier_name"] = inner_rets[0][16]
-                cache["purchase_name"] = inner_rets[0][17]
-                cache["jit_inventory"] = inner_rets[0][18]
+                cache["is_import"] = inner_rets[0][16]
+                cache["supplier_name"] = inner_rets[0][17]
+                cache["purchase_name"] = inner_rets[0][18]
+                cache["jit_inventory"] = inner_rets[0][19]
 
                 resp["preview_table"].append(cache)
         if len(resp["preview_table"]) == 0:

@@ -76,7 +76,7 @@
           </b-tbody>
           <b-tfoot id="inventory-table-footer">
             <b-tr>
-              <b-td colspan="10" variant="secondary">总共录入<b>{{ inventoriesTotal }}</b>条记录，共计<b>{{ pageTotal }}</b>页，当前展示第<b>{{ pageCurr }}</b>页，共<b>{{ inventoriesNum }}</b>条记录</b-td>
+              <b-td colspan="9" variant="secondary">总共录入<b>{{ inventoriesTotal }}</b>条记录，共计<b>{{ pageTotal }}</b>页，当前展示第<b>{{ pageCurr }}</b>页，共<b>{{ inventoriesNum }}</b>条记录</b-td>
             </b-tr>
           </b-tfoot>
         </b-table-simple>
