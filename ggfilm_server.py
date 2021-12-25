@@ -468,17 +468,17 @@ FROM ggfilm.products WHERE specification_code = '{}';".format(specification_code
             "classification_2": products[0][5],
             "product_series": products[0][6],
             "stop_status": products[0][7],
-            "product_weight": products[0][8],
-            "product_length": products[0][9],
-            "product_width": products[0][10],
-            "product_height": products[0][11],
+            "product_weight": "{}".format(products[0][8]),
+            "product_length": "{}".format(products[0][9]),
+            "product_width": "{}".format(products[0][10]),
+            "product_height": "{}".format(products[0][11]),
             "is_combined": products[0][12],
             "be_aggregated": products[0][13],
             "is_import": products[0][14],
             "supplier_name": products[0][15],
             "purchase_name": products[0][16],
-            "jit_inventory": products[0][17],
-            "moq": products[0][18],
+            "jit_inventory": "{}".format(products[0][17]),
+            "moq": "{}".format(products[0][18]),
         }
     return jsonify(response_object)
 
@@ -501,18 +501,18 @@ def update_one_product():
     classification_1 = payload.get("classification_1", "").strip()
     classification_2 = payload.get("classification_2", "").strip()
     product_series = payload.get("product_series", "").strip()
-    stop_status = payload.get("stop_status", "在用").strip()
-    product_weight = payload.get("product_weight", 0)
-    product_length = payload.get("product_length", 0)
-    product_width = payload.get("product_width", 0)
-    product_height = payload.get("product_height", 0)
-    is_combined = payload.get("is_combined", "否").strip()
-    be_aggregated = payload.get("be_aggregated", "参与").strip()
-    is_import = payload.get("is_import", "非进口品").strip()
+    stop_status = payload.get("stop_status", "全部").strip()
+    product_weight = payload.get("product_weight", "")
+    product_length = payload.get("product_length", "")
+    product_width = payload.get("product_width", "")
+    product_height = payload.get("product_height", "")
+    is_combined = payload.get("is_combined", "全部").strip()
+    be_aggregated = payload.get("be_aggregated", "全部").strip()
+    is_import = payload.get("is_import", "全部").strip()
     supplier_name = payload.get("supplier_name", "").strip()
     purchase_name = payload.get("purchase_name", "").strip()
-    jit_inventory = payload.get("jit_inventory", 0)
-    moq = payload.get("moq", 0)
+    jit_inventory = payload.get("jit_inventory", "")
+    moq = payload.get("moq", "")
 
     stmt = "UPDATE ggfilm.products SET "
     updates = []
@@ -532,13 +532,13 @@ def update_one_product():
         updates.append("product_series = '{}'".format(product_series))
     if stop_status != '全部':
         updates.append("stop_status = '{}'".format(stop_status))
-    if product_weight > 0:
+    if len(product_weight) > 0:
         updates.append("product_weight = '{}'".format(product_weight))
-    if product_length > 0:
+    if len(product_length) > 0:
         updates.append("product_length = '{}'".format(product_length))
-    if product_width > 0:
+    if len(product_width) > 0:
         updates.append("product_width = '{}'".format(product_width))
-    if product_height > 0:
+    if len(product_height) > 0:
         updates.append("product_height = '{}'".format(product_height))
     if is_combined != '全部':
         updates.append("is_combined = '{}'".format(is_combined))
@@ -550,9 +550,9 @@ def update_one_product():
         updates.append("supplier_name = '{}'".format(supplier_name))
     if len(purchase_name) > 0:
         updates.append("purchase_name = '{}'".format(purchase_name))
-    if jit_inventory > 0:
+    if len(jit_inventory) > 0:
         updates.append("jit_inventory = '{}'".format(jit_inventory))
-    if moq > 0:
+    if len(moq) > 0:
         updates.append("moq = '{}'".format(moq))
     stmt += ", ".join(updates)
     stmt += " WHERE specification_code = '{}';".format(specification_code)
@@ -1211,10 +1211,10 @@ def preview_report_file_case3():
         classification_1 = payload.get("classification_1", "").strip()
         classification_2 = payload.get("classification_2", "").strip()
         product_series = payload.get("product_series", "").strip()
-        stop_status = payload.get("stop_status", "在用").strip()
-        is_combined = payload.get("is_combined", "否").strip()
-        be_aggregated = payload.get("be_aggregated", "参与").strip()
-        is_import = payload.get("is_import", "非进口品").strip()
+        stop_status = payload.get("stop_status", "全部").strip()
+        is_combined = payload.get("is_combined", "全部").strip()
+        be_aggregated = payload.get("be_aggregated", "全部").strip()
+        is_import = payload.get("is_import", "全部").strip()
         supplier_name = payload.get("supplier_name", "").strip()
 
         stmt = "SELECT specification_code FROM ggfilm.products WHERE "
@@ -1333,9 +1333,9 @@ def export_report_file_case4():
     classification_1 = payload.get("classification_1", "").strip()
     classification_2 = payload.get("classification_2", "").strip()
     product_series = payload.get("product_series", "").strip()
-    stop_status = payload.get("stop_status", "在用").strip()
-    is_combined = payload.get("is_combined", "否").strip()
-    be_aggregated = payload.get("be_aggregated", "参与").strip()
+    stop_status = payload.get("stop_status", "全部").strip()
+    is_combined = payload.get("is_combined", "全部").strip()
+    be_aggregated = payload.get("be_aggregated", "全部").strip()
     is_import = payload.get("is_import", "全部").strip()
     supplier_name = payload.get("supplier_name", "").strip()
     threshold_ssr = int(payload.get("threshold_ssr", "4"))
@@ -1545,7 +1545,6 @@ FROM ggfilm.products;"
     preview_table = []
     specification_code_list = []
     cache = {}
-
     rets = DBConnector.query(stmt)
     if type(rets) is list and len(rets) > 0:
         for ret in rets:
