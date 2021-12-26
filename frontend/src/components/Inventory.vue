@@ -1250,6 +1250,9 @@ export default {
             this.showMessage = true
             this.addedSkus = res.data.added_skus
             this.shouldOpenSidebar = true
+          } else if (res.data.status === 'invalid input data') {
+            this.message = '导入失败！' + res.data.err_msg
+            this.showMessage = true
           } else {
             this.message = '导入失败！数据表格格式有变更，请人工复合！'
             this.showMessage = true

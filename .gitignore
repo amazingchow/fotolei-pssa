@@ -132,3 +132,5 @@ tmp/products_load_file_repetition_lookup_table
 tmp/products_load_file_repetition_lookup_table.db
 tmp/inventories_load_file_repetition_lookup_table
 tmp/inventories_load_file_repetition_lookup_table.db
+tmp/inventories_check_table
+tmp/inventories_check_table.db

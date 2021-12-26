@@ -233,6 +233,12 @@ def upload_inventories():
                 response_object = {"status": "new SKUs"}
                 response_object["added_skus"] = not_inserted_sku_list
             else:
+                is_valid, err_msg = do_data_check_for_input_inventories(csv_file)
+                if not is_valid:
+                    response_object = {"status": "invalid input data"}
+                    response_object["err_msg"] = err_msg
+                    return jsonify(response_object)
+
                 load_file_repetition_lookup_table[file_digest] = True
 
                 do_intelligent_calibration_for_input_inventories(csv_file)
@@ -2083,6 +2089,41 @@ def do_data_schema_validation_for_input_inventories(csv_file: str):
     if not is_valid:
         os.remove(csv_file)
     return is_valid
+
+
+def do_data_check_for_input_inventories(csv_file: str):
+    inventories_check_table = shelve.open("./tmp/inventories_check_table", flag='c', writeback=False)
+    inventories_check_table_tmp = {}
+
+    # 导入的起始库存数量 =? 最近一个月的截止库存数量
+    is_valid = True
+    err_msg = ""
+    line = 0
+    with open(csv_file, "r", encoding='utf-8-sig') as fd:
+        csv_reader = csv.reader(fd, delimiter=",")
+        for row in csv_reader:
+            if line > 0:
+                specification_code = row[2]
+                st_inventory_qty = int(row[4])
+                ed_inventory_qty = int(row[16])
+                if specification_code in inventories_check_table.keys():
+                    if st_inventory_qty != inventories_check_table[specification_code]:
+                        err_msg = "导入的起始库存数量不等于最近一个月的截止库存数量，出现在第{}行。".format(line + 1)
+                        is_valid = False
+                    else:
+                        inventories_check_table_tmp[specification_code] = ed_inventory_qty
+                else:
+                    inventories_check_table_tmp[specification_code] = ed_inventory_qty
+            line += 1
+    if is_valid:
+        for k, v in inventories_check_table_tmp.items():
+            inventories_check_table[k] = v
+
+    if not is_valid:
+        os.remove(csv_file)
+
+    inventories_check_table.close()
+    return is_valid, err_msg
 
 
 def do_intelligent_calibration_for_input_inventories(csv_file: str):
