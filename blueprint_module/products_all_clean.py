@@ -7,6 +7,10 @@ sys.path.append(os.path.abspath("../utils"))
 from . import blueprint
 from utils import db_connector
 from utils import lookup_table_sku_get_or_put
+from utils import lookup_table_brand_classification_1_2_association
+from utils import lookup_table_classification_1_2_association
+from utils import lookup_table_brand_classification_2_association
+from utils import lookup_table_sku_brand_classification_1_2_association
 from utils import cost_count
 
 
@@ -64,6 +68,10 @@ CREATE TABLE IF NOT EXISTS ggfilm.product_summary (
         else:
             os.remove("./tmp/products_load_file_repetition_lookup_table.db")
         lookup_table_sku_get_or_put.clear()
+        lookup_table_brand_classification_1_2_association.clear()
+        lookup_table_classification_1_2_association.clear()
+        lookup_table_brand_classification_2_association.clear()
+        lookup_table_sku_brand_classification_1_2_association.clear()
         response_object = {"status": "success"}
         return jsonify(response_object)
     else:

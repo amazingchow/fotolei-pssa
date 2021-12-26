@@ -1419,13 +1419,13 @@ export default {
     },
     onPreviewCase1 (evt) {
       evt.preventDefault()
-      if ((this.stDateSelection === '') || (this.edDateSelection === '')) {
+      if ((this.stDateSelectionForCase1 === '') || (this.edDateSelection === '')) {
         this.message = '起始日期/截止日期不能为空！'
         this.showMessage = true
-      } else if (this.dateReg.test(this.stDateSelection) && this.dateReg.test(this.edDateSelection)) {
+      } else if (this.dateReg.test(this.stDateSelectionForCase1) && this.dateReg.test(this.edDateSelection)) {
         this.$refs.processingModal.show()
         const payload = {
-          st_date: this.stDateSelection,
+          st_date: this.stDateSelectionForCase1,
           ed_date: this.edDateSelection,
           ui_classification1_tags: this.customizeCase1.classification1_tags,
           ui_classification1_classification2_tags: this.customizeCase1.classification1_classification2_tags,
