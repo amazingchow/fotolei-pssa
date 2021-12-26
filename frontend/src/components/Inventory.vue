@@ -1306,7 +1306,7 @@ export default {
       this.adminPwd = ''
     },
     cleanAllInventories (payload) {
-      axios.post(this.serverBaseURL + '/api/v1/inventories/clean', payload)
+      axios.post(this.serverBaseURL + '/api/v1/inventories/all/clean', payload)
         .then((res) => {
           if (res.data.status === 'success') {
             this.message = '删除成功！'

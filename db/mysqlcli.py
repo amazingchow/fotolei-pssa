@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 import logging
-logging.basicConfig(level=logging.DEBUG, format="[%(asctime)s][%(levelname)s] %(message)s")
-logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO, format="[%(asctime)s][%(levelname)s] %(message)s")
+logger = logging.getLogger("FotoleiPssA_DB")
 import mysql.connector
 import mysql.connector.pooling
 import os
 
 from mysql.connector import errorcode
-from singleton import Singleton
+from .singleton import Singleton
 
 
 @Singleton

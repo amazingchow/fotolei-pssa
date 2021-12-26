@@ -643,7 +643,7 @@ export default {
       this.$refs.processingModal.hide()
     },
     loadOldProductData (specificationCode) {
-      axios.get(this.serverBaseURL + '/api/v1/products/one?specification_code=' + specificationCode)
+      axios.get(this.serverBaseURL + '/api/v1/products/one/pick?specification_code=' + specificationCode)
         .then((res) => {
           if (res.data.status === 'success') {
             this.updateProduct.id = res.data.product.id
@@ -707,7 +707,7 @@ export default {
       this.updateProduct.moq = ''
     },
     updateNewProductData (payload) {
-      axios.post(this.serverBaseURL + '/api/v1/products/update', payload)
+      axios.post(this.serverBaseURL + '/api/v1/products/one/update', payload)
         .then((res) => {
           if (res.data.status === 'success') {
             this.message = '更新成功！'

@@ -1,0 +1,132 @@
+# -*- coding: utf-8 -*-
+import hashlib
+import logging
+import os
+import re
+import sys
+import time
+from collections import defaultdict
+sys.path.append(os.path.abspath("../db"))
+from db.mysqlcli import MySQLConnector
+from functools import wraps
+
+# 日志工具
+logging.basicConfig(level=logging.INFO, format="[%(asctime)s][%(levelname)s] %(message)s")
+logger = logging.getLogger("FotoleiPssA")
+
+# 正则匹配工具
+reg_positive_int = re.compile(r'^([0-9]*)*$')
+reg_int = re.compile(r'^[+-]?([0-9]*)*$')
+reg_int_and_float = re.compile(r'^[+-]?([0-9]*)*(\.([0-9]+))?$')
+
+
+# 通用工具函数 - 过程执行耗时统计器
+def cost_count(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        start = time.time()
+        t = func(*args, **kwargs)
+        logger.info("%s tooks time: %f secs", func.__name__, time.time()-start)
+        return t
+    return wrapper
+
+
+# 通用工具函数 - 为文件生成摘要
+def generate_file_digest(f: str):
+    sha256_hash = hashlib.sha256()
+    with open(f, "rb") as fin:
+        for byte_block in iter(lambda: fin.read(4096), b""):
+            sha256_hash.update(byte_block)
+    return sha256_hash.hexdigest()
+
+
+# 通用工具函数 - 为字符串生成摘要
+def generate_digest(s: str):
+    return hashlib.sha256(s.encode("utf-8")).hexdigest()
+
+
+# 数据库连接器 + 查询表
+db_connector = MySQLConnector.instance()
+db_connector.init_conn("ggfilm")
+
+lookup_table_sku_get_or_put = defaultdict(bool)
+lookup_table_inventory_update_without_repetition = defaultdict(bool)
+lookup_table_brand_classification_1_2_association = {}
+lookup_table_classification_1_2_association = {}
+lookup_table_brand_classification_2_association = {}
+
+def init_lookup_table_sku_get_or_put():
+    global lookup_table_sku_get_or_put
+
+    stmt = "SELECT specification_code FROM ggfilm.products;"
+    rets = db_connector.query(stmt)
+    if type(rets) is list and len(rets) > 0:
+        for ret in rets:
+            lookup_table_sku_get_or_put[ret[0]] = True
+        logger.info("Insert {} SKUs into lookup_table_sku_get_or_put!!!".format(
+            len(lookup_table_sku_get_or_put)))
+
+init_lookup_table_sku_get_or_put()
+
+
+def init_lookup_table_inventory_update_without_repetition():
+    global lookup_table_inventory_update_without_repetition
+
+    stmt = "SELECT create_time, specification_code FROM ggfilm.inventories;"
+    rets = db_connector.query(stmt)
+    if type(rets) is list and len(rets) > 0:
+        for ret in rets:
+            lookup_table_inventory_update_without_repetition[generate_digest("{} | {}".format(ret[0], ret[1]))] = True
+        logger.info("Insert {} INVENTORIES_UPDATEs into lookup_table_inventory_update_without_repetition!!!".format(
+            len(lookup_table_inventory_update_without_repetition)))
+
+init_lookup_table_inventory_update_without_repetition()
+
+
+def update_lookup_table_brand_classification_1_2_association():
+    global lookup_table_brand_classification_1_2_association
+    global lookup_table_classification_1_2_association
+    global lookup_table_brand_classification_2_association
+
+    # 品牌 -> 分类1 -> 分类2 -> 产品系列 -> 供应商名称
+    lookup_table_brand_classification_1_2_association.clear()
+    stmt = "SELECT brand, classification_1, classification_2, product_series, supplier_name FROM ggfilm.products;"
+    rets = db_connector.query(stmt)
+    if type(rets) is list and len(rets) > 0:
+        for ret in rets:
+            brand = ret[0]
+            classification_1 = ret[1]
+            classification_2 = ret[2]
+            product_series = ret[3]
+            supplier_name = ret[4]
+            if brand not in lookup_table_brand_classification_1_2_association.keys():
+                lookup_table_brand_classification_1_2_association[brand] = {}
+            if classification_1 not in lookup_table_brand_classification_1_2_association[brand].keys():
+                lookup_table_brand_classification_1_2_association[brand][classification_1] = {}
+            if classification_2 not in lookup_table_brand_classification_1_2_association[brand][classification_1].keys():
+                lookup_table_brand_classification_1_2_association[brand][classification_1][classification_2] = {}
+            if len(product_series) > 0:
+                if product_series not in lookup_table_brand_classification_1_2_association[brand][classification_1][classification_2].keys():
+                    lookup_table_brand_classification_1_2_association[brand][classification_1][classification_2][product_series] = set()
+                if len(supplier_name) > 0:
+                    lookup_table_brand_classification_1_2_association[brand][classification_1][classification_2][product_series].add(supplier_name)
+    # 分类1 -> 分类2
+    lookup_table_classification_1_2_association.clear()
+    if type(rets) is list and len(rets) > 0:
+        for ret in rets:
+            classification_1 = ret[1]
+            classification_2 = ret[2]
+            if classification_1 not in lookup_table_classification_1_2_association.keys():
+                lookup_table_classification_1_2_association[classification_1] = set()
+            lookup_table_classification_1_2_association[classification_1].add("{}|{}".format(classification_1, classification_2))
+    # 品牌 -> 分类2
+    lookup_table_brand_classification_2_association.clear()
+    if type(rets) is list and len(rets) > 0:
+        for ret in rets:
+            brand = ret[0]
+            classification_2 = ret[2]
+            if brand not in lookup_table_brand_classification_2_association.keys():
+                lookup_table_brand_classification_2_association[brand] = set()
+            lookup_table_brand_classification_2_association[brand].add("{}|{}".format(brand, classification_2))
+
+update_lookup_table_brand_classification_1_2_association()
