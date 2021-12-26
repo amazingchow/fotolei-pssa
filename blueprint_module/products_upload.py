@@ -15,6 +15,7 @@ from utils import lookup_table_sku_get_or_put
 from utils import cost_count
 from utils import generate_file_digest, generate_digest
 from utils import update_lookup_table_brand_classification_1_2_association
+from utils import init_lookup_table_sku_brand_classification_1_2_association
 
 
 # 载入"商品明细数据报表"的接口
@@ -82,6 +83,7 @@ def upload_products():
         db_connector.insert(stmt, ("导入{}".format(csv_files[0].filename),))
 
         update_lookup_table_brand_classification_1_2_association()
+        init_lookup_table_sku_brand_classification_1_2_association()
 
         load_file_repetition_lookup_table[file_digest] = True
     load_file_repetition_lookup_table.close()

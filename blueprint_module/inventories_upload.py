@@ -14,6 +14,7 @@ from utils import reg_int, reg_int_and_float
 from utils import db_connector
 from utils import lookup_table_sku_get_or_put
 from utils import lookup_table_inventory_update_without_repetition
+from utils import lookup_table_sku_brand_classification_1_2_association
 from utils import cost_count
 from utils import generate_file_digest, generate_digest
 
@@ -64,7 +65,7 @@ def upload_inventories():
                     today = pendulum.today()
                     last_month = today.subtract(months=1)
                     import_date = last_month.strftime('%Y-%m')
-                add_date_for_input_inventories(csv_file, import_date.strip())
+                add_date_brand_c1_c2_for_input_inventories(csv_file, import_date.strip())
 
                 repeat = do_remove_repeat_inventories_updates(csv_file)
 
@@ -79,7 +80,7 @@ def upload_inventories():
                     "st_inventory_qty, st_inventory_total, purchase_qty, purchase_total, " +
                     "purchase_then_return_qty, purchase_then_return_total, sale_qty, sale_total, " +
                     "sale_then_return_qty, sale_then_return_total, others_qty, others_total, " +
-                    "ed_inventory_qty, ed_inventory_total);"
+                    "ed_inventory_qty, ed_inventory_total, extra_brand, extra_classification_1, extra_classification_2);"
                 )
 
                 with open(csv_file, "r", encoding='utf-8-sig') as fd:
@@ -293,7 +294,7 @@ def do_intelligent_calibration_for_input_inventories(csv_file: str):
     return is_valid, err_msg
 
 
-def add_date_for_input_inventories(csv_file: str, import_date: str):
+def add_date_brand_c1_c2_for_input_inventories(csv_file: str, import_date: str):
     fr = open(csv_file, "r", encoding='utf-8-sig')
     csv_reader = csv.reader(fr, delimiter=",")
     fw = open(csv_file + ".tmp", "w", encoding='utf-8-sig')
@@ -301,10 +302,14 @@ def add_date_for_input_inventories(csv_file: str, import_date: str):
     line = 0
     for row in csv_reader:
         if line == 0:
-            new_row = ["年月"] + row
+            new_row = ["年月"] + row + ["品牌", "分类1", "分类2"]
             csv_writer.writerow(new_row)
         else:
-            new_row = [import_date] + row
+            new_row = [import_date] + row + [
+                lookup_table_sku_brand_classification_1_2_association[row[2]][0],
+                lookup_table_sku_brand_classification_1_2_association[row[2]][1],
+                lookup_table_sku_brand_classification_1_2_association[row[2]][2]
+            ]
             csv_writer.writerow(new_row)
         line += 1
     fw.close()
