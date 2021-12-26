@@ -9,3 +9,5 @@ rm -rf $PWD/tmp/products_load_file_repetition_lookup_table
 rm -rf $PWD/tmp/products_load_file_repetition_lookup_table.db
 rm -rf $PWD/tmp/inventories_load_file_repetition_lookup_table
 rm -rf $PWD/tmp/inventories_load_file_repetition_lookup_table.db
+rm -rf $PWD/tmp/inventories_check_table
+rm -rf $PWD/tmp/inventories_check_table.db

@@ -21,5 +21,5 @@ CREATE TABLE IF NOT EXISTS ggfilm.products (
     jit_inventory      INT,                   /* 实时可用库存 */
     moq                INT,                   /* 最小订货单元 */
     PRIMARY KEY (id),
-    KEY (product_code, specification_code)
+    KEY (specification_code)
 ) ENGINE=InnoDB;

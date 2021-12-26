@@ -1250,6 +1250,9 @@ export default {
             this.showMessage = true
             this.addedSkus = res.data.added_skus
             this.shouldOpenSidebar = true
+          } else if (res.data.status === 'invalid input data') {
+            this.message = '导入失败！' + res.data.err_msg
+            this.showMessage = true
           } else {
             this.message = '导入失败！数据表格格式有变更，请人工复合！'
             this.showMessage = true
@@ -1303,7 +1306,7 @@ export default {
       this.adminPwd = ''
     },
     cleanAllInventories (payload) {
-      axios.post(this.serverBaseURL + '/api/v1/inventories/clean', payload)
+      axios.post(this.serverBaseURL + '/api/v1/inventories/all/clean', payload)
         .then((res) => {
           if (res.data.status === 'success') {
             this.message = '删除成功！'

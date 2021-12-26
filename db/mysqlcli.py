@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 import logging
-logging.basicConfig(level=logging.DEBUG, format="[%(asctime)s][%(levelname)s] %(message)s")
-logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO, format="[%(asctime)s][%(levelname)s] %(message)s")
+logger = logging.getLogger("FotoleiPssA_DB")
 import mysql.connector
 import mysql.connector.pooling
 import os
 
 from mysql.connector import errorcode
-from singleton import Singleton
+from .singleton import Singleton
 
 
 @Singleton
@@ -144,7 +144,17 @@ class MySQLConnector():
             cnx.close()
 
     def delete(self, stmt:str):
-        pass
+        cnx = self.cnxpool.get_connection()
+        cur = cnx.cursor()
+        try:
+            cur.execute(stmt)
+            cnx.commit()
+        except mysql.connector.Error as err:
+            cnx.rollback()
+            logger.error("DELETE err: {}".format(err))
+        finally:
+            cur.close()
+            cnx.close()
 
     def create_table(self, stmt:str):
         cnx = self.cnxpool.get_connection()
