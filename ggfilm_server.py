@@ -2373,6 +2373,10 @@ def do_data_check_for_input_case6_demand_table(csv_file: str):
                     is_valid = False
                     err_msg = "'数量'数据存在非法输入，出现在第{}行。".format(line + 1)
                     break
+                if not SKU_LOOKUP_TABLE.get(row[0], False):
+                    is_valid = False
+                    err_msg = "'规格编码'不存在系统内，出现在第{}行。".format(line + 1)
+                    break
             line += 1
     if not is_valid:
         os.remove(csv_file)
