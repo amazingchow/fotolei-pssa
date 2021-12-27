@@ -24,38 +24,38 @@ from utils import generate_digest
 -------------------------------------------------------------------
 龟龟销售额
 -------------------------------------------------------------------
-2店销售额  
+2店销售额
 -------------------------------------------------------------------
 数码类目销售额
 -------------------------------------------------------------------
 背带
 数码/包&收纳
-数码/快挂 
+数码/快挂
 -------------------------------------------------------------------
 传统类目销售额
 -------------------------------------------------------------------
 暗房冲洗设备
-胶片     
+胶片
 页片
 相纸
-彩色药水 
-黑白药水		   
-底片收纳保护		
-翻拍器 
-放大机类	   
+彩色药水
+黑白药水
+底片收纳保护
+翻拍器
+放大机类
 胶片相机
 机械快门线/纽
 -------------------------------------------------------------------
 各品牌销售额
 -------------------------------------------------------------------
-巅峰设计  
-cam-in  	
+巅峰设计
+cam-in
 poilotfoto
 -------------------------------------------------------------------
 各品牌-分类2销售额
 -------------------------------------------------------------------
 伊尔福-黑白药水
-伊尔福-相纸	
+伊尔福-相纸
 '''
 
 
@@ -149,7 +149,7 @@ def preview_report_file_case1():
         st_date, ed_date
     )
     rets = db_connector.query(stmt)
-    if type(rets) is list and len(rets) > 0 and rets[0][0] != None:
+    if type(rets) is list and len(rets) > 0 and rets[0][0] is not None:
         sum_sale_total = rets[0][0]
         preview_table.append(["总销售额", "{}".format(sum_sale_total), "100%"])
         if "传统耗材" in ui_classification1_classification2_lookup_table.keys():
@@ -171,7 +171,7 @@ def preview_report_file_case1():
                     sum_sale_total_for_c1_c2 = sum([ret[0] for ret in rets if len(ret[1]) > 0 and ret[1].strip() == c2_tag])
                     sum_sale_total_for_c1_c2_percent = sum_sale_total_for_c1_c2 / sum_sale_total * 100
                     tmp_table.append((c2_tag, sum_sale_total_for_c1_c2, sum_sale_total_for_c1_c2_percent))
-                tmp_table.sort(key=lambda x : x[1], reverse=True)
+                tmp_table.sort(key=lambda x: x[1], reverse=True)
                 for item in tmp_table:
                     preview_table.append([item[0], "{}".format(item[1]), "{:.2f}%".format(item[2])])
         if "数码" in ui_classification1_classification2_lookup_table.keys():
@@ -194,7 +194,7 @@ def preview_report_file_case1():
                     sum_sale_total_for_c1_c2 = sum([ret[0] for ret in rets if len(ret[1]) > 0 and ret[1].strip() == c2_tag])
                     sum_sale_total_for_c1_c2_percent = sum_sale_total_for_c1_c2 / sum_sale_total * 100
                     tmp_table.append((c2_tag, sum_sale_total_for_c1_c2, sum_sale_total_for_c1_c2_percent))
-                tmp_table.sort(key=lambda x : x[1], reverse=True)
+                tmp_table.sort(key=lambda x: x[1], reverse=True)
                 for item in tmp_table:
                     preview_table.append([item[0], "{}".format(item[1]), "{:.2f}%".format(item[2])])
         # 计算各品牌销售额
@@ -205,11 +205,11 @@ def preview_report_file_case1():
                 brand_tag, st_date, ed_date
             )
             rets = db_connector.query(stmt)
-            if type(rets) is list and len(rets) > 0 and rets[0][0] != None:
+            if type(rets) is list and len(rets) > 0 and rets[0][0] is not None:
                 sum_sale_total_for_brand = rets[0][0]
                 sum_sale_total_for_brand_percent = sum_sale_total_for_brand / sum_sale_total * 100
                 tmp_table.append((brand_tag, sum_sale_total_for_brand, sum_sale_total_for_brand_percent))
-        tmp_table.sort(key=lambda x : x[1], reverse=True)
+        tmp_table.sort(key=lambda x: x[1], reverse=True)
         for item in tmp_table:
             preview_table.append([item[0], "{}".format(item[1]), "{:.2f}%".format(item[2])])
         # 计算各品牌-分类2销售额
@@ -221,14 +221,14 @@ def preview_report_file_case1():
                 brand_tag_classification2_tag[0].strip(), brand_tag_classification2_tag[1].strip(), st_date, ed_date
             )
             rets = db_connector.query(stmt)
-            if type(rets) is list and len(rets) > 0 and rets[0][0] != None:
+            if type(rets) is list and len(rets) > 0 and rets[0][0] is not None:
                 sum_sale_total_for_brand_classification2 = rets[0][0]
                 sum_sale_total_for_brand_classification2_percent = sum_sale_total_for_brand_classification2 / sum_sale_total * 100
                 tmp_table.append(("{}-{}".format(
-                    brand_tag_classification2_tag[0], brand_tag_classification2_tag[1]), 
+                    brand_tag_classification2_tag[0], brand_tag_classification2_tag[1]),
                     sum_sale_total_for_brand_classification2, sum_sale_total_for_brand_classification2_percent
                 ))
-        tmp_table.sort(key=lambda x : x[1], reverse=True)
+        tmp_table.sort(key=lambda x: x[1], reverse=True)
         for item in tmp_table:
             preview_table.append([item[0], "{}".format(item[1]), "{:.2f}%".format(item[2])])
 

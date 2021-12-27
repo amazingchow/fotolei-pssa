@@ -18,4 +18,5 @@ pssa_server.register_blueprint(blueprint)
 def all_done():
     db_connector.release_conn()
 
+
 atexit.register(all_done)
