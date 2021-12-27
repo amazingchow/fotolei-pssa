@@ -168,7 +168,7 @@ def preview_report_file_case1():
                 tmp_table = []
                 for c2_tag in ui_classification1_classification2_lookup_table["传统耗材"]:
                     # 计算分类1为传统耗材，分类2为'c2_tag'的销售额
-                    sum_sale_total_for_c1_c2 = sum([ret[0] for ret in rets if len(ret[1]) > 0 and ret[1].strip() == c2_tag])
+                    sum_sale_total_for_c1_c2 = sum([ret[0] for ret in rets if len(ret[1]) > 0 and ret[1] == c2_tag])
                     sum_sale_total_for_c1_c2_percent = sum_sale_total_for_c1_c2 / sum_sale_total * 100
                     tmp_table.append((c2_tag, sum_sale_total_for_c1_c2, sum_sale_total_for_c1_c2_percent))
                 tmp_table.sort(key=lambda x: x[1], reverse=True)
@@ -190,8 +190,7 @@ def preview_report_file_case1():
                 tmp_table = []
                 for c2_tag in ui_classification1_classification2_lookup_table["数码"]:
                     # 计算分类1为数码，分类2为'c2_tag'的销售额
-                    # TODO: 去除extra_classification_2的空格
-                    sum_sale_total_for_c1_c2 = sum([ret[0] for ret in rets if len(ret[1]) > 0 and ret[1].strip() == c2_tag])
+                    sum_sale_total_for_c1_c2 = sum([ret[0] for ret in rets if len(ret[1]) > 0 and ret[1] == c2_tag])
                     sum_sale_total_for_c1_c2_percent = sum_sale_total_for_c1_c2 / sum_sale_total * 100
                     tmp_table.append((c2_tag, sum_sale_total_for_c1_c2, sum_sale_total_for_c1_c2_percent))
                 tmp_table.sort(key=lambda x: x[1], reverse=True)
@@ -216,9 +215,8 @@ def preview_report_file_case1():
         preview_table.append(["品牌-分类2销售额", "", ""])
         tmp_table = []
         for brand_tag_classification2_tag in ui_brand_classification2_tags_table:
-            # TODO: 去除extra_classification_2的空格
-            stmt = "SELECT SUM(sale_total) as sum_sale_total FROM ggfilm.inventories WHERE extra_brand = '{}' AND extra_classification_2 LIKE '{}%' AND create_time >= '{}' AND create_time <= '{}';".format(
-                brand_tag_classification2_tag[0].strip(), brand_tag_classification2_tag[1].strip(), st_date, ed_date
+            stmt = "SELECT SUM(sale_total) as sum_sale_total FROM ggfilm.inventories WHERE extra_brand = '{}' AND extra_classification_2 = '{}' AND create_time >= '{}' AND create_time <= '{}';".format(
+                brand_tag_classification2_tag[0], brand_tag_classification2_tag[1], st_date, ed_date
             )
             rets = db_connector.query(stmt)
             if type(rets) is list and len(rets) > 0 and rets[0][0] is not None:
