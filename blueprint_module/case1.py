@@ -75,7 +75,7 @@ def preview_report_file_case1():
     for tag in ui_classification1_tags:
         if tag not in lookup_table_classification_1_2_association.keys():
             response_object = {"status": "invalid tag"}
-            response_object["err_msg"] = "参与统计的分类1：{}不存在！".format(tag)
+            response_object["err_msg"] = "输入ui参数错误 - 参与统计的分类1：{}不存在！".format(tag)
             return jsonify(response_object)
 
     ui_classification1_classification2_tags = payload.get("ui_classification1_classification2_tags", [])
@@ -84,47 +84,59 @@ def preview_report_file_case1():
         c1_tag, c2_tag = tag.split("|")
         if c1_tag not in ui_classification1_tags:
             response_object = {"status": "invalid tag"}
-            response_object["err_msg"] = "参与统计的分类1|分类2 - 分类1：{}不存在！".format(c1_tag)
+            response_object["err_msg"] = "输入ui参数错误 - 参与统计的分类1|分类2 - 分类1：{}不存在！".format(c1_tag)
             return jsonify(response_object)
         if tag not in lookup_table_classification_1_2_association[c1_tag]:
             response_object = {"status": "invalid tag"}
-            response_object["err_msg"] = "参与统计的分类1|分类2 - 分类2：{}不存在！".format(c2_tag)
+            response_object["err_msg"] = "输入ui参数错误 - 参与统计的分类1|分类2 - 分类2：{}不存在！".format(c2_tag)
             return jsonify(response_object)
         ui_classification1_classification2_lookup_table[c1_tag].append(c2_tag)
 
     ui_classification1_topk_tags = payload.get("ui_classification1_topk_tags", [])
+    ui_classification1_topk_lookup_table = defaultdict(int)
     for tag in ui_classification1_topk_tags:
         c1_tag, topk_tag = tag.split("|")
         if c1_tag not in ui_classification1_tags:
             response_object = {"status": "invalid tag"}
-            response_object["err_msg"] = "销售top必选（分类1）- 分类1：{}不存在！".format(c1_tag)
+            response_object["err_msg"] = "输入ui参数错误 - 销售top必选（分类1）- 分类1：{}不存在！".format(c1_tag)
             return jsonify(response_object)
         if not topk_tag.startswith("top"):
             response_object = {"status": "invalid tag"}
-            response_object["err_msg"] = "销售top必选（分类1）- topk：{}格式不正确！".format(topk_tag)
+            response_object["err_msg"] = "输入ui参数错误 - 销售top必选（分类1）- topk：{}格式不正确！".format(topk_tag)
             return jsonify(response_object)
         topk = topk_tag.lstrip("top")
         if reg_positive_int.match(topk) is None:
             response_object = {"status": "invalid tag"}
-            response_object["err_msg"] = "销售top必选（分类1）- topk：{}格式不正确！".format(topk_tag)
+            response_object["err_msg"] = "输入ui参数错误 - 销售top必选（分类1）- topk：{}格式不正确！".format(topk_tag)
             return jsonify(response_object)
+        if int(topk) > len(lookup_table_classification_1_2_association[c1_tag]):
+            response_object = {"status": "invalid tag"}
+            response_object["err_msg"] = "输入ui参数错误 - 销售top必选（分类1）- topk：{}超过最大值top{}".format(
+                topk_tag, len(lookup_table_classification_1_2_association[c1_tag]))
+            return jsonify(response_object)
+        ui_classification1_topk_lookup_table[c1_tag] = int(topk)
 
     ui_brand_tags = payload.get("ui_brand_tags", [])
     for tag in ui_brand_tags:
         if tag not in lookup_table_brand_classification_2_association.keys():
             response_object = {"status": "invalid tag"}
-            response_object["err_msg"] = "参与统计的品牌：{}不存在！".format(tag)
+            response_object["err_msg"] = "输入ui参数错误 - 参与统计的品牌：{}不存在！".format(tag)
             return jsonify(response_object)
 
     ui_brand_topk_tag = payload.get("ui_brand_topk_tag", "")
     if not ui_brand_topk_tag.startswith("top"):
         response_object = {"status": "invalid tag"}
-        response_object["err_msg"] = "销售top必选（品牌）- topk：{}格式不正确！".format(ui_brand_topk_tag)
+        response_object["err_msg"] = "输入ui参数错误 - 销售top必选（品牌）- topk：{}格式不正确！".format(ui_brand_topk_tag)
         return jsonify(response_object)
-    topk = ui_brand_topk_tag.lstrip("top")
-    if reg_positive_int.match(topk) is None:
+    brand_topk = ui_brand_topk_tag.lstrip("top")
+    if reg_positive_int.match(brand_topk) is None:
         response_object = {"status": "invalid tag"}
-        response_object["err_msg"] = "销售top必选（品牌）- topk：{}格式不正确！".format(ui_brand_topk_tag)
+        response_object["err_msg"] = "输入ui参数错误 - 销售top必选（品牌）- topk：{}格式不正确！".format(ui_brand_topk_tag)
+        return jsonify(response_object)
+    if int(brand_topk) > len(lookup_table_brand_classification_2_association):
+        response_object = {"status": "invalid tag"}
+        response_object["err_msg"] = "输入ui参数错误 - 销售top必选（分类1）- topk：{}超过最大值top{}".format(
+            ui_brand_topk_tag, len(lookup_table_brand_classification_2_association))
         return jsonify(response_object)
 
     ui_brand_classification2_tags = payload.get("ui_brand_classification2_tags", [])
@@ -133,11 +145,11 @@ def preview_report_file_case1():
         brand_tag, c2_tag = tag.split("|")
         if brand_tag not in lookup_table_brand_classification_2_association.keys():
             response_object = {"status": "invalid tag"}
-            response_object["err_msg"] = "参与统计的品牌|分类2 - 品牌：{}不存在！".format(brand_tag)
+            response_object["err_msg"] = "输入ui参数错误 - 参与统计的品牌|分类2 - 品牌：{}不存在！".format(brand_tag)
             return jsonify(response_object)
         if tag not in lookup_table_brand_classification_2_association[brand_tag]:
             response_object = {"status": "invalid tag"}
-            response_object["err_msg"] = "参与统计的品牌|分类2 - 分类2：{}不存在！".format(c2_tag)
+            response_object["err_msg"] = "输入ui参数错误 - 参与统计的品牌|分类2 - 分类2：{}不存在！".format(c2_tag)
             return jsonify(response_object)
         ui_brand_classification2_tags_table.append((brand_tag, c2_tag))
 
@@ -153,6 +165,7 @@ def preview_report_file_case1():
         sum_sale_total = rets[0][0]
         preview_table.append(["总销售额", "{}".format(sum_sale_total), "100%"])
         if "传统耗材" in ui_classification1_classification2_lookup_table.keys():
+            topk = ui_classification1_topk_lookup_table["传统耗材"]
             # 计算龟龟销售额
             stmt = "SELECT sale_total, extra_classification_2 FROM ggfilm.inventories WHERE extra_classification_1 = '传统耗材' AND create_time >= '{}' AND create_time <= '{}';".format(
                 st_date, ed_date
@@ -166,15 +179,52 @@ def preview_report_file_case1():
                 # preview_table.append(["传统类目销售额", "{}".format(sum_sale_total_for_c1), "{:.2f}%".format(sum_sale_total_for_c1_percent)])
                 preview_table.append(["传统类目销售额", "", ""])
                 tmp_table = []
-                for c2_tag in ui_classification1_classification2_lookup_table["传统耗材"]:
-                    # 计算分类1为传统耗材，分类2为'c2_tag'的销售额
-                    sum_sale_total_for_c1_c2 = sum([ret[0] for ret in rets if len(ret[1]) > 0 and ret[1] == c2_tag])
-                    sum_sale_total_for_c1_c2_percent = sum_sale_total_for_c1_c2 / sum_sale_total * 100
-                    tmp_table.append((c2_tag, sum_sale_total_for_c1_c2, sum_sale_total_for_c1_c2_percent))
-                tmp_table.sort(key=lambda x: x[1], reverse=True)
+                if topk <= len(ui_classification1_classification2_lookup_table["传统耗材"]):
+                    # 如果选中的待计算项目 >= topk，则直接处理待计算项目
+                    for c2_tag in ui_classification1_classification2_lookup_table["传统耗材"]:
+                        # 计算分类1为传统耗材，分类2为'c2_tag'的销售额
+                        sum_sale_total_for_c1_c2 = sum([ret[0] for ret in rets if len(ret[1]) > 0 and ret[1] == c2_tag])
+                        sum_sale_total_for_c1_c2_percent = sum_sale_total_for_c1_c2 / sum_sale_total * 100
+                        tmp_table.append((c2_tag, sum_sale_total_for_c1_c2, sum_sale_total_for_c1_c2_percent))
+                    tmp_table.sort(key=lambda x: x[1], reverse=True)
+                else:
+                    # 如果选中的待计算项目 < topk，待计算项目必须被处理且出现在结果中，空位用topk来填充
+                    # 获取所有‘分类1‘等于‘传统耗材’的分类2
+                    all_c2_tags = []
+                    for item in lookup_table_classification_1_2_association["传统耗材"]:
+                        all_c2_tags.append(item.split("|")[1].strip())
+                    for c2_tag in all_c2_tags:
+                        sum_sale_total_for_c1_c2 = sum([ret[0] for ret in rets if len(ret[1]) > 0 and ret[1] == c2_tag])
+                        sum_sale_total_for_c1_c2_percent = sum_sale_total_for_c1_c2 / sum_sale_total * 100
+                        tmp_table.append((c2_tag, sum_sale_total_for_c1_c2, sum_sale_total_for_c1_c2_percent))
+                    tmp_table.sort(key=lambda x: x[1], reverse=True)
+                    if len(tmp_table) < topk:
+                        topk = len(tmp_table)
+                    tmp_table = tmp_table[:topk]
+                    tmp_tags_table = [item[0] for item in tmp_table]
+                    for c2_tag in ui_classification1_classification2_lookup_table["传统耗材"]:
+                        found_c2_tag = False
+                        for x in tmp_tags_table:
+                            if c2_tag == x:
+                                found_c2_tag = True
+                                break
+                        if found_c2_tag:
+                            continue
+                        sum_sale_total_for_c1_c2 = sum([ret[0] for ret in rets if len(ret[1]) > 0 and ret[1] == c2_tag])
+                        sum_sale_total_for_c1_c2_percent = sum_sale_total_for_c1_c2 / sum_sale_total * 100
+                        if sum_sale_total_for_c1_c2 <= tmp_table[topk-1][1]:
+                            tmp_table[topk-1] = (c2_tag, sum_sale_total_for_c1_c2, sum_sale_total_for_c1_c2_percent)
+                        elif sum_sale_total_for_c1_c2 >= tmp_table[0][1]:
+                            tmp_table[0] = (c2_tag, sum_sale_total_for_c1_c2, sum_sale_total_for_c1_c2_percent)
+                        else:
+                            for i in range(topk-2,0,-1):
+                                if sum_sale_total_for_c1_c2 <= tmp_table[i][1]:
+                                    tmp_table[i] = (c2_tag, sum_sale_total_for_c1_c2, sum_sale_total_for_c1_c2_percent)
+                                    break
                 for item in tmp_table:
                     preview_table.append([item[0], "{}".format(item[1]), "{:.2f}%".format(item[2])])
         if "数码" in ui_classification1_classification2_lookup_table.keys():
+            topk = ui_classification1_topk_lookup_table["数码"]
             # 计算2店销售额
             stmt = "SELECT sale_total, extra_classification_2 FROM ggfilm.inventories WHERE extra_classification_1 = '数码' AND create_time >= '{}' AND create_time <= '{}';".format(
                 st_date, ed_date
@@ -188,29 +238,108 @@ def preview_report_file_case1():
                 # preview_table.append(["数码类目销售额", "{}".format(sum_sale_total_for_c2), "{:.2f}%".format(sum_sale_total_for_c2_percent)])
                 preview_table.append(["数码类目销售额", "", ""])
                 tmp_table = []
-                for c2_tag in ui_classification1_classification2_lookup_table["数码"]:
-                    # 计算分类1为数码，分类2为'c2_tag'的销售额
-                    sum_sale_total_for_c1_c2 = sum([ret[0] for ret in rets if len(ret[1]) > 0 and ret[1] == c2_tag])
-                    sum_sale_total_for_c1_c2_percent = sum_sale_total_for_c1_c2 / sum_sale_total * 100
-                    tmp_table.append((c2_tag, sum_sale_total_for_c1_c2, sum_sale_total_for_c1_c2_percent))
-                tmp_table.sort(key=lambda x: x[1], reverse=True)
+                if topk <= len(ui_classification1_classification2_lookup_table["数码"]):
+                    # 如果选中的待计算项目 >= topk，则直接处理待计算项目
+                    for c2_tag in ui_classification1_classification2_lookup_table["数码"]:
+                        # 计算分类1为数码，分类2为'c2_tag'的销售额
+                        sum_sale_total_for_c1_c2 = sum([ret[0] for ret in rets if len(ret[1]) > 0 and ret[1] == c2_tag])
+                        sum_sale_total_for_c1_c2_percent = sum_sale_total_for_c1_c2 / sum_sale_total * 100
+                        tmp_table.append((c2_tag, sum_sale_total_for_c1_c2, sum_sale_total_for_c1_c2_percent))
+                    tmp_table.sort(key=lambda x: x[1], reverse=True)
+                else:
+                    # 如果选中的待计算项目 < topk，待计算项目必须被处理且出现在结果中，空位用topk来填充
+                    # 获取所有‘分类1‘等于‘数码’的分类2
+                    all_c2_tags = []
+                    for item in lookup_table_classification_1_2_association["数码"]:
+                        all_c2_tags.append(item.split("|")[1].strip())
+                    for c2_tag in all_c2_tags:
+                        sum_sale_total_for_c1_c2 = sum([ret[0] for ret in rets if len(ret[1]) > 0 and ret[1] == c2_tag])
+                        sum_sale_total_for_c1_c2_percent = sum_sale_total_for_c1_c2 / sum_sale_total * 100
+                        tmp_table.append((c2_tag, sum_sale_total_for_c1_c2, sum_sale_total_for_c1_c2_percent))
+                    tmp_table.sort(key=lambda x: x[1], reverse=True)
+                    if len(tmp_table) < topk:
+                        topk = len(tmp_table)
+                    tmp_table = tmp_table[:topk]
+                    tmp_tags_table = [item[0] for item in tmp_table]
+                    for c2_tag in ui_classification1_classification2_lookup_table["数码"]:
+                        found_c2_tag = False
+                        for x in tmp_tags_table:
+                            if c2_tag == x:
+                                found_c2_tag = True
+                                break
+                        if found_c2_tag:
+                            continue
+                        sum_sale_total_for_c1_c2 = sum([ret[0] for ret in rets if len(ret[1]) > 0 and ret[1] == c2_tag])
+                        sum_sale_total_for_c1_c2_percent = sum_sale_total_for_c1_c2 / sum_sale_total * 100
+                        if sum_sale_total_for_c1_c2 <= tmp_table[topk-1][1]:
+                            tmp_table[topk-1] = (c2_tag, sum_sale_total_for_c1_c2, sum_sale_total_for_c1_c2_percent)
+                        elif sum_sale_total_for_c1_c2 >= tmp_table[0][1]:
+                            tmp_table[0] = (c2_tag, sum_sale_total_for_c1_c2, sum_sale_total_for_c1_c2_percent)
+                        else:
+                            for i in range(topk-2,0,-1):
+                                if sum_sale_total_for_c1_c2 <= tmp_table[i][1]:
+                                    tmp_table[i] = (c2_tag, sum_sale_total_for_c1_c2, sum_sale_total_for_c1_c2_percent)
+                                    break
                 for item in tmp_table:
                     preview_table.append([item[0], "{}".format(item[1]), "{:.2f}%".format(item[2])])
         # 计算各品牌销售额
         preview_table.append(["品牌销售额", "", ""])
         tmp_table = []
-        for brand_tag in ui_brand_tags:
-            stmt = "SELECT SUM(sale_total) as sum_sale_total FROM ggfilm.inventories WHERE extra_brand = '{}' AND create_time >= '{}' AND create_time <= '{}';".format(
-                brand_tag, st_date, ed_date
+        if int(brand_topk) <= len(ui_brand_tags):
+            # 如果选中的待计算项目 >= topk，则直接处理待计算项目
+            for brand_tag in ui_brand_tags:
+                stmt = "SELECT SUM(sale_total) as sum_sale_total FROM ggfilm.inventories WHERE extra_brand = '{}' AND create_time >= '{}' AND create_time <= '{}';".format(
+                    brand_tag, st_date, ed_date
+                )
+                rets = db_connector.query(stmt)
+                if type(rets) is list and len(rets) > 0 and rets[0][0] is not None:
+                    sum_sale_total_for_brand = rets[0][0]
+                    sum_sale_total_for_brand_percent = sum_sale_total_for_brand / sum_sale_total * 100
+                    tmp_table.append((brand_tag, sum_sale_total_for_brand, sum_sale_total_for_brand_percent))
+            tmp_table.sort(key=lambda x: x[1], reverse=True)
+        else:
+            topk = int(brand_topk)
+            # 如果选中的待计算项目 < topk，待计算项目必须被处理且出现在结果中，空位用topk来填充
+            stmt = "SELECT sale_total, extra_brand FROM ggfilm.inventories WHERE create_time >= '{}' AND create_time <= '{}';".format(
+                st_date, ed_date
             )
             rets = db_connector.query(stmt)
-            if type(rets) is list and len(rets) > 0 and rets[0][0] is not None:
-                sum_sale_total_for_brand = rets[0][0]
-                sum_sale_total_for_brand_percent = sum_sale_total_for_brand / sum_sale_total * 100
-                tmp_table.append((brand_tag, sum_sale_total_for_brand, sum_sale_total_for_brand_percent))
-        tmp_table.sort(key=lambda x: x[1], reverse=True)
+            if type(rets) is list and len(rets) > 0:
+                # 获取所有‘品牌‘
+                all_brand_tags = []
+                for item in lookup_table_brand_classification_2_association.keys():
+                    all_brand_tags.append(item)
+                for brand_tag in all_brand_tags:
+                    sum_sale_total_for_brand = sum([ret[0] for ret in rets if len(ret[1]) > 0 and ret[1] == brand_tag])
+                    sum_sale_total_for_brand_percent = sum_sale_total_for_brand / sum_sale_total * 100
+                    tmp_table.append((brand_tag, sum_sale_total_for_brand, sum_sale_total_for_brand_percent))
+                tmp_table.sort(key=lambda x: x[1], reverse=True)
+                if len(tmp_table) < topk:
+                    topk = len(tmp_table)
+                tmp_table = tmp_table[:topk]
+                tmp_tags_table = [item[0] for item in tmp_table]
+                for brand_tag in ui_brand_tags:
+                    found_brand_tag = False
+                    for x in tmp_tags_table:
+                        if brand_tag == x:
+                            found_brand_tag = True
+                            break
+                    if found_brand_tag:
+                        continue
+                    sum_sale_total_for_brand = sum([ret[0] for ret in rets if len(ret[1]) > 0 and ret[1] == brand_tag])
+                    sum_sale_total_for_brand_percent = sum_sale_total_for_brand / sum_sale_total * 100
+                    if sum_sale_total_for_brand <= tmp_table[topk-1][1]:
+                        tmp_table[topk-1] = (brand_tag, sum_sale_total_for_brand, sum_sale_total_for_brand_percent)
+                    elif sum_sale_total_for_brand >= tmp_table[0][1]:
+                        tmp_table[0] = (brand_tag, sum_sale_total_for_brand, sum_sale_total_for_brand_percent)
+                    else:
+                        for i in range(topk-2,0,-1):
+                            if sum_sale_total_for_brand <= tmp_table[i][1]:
+                                tmp_table[i] = (brand_tag, sum_sale_total_for_brand, sum_sale_total_for_brand_percent)
+                                break
         for item in tmp_table:
             preview_table.append([item[0], "{}".format(item[1]), "{:.2f}%".format(item[2])])
+
         # 计算各品牌-分类2销售额
         preview_table.append(["品牌-分类2销售额", "", ""])
         tmp_table = []
