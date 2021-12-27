@@ -44,8 +44,12 @@ CREATE TABLE IF NOT EXISTS ggfilm.inventories (
     ed_inventory_qty           INT,                    /* 截止库存数量 */
     ed_inventory_total         INT,                    /* 截止库存总额 */
     create_time                VARCHAR(10),            /* 年月的格式 */
+    extra_brand                VARCHAR(64),            /* 品牌 */
+    extra_classification_1     VARCHAR(64),            /* 分类1 */
+    extra_classification_2     VARCHAR(64),            /* 分类2 */
+    anchor                     TINYINT,                /* 锚，防止‘分类2‘读出来带空格 */
     PRIMARY KEY (id),
-    KEY (product_code, specification_code)
+    KEY (specification_code, extra_brand, extra_classification_1, extra_classification_2)
 ) ENGINE=InnoDB;
 '''
         db_connector.create_table(stmt)

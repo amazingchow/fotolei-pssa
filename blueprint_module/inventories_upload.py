@@ -80,7 +80,8 @@ def upload_inventories():
                     "st_inventory_qty, st_inventory_total, purchase_qty, purchase_total, " +
                     "purchase_then_return_qty, purchase_then_return_total, sale_qty, sale_total, " +
                     "sale_then_return_qty, sale_then_return_total, others_qty, others_total, " +
-                    "ed_inventory_qty, ed_inventory_total, extra_brand, extra_classification_1, extra_classification_2);"
+                    "ed_inventory_qty, ed_inventory_total, " +
+                    "extra_brand, extra_classification_1, extra_classification_2, anchor);"
                 )
 
                 with open(csv_file, "r", encoding='utf-8-sig') as fd:
@@ -302,13 +303,14 @@ def add_date_brand_c1_c2_for_input_inventories(csv_file: str, import_date: str):
     line = 0
     for row in csv_reader:
         if line == 0:
-            new_row = ["年月"] + row + ["品牌", "分类1", "分类2"]
+            new_row = ["年月"] + row + ["品牌", "分类1", "分类2", "锚"]
             csv_writer.writerow(new_row)
         else:
             new_row = [import_date] + row + [
                 lookup_table_sku_brand_classification_1_2_association[row[2]][0],
                 lookup_table_sku_brand_classification_1_2_association[row[2]][1],
-                lookup_table_sku_brand_classification_1_2_association[row[2]][2]
+                lookup_table_sku_brand_classification_1_2_association[row[2]][2],
+                "0"
             ]
             csv_writer.writerow(new_row)
         line += 1

@@ -1342,17 +1342,7 @@ export default {
       this.adminPwd = ''
     },
     // ------------------------------ 销售报表（按分类汇总） ------------------------------
-    onCustomizeCase1 (evt) {
-      evt.preventDefault()
-      this.$refs.customizeCase1Modal.show()
-    },
-    onSaveCustomizeCase1 (evt) {
-      evt.preventDefault()
-      this.$refs.customizeCase1Modal.hide()
-    },
-    onCancelSaveCustomizeCase1 (evt) {
-      evt.preventDefault()
-      this.$refs.customizeCase1Modal.hide()
+    onResetCustomizeCase1 () {
       this.customizeCase1 = {
         classification1_tags: ['数码', '传统耗材'],
         classification1_classification2_tags: [
@@ -1390,6 +1380,19 @@ export default {
         brand_topk_tag: 'top10',
         brand_classification2_tags: []
       }
+    },
+    onCustomizeCase1 (evt) {
+      evt.preventDefault()
+      this.$refs.customizeCase1Modal.show()
+    },
+    onSaveCustomizeCase1 (evt) {
+      evt.preventDefault()
+      this.$refs.customizeCase1Modal.hide()
+    },
+    onCancelSaveCustomizeCase1 (evt) {
+      evt.preventDefault()
+      this.$refs.customizeCase1Modal.hide()
+      this.onResetCustomizeCase1()
     },
     previewReportFileCase1Close () {
       this.$refs.processingModal.hide()
@@ -1457,8 +1460,7 @@ export default {
     onCancelExportCase1 (evt) {
       evt.preventDefault()
       this.$refs.exportFileCase1Modal.hide()
-      // 恢复默认设置
-      this.initExportForm()
+      this.onResetCustomizeCase1()
     },
     // ------------------------------ 销售报表（按系列汇总） ------------------------------
     previewReportFileCase2Close () {
@@ -1857,6 +1859,7 @@ export default {
       this.$refs.processingModal.hide()
       // 恢复默认设置
       this.initExportForm()
+      this.onResetCustomizeCase1()
     },
     prepareExportReportFile (url, payload) {
       axios.post(this.serverBaseURL + url, payload)
