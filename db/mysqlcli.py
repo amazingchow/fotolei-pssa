@@ -14,19 +14,19 @@ from .singleton import Singleton
 class MySQLConnector():
     def __init__(self):
         self.host = os.environ.get("MYSQL_HOST")
-        if self.host == None or len(self.host) == 0:
+        if self.host is None or len(self.host) == 0:
             raise Exception("MYSQL_HOST must be set!!!")
         self.port = os.environ.get("MYSQL_PORT")
-        if self.port == None or len(self.port) == 0:
+        if self.port is None or len(self.port) == 0:
             raise Exception("MYSQL_PORT must be set!!!")
         self.username = os.environ.get("MYSQL_USERNAME")
-        if self.username == None or len(self.username) == 0:
+        if self.username is None or len(self.username) == 0:
             raise Exception("MYSQL_USERNAME must be set!!!")
         self.password = os.environ.get("MYSQL_PASSWORD")
-        if self.password == None or len(self.password) == 0:
+        if self.password is None or len(self.password) == 0:
             raise Exception("MYSQL_PASSWORD must be set!!!")
 
-    def init_conn(self, db:str):
+    def init_conn(self, db: str):
         try:
             dbconfig = {
                 "host": self.host,
@@ -46,7 +46,6 @@ class MySQLConnector():
                 raise Exception("Database {} does not exist".format(db))
             else:
                 raise Exception("Unknown err: {}".format(err))
-        
         cnx = self.cnxpool.get_connection()
         if not cnx.is_connected():
             raise Exception("MySQL Server can not be connected ({}:{}@{}:{})".format(
@@ -64,7 +63,7 @@ class MySQLConnector():
             self.host, self.port
         ))
 
-    def insert(self, stmt:str, record:tuple):
+    def insert(self, stmt: str, record: tuple):
         cnx = self.cnxpool.get_connection()
         cur = cnx.cursor()
         try:
@@ -77,7 +76,7 @@ class MySQLConnector():
             cur.close()
             cnx.close()
 
-    def batch_insert(self, stmt:str, records:list):
+    def batch_insert(self, stmt: str, records: list):
         cnx = self.cnxpool.get_connection()
         cur = cnx.cursor()
         try:
@@ -90,7 +89,7 @@ class MySQLConnector():
             cur.close()
             cnx.close()
 
-    def load_data_infile(self, stmt:str):
+    def load_data_infile(self, stmt: str):
         cnx = self.cnxpool.get_connection()
         cur = cnx.cursor()
         try:
@@ -103,7 +102,7 @@ class MySQLConnector():
             cur.close()
             cnx.close()
 
-    def query(self, stmt:str):
+    def query(self, stmt: str):
         cnx = self.cnxpool.get_connection()
         cur = cnx.cursor()
         result = object()
@@ -116,8 +115,8 @@ class MySQLConnector():
             cur.close()
             cnx.close()
         return result
-    
-    def batch_update(self, stmt:str, records:list):
+
+    def batch_update(self, stmt: str, records: list):
         cnx = self.cnxpool.get_connection()
         cur = cnx.cursor()
         try:
@@ -130,7 +129,7 @@ class MySQLConnector():
             cur.close()
             cnx.close()
 
-    def update(self, stmt:str):
+    def update(self, stmt: str):
         cnx = self.cnxpool.get_connection()
         cur = cnx.cursor()
         try:
@@ -143,7 +142,7 @@ class MySQLConnector():
             cur.close()
             cnx.close()
 
-    def delete(self, stmt:str):
+    def delete(self, stmt: str):
         cnx = self.cnxpool.get_connection()
         cur = cnx.cursor()
         try:
@@ -156,7 +155,7 @@ class MySQLConnector():
             cur.close()
             cnx.close()
 
-    def create_table(self, stmt:str):
+    def create_table(self, stmt: str):
         cnx = self.cnxpool.get_connection()
         cur = cnx.cursor()
         try:
@@ -169,7 +168,7 @@ class MySQLConnector():
             cur.close()
             cnx.close()
 
-    def drop_table(self, stmt:str):
+    def drop_table(self, stmt: str):
         cnx = self.cnxpool.get_connection()
         cur = cnx.cursor()
         try:
