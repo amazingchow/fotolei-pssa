@@ -801,6 +801,7 @@
             <b-th scope="col">小计重量/kg</b-th>
             <b-th scope="col">单个体积/cm³</b-th>
             <b-th scope="col">小计体积/m³</b-th>
+            <b-th scope="col">备注</b-th>
           </b-tr>
         </b-thead>
         <b-tbody>
@@ -822,6 +823,7 @@
             <b-td>{{ item.weight_total }}</b-td>
             <b-td>{{ item.volume }}</b-td>
             <b-td>{{ item.volume_total }}</b-td>
+            <b-td>{{ item.remark }}</b-td>
           </b-tr>
         </b-tbody>
       </b-table-simple>
