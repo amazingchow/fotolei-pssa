@@ -58,7 +58,7 @@ def export_report_file_case4():
     threshold_ssr = int(payload.get("threshold_ssr", "4"))
     reduced_btn_option = payload.get("reduced_btn_option", True)
 
-    stmt = "SELECT * FROM ggfilm.products WHERE "
+    stmt = "SELECT * FROM ggfilm.products"
     selections = []
     if len(brand) > 0:
         selections.append("brand = '{}'".format(brand))
@@ -78,7 +78,8 @@ def export_report_file_case4():
         selections.append("is_import = '{}'".format(is_import))
     if len(supplier_name) > 0:
         selections.append("supplier_name = '{}'".format(supplier_name))
-    stmt += " AND ".join(selections)
+    if len(selections) > 0:
+        stmt += " WHERE " + " AND ".join(selections)
     stmt += ";"
 
     preview_table = []
@@ -89,31 +90,29 @@ def export_report_file_case4():
             specification_code = ret[3]
             jit_inventory = ret[19]
 
-            stmt = "SELECT * FROM ggfilm.inventories \
-WHERE specification_code = '{}' AND \
-create_time >= '{}' AND \
-create_time <= '{}' \
-ORDER BY create_time ASC;".format(
+            stmt = "SELECT * FROM ggfilm.inventories WHERE specification_code = '{}' AND create_time >= '{}' AND create_time <= '{}' ORDER BY create_time ASC;".format(
                 specification_code, st_date, ed_date
             )
             inner_rets = db_connector.query(stmt)
             if type(inner_rets) is list and len(inner_rets) > 0:
-                sale_qty_x_months = 0
-                for inner_ret in inner_rets:
-                    sale_qty_x_months += inner_ret[11]
-                if reduced_btn_option:
-                    reduced_months = 0
-                    for inner_ret in inner_rets:
-                        if inner_ret[5] == 0 and inner_ret[17] == 0:
-                            if inner_ret[7] <= 10 and inner_ret[7] <= inner_ret[11]:
-                                reduced_months += 1
-                            elif inner_ret[7] > 10 and inner_ret[7] > inner_ret[11]:
-                                reduced_months += 1
-                    if time_quantum_x != reduced_months:
+                is_unsalable = False
+                sale_qty_x_months = sum(inner_ret[11] - inner_ret[13] for inner_ret in inner_rets)
+                if sale_qty_x_months > 0:
+                    if reduced_btn_option:
+                        reduced_months = time_quantum_x - len(inner_rets)
+                        for inner_ret in inner_rets:
+                            if inner_ret[5] == 0 and inner_ret[17] == 0:
+                                if inner_ret[7] > 0 and inner_ret[7] <= 10 and inner_ret[7] <= (inner_ret[11] - inner_ret[13]):
+                                    reduced_months += 1
+                                elif inner_ret[7] > 10 and inner_ret[7] > (inner_ret[11] - inner_ret[13]):
+                                    reduced_months += 1
                         sale_qty_x_months = int(sale_qty_x_months * (time_quantum_x / (time_quantum_x - reduced_months)))
-
-                if (sale_qty_x_months > 0 and (jit_inventory / sale_qty_x_months) > threshold_ssr) or \
+                    if (sale_qty_x_months > 0 and (jit_inventory / sale_qty_x_months) > threshold_ssr) or \
                         (sale_qty_x_months == 0 and jit_inventory > 0):
+                        is_unsalable = True
+                else:
+                    is_unsalable = True
+                if is_unsalable:
                     # 滞销了
                     cache = {}
                     cache["product_code"] = inner_rets[0][1]
@@ -139,7 +138,7 @@ ORDER BY create_time ASC;".format(
                     cache["purchase_total"] = sum([inner_ret[8] for inner_ret in inner_rets])
                     cache["purchase_then_return_qty"] = sum([inner_ret[9] for inner_ret in inner_rets])
                     cache["purchase_then_return_total"] = sum([inner_ret[10] for inner_ret in inner_rets])
-                    cache["sale_qty"] = sale_qty_x_months
+                    cache["sale_qty"] = sum([inner_ret[11] for inner_ret in inner_rets])
                     cache["sale_total"] = sum([inner_ret[12] for inner_ret in inner_rets])
                     cache["sale_then_return_qty"] = sum([inner_ret[13] for inner_ret in inner_rets])
                     cache["sale_then_return_total"] = sum([inner_ret[14] for inner_ret in inner_rets])
@@ -148,8 +147,10 @@ ORDER BY create_time ASC;".format(
                     cache["ed_inventory_qty"] = inner_rets[len(inner_rets) - 1][17]
                     cache["ed_inventory_total"] = inner_rets[len(inner_rets) - 1][18]
                     cache["jit_inventory"] = jit_inventory
-                    if sale_qty_x_months == 0 and jit_inventory > 0:
-                        cache["ssr"] = "*"
+                    if sale_qty_x_months == 0:
+                        cache["ssr"] = "{}/0".format(jit_inventory)
+                    elif sale_qty_x_months < 0:
+                        cache["ssr"] = "{}/{}".format(jit_inventory, sale_qty_x_months)
                     else:
                         cache["ssr"] = float("{:.3f}".format(jit_inventory / sale_qty_x_months))
                     preview_table.append(cache)
