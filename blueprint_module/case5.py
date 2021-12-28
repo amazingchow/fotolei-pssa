@@ -147,6 +147,12 @@ jit_inventory, product_weight, product_length, product_width, product_height, mo
                     cache[specification_code]["weight_total"] = float("{:.3f}".format((cache[specification_code]["weight"] * cache[specification_code]["projected_purchase"]) / 1e3))
                     cache[specification_code]["volume_total"] = float("{:.3f}".format((cache[specification_code]["volume"] * cache[specification_code]["projected_purchase"]) / 1e6))
         for _, v in cache.items():
+            if v["inventory"] < 0:
+                v["inventory_divided_by_sale_qty_x_months"] = "#DIV/0!"
+                v["inventory_divided_by_reduced_sale_qty_x_months"] = "#DIV/0!"
+                v["inventory_divided_by_sale_qty_y_months"] = "#DIV/0!"
+                v["inventory_divided_by_reduced_sale_qty_y_months"] = "#DIV/0!"
+
             preview_table.append(v)
         if len(preview_table) > 0:
             response_object = {"status": "success"}
