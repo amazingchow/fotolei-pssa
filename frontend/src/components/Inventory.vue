@@ -1041,40 +1041,11 @@ export default {
       supplierNameSelections: [],
       supplierNameSelection: '',
       customizeCase1: {
-        classification1_tags: ['数码', '传统耗材'],
-        classification1_classification2_tags: [
-          '数码|背带',
-          '数码|包&收纳',
-          '数码|快挂',
-          '传统耗材|暗房冲洗设备',
-          '传统耗材|胶片',
-          '传统耗材|页片',
-          '传统耗材|相纸',
-          '传统耗材|彩色药水',
-          '传统耗材|黑白药水',
-          '传统耗材|底片收纳保护',
-          '传统耗材|翻拍器',
-          '传统耗材|放大机类',
-          '传统耗材|胶片相机'
-        ],
-        classification1_topk_tags: ['数码|top2', '传统耗材|top10'],
-        brand_tags: [
-          '百得信',
-          '宝图',
-          '福马',
-          '富士',
-          '柯达',
-          '派森',
-          '上海',
-          '泰特诺',
-          '伊尔福',
-          'adox',
-          'jobo',
-          'lab-box',
-          'osiris',
-          'poilotfoto'
-        ],
-        brand_topk_tag: 'top10',
+        classification1_tags: [],
+        classification1_classification2_tags: [],
+        classification1_topk_tags: [],
+        brand_tags: [],
+        brand_topk_tag: '',
         brand_classification2_tags: []
       },
       previewCase1: {
@@ -1342,44 +1313,35 @@ export default {
       this.adminPwd = ''
     },
     // ------------------------------ 销售报表（按分类汇总） ------------------------------
-    onResetCustomizeCase1 () {
-      this.customizeCase1 = {
-        classification1_tags: ['数码', '传统耗材'],
-        classification1_classification2_tags: [
-          '数码|背带',
-          '数码|包&收纳',
-          '数码|快挂',
-          '传统耗材|暗房冲洗设备',
-          '传统耗材|胶片',
-          '传统耗材|页片',
-          '传统耗材|相纸',
-          '传统耗材|彩色药水',
-          '传统耗材|黑白药水',
-          '传统耗材|底片收纳保护',
-          '传统耗材|翻拍器',
-          '传统耗材|放大机类',
-          '传统耗材|胶片相机'
-        ],
-        classification1_topk_tags: ['数码|top2', '传统耗材|top10'],
-        brand_tags: [
-          '百得信',
-          '宝图',
-          '福马',
-          '富士',
-          '柯达',
-          '派森',
-          '上海',
-          '泰特诺',
-          '伊尔福',
-          'adox',
-          'jobo',
-          'lab-box',
-          'osiris',
-          'poilotfoto'
-        ],
-        brand_topk_tag: 'top10',
-        brand_classification2_tags: []
-      }
+    fetchUI () {
+      axios.get(this.serverBaseURL + '/api/v1/case1/ui/fetch')
+        .then((res) => {
+          this.customizeCase1.classification1_tags = res.data.ui.classification1_tags
+          this.customizeCase1.classification1_classification2_tags = res.data.ui.classification1_classification2_tags
+          this.customizeCase1.classification1_topk_tags = res.data.ui.classification1_topk_tags
+          this.customizeCase1.brand_tags = res.data.ui.brand_tags
+          this.customizeCase1.brand_topk_tag = res.data.ui.brand_topk_tag
+          this.customizeCase1.brand_classification2_tags = res.data.ui.brand_classification2_tags
+        })
+        .catch((error) => {
+          // eslint-disable-next-line
+          console.log(error)
+          this.message = '获取自定义UI失败！'
+          this.showMessage = true
+        })
+    },
+    saveUI (payload) {
+      axios.post(this.serverBaseURL + '/api/v1/case1/ui/save', payload)
+        .then(() => {
+          this.message = '保存自定义UI成功！'
+          this.showMessage = true
+        })
+        .catch((error) => {
+          // eslint-disable-next-line
+          console.log(error)
+          this.message = '保存自定义UI失败！'
+          this.showMessage = true
+        })
     },
     onCustomizeCase1 (evt) {
       evt.preventDefault()
@@ -1387,12 +1349,21 @@ export default {
     },
     onSaveCustomizeCase1 (evt) {
       evt.preventDefault()
+      const payload = {
+        classification1_tags: this.customizeCase1.classification1_tags,
+        classification1_classification2_tags: this.customizeCase1.classification1_classification2_tags,
+        classification1_topk_tags: this.customizeCase1.classification1_topk_tags,
+        brand_tags: this.customizeCase1.brand_tags,
+        brand_topk_tag: this.customizeCase1.brand_topk_tag,
+        brand_classification2_tags: this.customizeCase1.brand_classification2_tags
+      }
+      this.saveUI(payload)
       this.$refs.customizeCase1Modal.hide()
     },
     onCancelSaveCustomizeCase1 (evt) {
       evt.preventDefault()
+      this.fetchUI()
       this.$refs.customizeCase1Modal.hide()
-      this.onResetCustomizeCase1()
     },
     previewReportFileCase1Close () {
       this.$refs.processingModal.hide()
@@ -1460,7 +1431,6 @@ export default {
     onCancelExportCase1 (evt) {
       evt.preventDefault()
       this.$refs.exportFileCase1Modal.hide()
-      this.onResetCustomizeCase1()
     },
     // ------------------------------ 销售报表（按系列汇总） ------------------------------
     previewReportFileCase2Close () {
@@ -1859,7 +1829,6 @@ export default {
       this.$refs.processingModal.hide()
       // 恢复默认设置
       this.initExportForm()
-      this.onResetCustomizeCase1()
     },
     prepareExportReportFile (url, payload) {
       axios.post(this.serverBaseURL + url, payload)
@@ -2018,6 +1987,7 @@ export default {
     this.listInventories()
     this.getInventoriesTotal()
     this.setDefaultDate()
+    this.fetchUI()
   }
 }
 </script>

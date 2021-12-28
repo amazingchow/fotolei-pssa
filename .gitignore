@@ -134,3 +134,5 @@ tmp/inventories_load_file_repetition_lookup_table
 tmp/inventories_load_file_repetition_lookup_table.db
 tmp/inventories_check_table
 tmp/inventories_check_table.db
+tmp/customize_report_forms_ui
+tmp/customize_report_forms_ui.db

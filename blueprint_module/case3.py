@@ -100,15 +100,15 @@ def preview_report_file_case3():
     else:
         product_code = payload.get("product_code", "").strip()
         product_name = payload.get("product_name", "").strip()
-        brand = payload.get("brand", "").strip()
-        classification_1 = payload.get("classification_1", "").strip()
-        classification_2 = payload.get("classification_2", "").strip()
-        product_series = payload.get("product_series", "").strip()
+        brand = payload.get("brand", "").strip().lower()
+        classification_1 = payload.get("classification_1", "").strip().lower()
+        classification_2 = payload.get("classification_2", "").strip().lower()
+        product_series = payload.get("product_series", "").strip().lower()
         stop_status = payload.get("stop_status", "全部").strip()
         is_combined = payload.get("is_combined", "全部").strip()
         be_aggregated = payload.get("be_aggregated", "全部").strip()
         is_import = payload.get("is_import", "全部").strip()
-        supplier_name = payload.get("supplier_name", "").strip()
+        supplier_name = payload.get("supplier_name", "").strip().lower()
 
         stmt = "SELECT specification_code FROM ggfilm.products WHERE "
         selections = []
