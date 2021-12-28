@@ -25,7 +25,7 @@ from utils import generate_digest
 def preview_report_file_case5():
     way = request.args.get("way", "1")
     payload = request.get_json()
-    supplier_name = payload.get("supplier_name", "")
+    supplier_name = payload.get("supplier_name", "").lower()
     time_quantum_x = int(payload.get("time_quantum_x", "6"))
     threshold_x = int(payload.get("threshold_x", "2"))
     time_quantum_y = int(payload.get("time_quantum_y", "12"))

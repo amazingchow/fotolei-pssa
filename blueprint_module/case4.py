@@ -46,15 +46,15 @@ def export_report_file_case4():
     else:
         time_quantum_x = ed_datetime.month - st_datetime.month
 
-    brand = payload.get("brand", "").strip()
-    classification_1 = payload.get("classification_1", "").strip()
-    classification_2 = payload.get("classification_2", "").strip()
-    product_series = payload.get("product_series", "").strip()
+    brand = payload.get("brand", "").strip().lower()
+    classification_1 = payload.get("classification_1", "").strip().lower()
+    classification_2 = payload.get("classification_2", "").strip().lower()
+    product_series = payload.get("product_series", "").strip().lower()
     stop_status = payload.get("stop_status", "全部").strip()
     is_combined = payload.get("is_combined", "全部").strip()
     be_aggregated = payload.get("be_aggregated", "全部").strip()
     is_import = payload.get("is_import", "全部").strip()
-    supplier_name = payload.get("supplier_name", "").strip()
+    supplier_name = payload.get("supplier_name", "").strip().lower()
     threshold_ssr = int(payload.get("threshold_ssr", "4"))
     reduced_btn_option = payload.get("reduced_btn_option", True)
 
