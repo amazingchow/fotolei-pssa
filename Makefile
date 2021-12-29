@@ -42,3 +42,7 @@ run_client: build_client_prod
 .PHONY: run_clientd
 run_clientd: build_client_prod
 	@nohup `serve -s frontend/dist -l 8888 2>&1 | tee clientd.log` &
+
+.PHONY: stop
+stop:
+	@./scripts/stop.sh
