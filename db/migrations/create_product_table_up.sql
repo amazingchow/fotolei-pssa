@@ -9,10 +9,10 @@ CREATE TABLE IF NOT EXISTS ggfilm.products (
     classification_2   VARCHAR(64),           /* 分类2 */
     product_series     VARCHAR(64),           /* 产品系列 */
     stop_status        VARCHAR(32),           /* STOP状态 */
-    product_weight     INT,                   /* 重量/g */
-    product_length     INT,                   /* 长度/cm */
-    product_width      INT,                   /* 宽度/cm */
-    product_height     INT,                   /* 高度/cm */
+    product_weight     FLOAT,                 /* 重量/g */
+    product_length     FLOAT,                 /* 长度/cm */
+    product_width      FLOAT,                 /* 宽度/cm */
+    product_height     FLOAT,                 /* 高度/cm */
     is_combined        VARCHAR(32),           /* 是否是组合商品 */
     be_aggregated      VARCHAR(32),           /* 是否参与统计 */
     is_import          VARCHAR(32),           /* 是否是进口商品 */
