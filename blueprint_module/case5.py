@@ -122,8 +122,11 @@ jit_inventory, product_weight, product_length, product_width, product_height, mo
                 else:
                     tmp = int((x3 / time_quantum_x) * projected_purchase_months)
                     cache[specification_code]["projected_purchase"] = tmp - cache[specification_code]["inventory"]
-                    if cache[specification_code]["projected_purchase"] < 0:
-                        cache[specification_code]["projected_purchase"] = 0
+                    if cache[specification_code]["projected_purchase"] <= 0:
+                        tmp = int((x4 / time_quantum_y) * projected_purchase_months)
+                        cache[specification_code]["projected_purchase"] = tmp - cache[specification_code]["inventory"]
+                        if cache[specification_code]["projected_purchase"] < 0:
+                            cache[specification_code]["projected_purchase"] = 0
                 if cache[specification_code]["projected_purchase"] == 0:
                     del cache[specification_code]
                 else:
@@ -185,17 +188,22 @@ def prepare_report_file_case5():
             "规格编码", "品牌", "商品名称", "规格名称", "供应商",
             "{}个月销量".format(time_quantum_x), "{}个月折算销量".format(time_quantum_x),
             "{}个月销量".format(time_quantum_y), "{}个月折算销量".format(time_quantum_y),
-            "库存量", "库存/{}个月销量".format(time_quantum_x),
-            "库存/{}个月销量".format(time_quantum_y), "拟定进货量",
-            "单个重量/g", "小计重量/kg", "单个体积/cm³", "小计体积/m³",
+            "库存量",
+            "库存/{}个月销量".format(time_quantum_x), "库存/{}个月折算销量".format(time_quantum_x),
+            "库存/{}个月销量".format(time_quantum_y), "库存/{}个月折算销量".format(time_quantum_y),
+            "拟定进货量", "单个重量/g", "小计重量/kg", "单个体积/cm³", "小计体积/m³",
             "备注",
         ])
         for item in preview_table:
             csv_writer.writerow([
                 item["specification_code"], item["brand"], item["product_name"], item["specification_name"], item["supplier_name"],
-                item["sale_qty_x_months"], item["reduced_sale_qty_x_months"], item["sale_qty_y_months"], item["reduced_sale_qty_y_months"],
-                item["inventory"], item["inventory_divided_by_sale_qty_x_months"], item["inventory_divided_by_sale_qty_y_months"], item["projected_purchase"],
-                item["weight"], item["weight_total"], item["volume"], item["volume_total"], item["remark"],
+                item["sale_qty_x_months"], item["reduced_sale_qty_x_months"],
+                item["sale_qty_y_months"], item["reduced_sale_qty_y_months"],
+                item["inventory"],
+                item["inventory_divided_by_sale_qty_x_months"], item["inventory_divided_by_reduced_sale_qty_x_months"],
+                item["inventory_divided_by_sale_qty_y_months"], item["inventory_divided_by_reduced_sale_qty_y_months"],
+                item["projected_purchase"], item["weight"], item["weight_total"], item["volume"], item["volume_total"],
+                item["remark"],
             ])
 
     response_object = {"status": "success"}
@@ -253,17 +261,36 @@ ORDER BY create_time DESC;".format(specification_code, the_past_m_month)
             g_cache[specification_code]["remark"] = ""
             # 计算M个月折算销量
             if reduced_btn_option:
-                reduced_months = the_time_quantum - len(rets)
-                for ret in rets:
-                    if ret[0] == 0 and ret[1] == 0:
-                        if ret[2] > 0 and ret[2] <= 10 and ret[2] <= (ret[3] - ret[4]):
-                            reduced_months += 1
-                        elif ret[2] > 10 and ret[2] > (ret[3] - ret[4]):
-                            reduced_months += 1
                 if is_the_past_x_month:
-                    g_cache[specification_code]["reduced_sale_qty_x_months"] = int(g_cache[specification_code]["sale_qty_x_months"] * (the_time_quantum / (the_time_quantum - reduced_months)))
+                    if g_cache[specification_code]["sale_qty_x_months"] == 0:
+                        g_cache[specification_code]["reduced_sale_qty_x_months"] = 0
+                    else:
+                        reduced_months = the_time_quantum - len(rets)
+                        for ret in rets:
+                            if ret[0] == 0 and ret[1] == 0:
+                                if ret[2] > 0 and ret[2] <= 10 and ret[2] <= (ret[3] - ret[4]):
+                                    reduced_months += 1
+                                elif ret[2] > 10 and ret[2] > (ret[3] - ret[4]):
+                                    reduced_months += 1
+                        if the_time_quantum == reduced_months:
+                            g_cache[specification_code]["reduced_sale_qty_x_months"] = int(g_cache[specification_code]["sale_qty_x_months"] * (the_time_quantum / len(rets)))
+                        else:
+                            g_cache[specification_code]["reduced_sale_qty_x_months"] = int(g_cache[specification_code]["sale_qty_x_months"] * (the_time_quantum / (the_time_quantum - reduced_months)))
                 else:
-                    g_cache[specification_code]["reduced_sale_qty_y_months"] = int(g_cache[specification_code]["sale_qty_y_months"] * (the_time_quantum / (the_time_quantum - reduced_months)))
+                    if g_cache[specification_code]["sale_qty_y_months"] == 0:
+                        g_cache[specification_code]["reduced_sale_qty_y_months"] = 0
+                    else:
+                        reduced_months = the_time_quantum - len(rets)
+                        for ret in rets:
+                            if ret[0] == 0 and ret[1] == 0:
+                                if ret[2] > 0 and ret[2] <= 10 and ret[2] <= (ret[3] - ret[4]):
+                                    reduced_months += 1
+                                elif ret[2] > 10 and ret[2] > (ret[3] - ret[4]):
+                                    reduced_months += 1
+                        if the_time_quantum == reduced_months:
+                            g_cache[specification_code]["reduced_sale_qty_y_months"] = int(g_cache[specification_code]["sale_qty_y_months"] * (the_time_quantum / len(rets)))
+                        else:
+                            g_cache[specification_code]["reduced_sale_qty_y_months"] = int(g_cache[specification_code]["sale_qty_y_months"] * (the_time_quantum / (the_time_quantum - reduced_months)))
             else:
                 if is_the_past_x_month:
                     g_cache[specification_code]["reduced_sale_qty_x_months"] = g_cache[specification_code]["sale_qty_x_months"]

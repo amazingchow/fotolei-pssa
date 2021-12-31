@@ -997,7 +997,7 @@ export default {
   data () {
     return {
       serverBaseURL: process.env.SERVER_BASE_URL,
-      dateReg: /^20[2-3][0-9]-(0[1-9]|1[0-2])$/,
+      dateReg: /^20[1-3][0-9]-(0[1-9]|1[0-2])$/,
       adminUsr: '',
       adminPwd: '',
       customDateSelection: '',
