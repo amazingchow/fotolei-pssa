@@ -106,7 +106,10 @@ def export_report_file_case4():
                                     reduced_months += 1
                                 elif inner_ret[7] > 10 and inner_ret[7] > (inner_ret[11] - inner_ret[13]):
                                     reduced_months += 1
-                        sale_qty_x_months = int(sale_qty_x_months * (time_quantum_x / (time_quantum_x - reduced_months)))
+                        if time_quantum_x == reduced_months:
+                            sale_qty_x_months = int(sale_qty_x_months * (time_quantum_x / len(inner_rets)))
+                        else:
+                            sale_qty_x_months = int(sale_qty_x_months * (time_quantum_x / (time_quantum_x - reduced_months)))
                     if (sale_qty_x_months > 0 and (jit_inventory / sale_qty_x_months) > threshold_ssr) or \
                         (sale_qty_x_months == 0 and jit_inventory > 0):
                         is_unsalable = True

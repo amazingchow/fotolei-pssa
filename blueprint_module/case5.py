@@ -273,7 +273,7 @@ ORDER BY create_time DESC;".format(specification_code, the_past_m_month)
                                 elif ret[2] > 10 and ret[2] > (ret[3] - ret[4]):
                                     reduced_months += 1
                         if the_time_quantum == reduced_months:
-                            g_cache[specification_code]["reduced_sale_qty_x_months"] = g_cache[specification_code]["sale_qty_x_months"] * 12
+                            g_cache[specification_code]["reduced_sale_qty_x_months"] = int(g_cache[specification_code]["sale_qty_x_months"] * (the_time_quantum / len(rets)))
                         else:
                             g_cache[specification_code]["reduced_sale_qty_x_months"] = int(g_cache[specification_code]["sale_qty_x_months"] * (the_time_quantum / (the_time_quantum - reduced_months)))
                 else:
@@ -288,7 +288,7 @@ ORDER BY create_time DESC;".format(specification_code, the_past_m_month)
                                 elif ret[2] > 10 and ret[2] > (ret[3] - ret[4]):
                                     reduced_months += 1
                         if the_time_quantum == reduced_months:
-                            g_cache[specification_code]["reduced_sale_qty_y_months"] = g_cache[specification_code]["sale_qty_y_months"] * 12
+                            g_cache[specification_code]["reduced_sale_qty_y_months"] = int(g_cache[specification_code]["sale_qty_y_months"] * (the_time_quantum / len(rets)))
                         else:
                             g_cache[specification_code]["reduced_sale_qty_y_months"] = int(g_cache[specification_code]["sale_qty_y_months"] * (the_time_quantum / (the_time_quantum - reduced_months)))
             else:
