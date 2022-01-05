@@ -1,6 +1,9 @@
 #!/bin/bash
 
 mkdir -p ~/mysql/data
+mkdir -p ~/mysql/logs
+mkdir -p ~/mysql/conf.d
+cp $PWD/test/mysql-deploy/conf.d/*.cnf ~/mysql/conf.d
 mkdir -p ~/mysql/migrations
 cp $PWD/db/migrations/*.sql ~/mysql/migrations
 mkdir -p ~/ggfilm-server/inventories

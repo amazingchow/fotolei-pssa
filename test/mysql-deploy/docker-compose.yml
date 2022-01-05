@@ -12,4 +12,6 @@ services:
       MYSQL_PASS: "123456"
     volumes:
       - ~/mysql/data:/var/lib/mysql
+      - ~/mysql/logs:/tmp
+      - ~/mysql/conf.d:/etc/mysql/mysql.conf.d
       - ~/mysql/migrations:/migrations
