@@ -2,14 +2,18 @@ version: "3.7"
 services:
   # mysql数据库
   db:
-    image: mysql:5.7
+    image: summychoutoto/mysql:5.7-support-log-files
     ports:
       - 13306:3306
     command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    # 在宿主机文件"/etc/passwd"中找出目标"uid:gid"
+    user: 1002:1003
     environment:
       MYSQL_ROOT_PASSWORD: "Pwd123!@"
       MYSQL_USER: "tester"
       MYSQL_PASS: "123456"
     volumes:
       - ~/mysql/data:/var/lib/mysql
-      - ~/mysql/migrations:/migrations
+      - ~/mysql/logs:/var/log/mysql
+      - ~/mysql/conf.d:/etc/mysql/mysql.conf.d
+      - ~/mysql/migrations:/mysql/migrations
