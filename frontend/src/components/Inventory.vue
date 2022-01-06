@@ -1958,8 +1958,10 @@ export default {
       // 为导入时间设置默认值
       if (month >= 10) {
         this.customDateSelection = year.toString() + '-' + month.toString()
-      } else {
+      } else if (month < 10 && month >= 2) {
         this.customDateSelection = year.toString() + '-0' + month.toString()
+      } else {
+        this.customDateSelection = (year - 1).toString() + '-12'
       }
       // 为起始时间设置默认值
       this.stDateSelectionForCase1 = this.customDateSelection
@@ -1974,8 +1976,10 @@ export default {
       }
       if (stMonth >= 10) {
         this.stDateSelection = stYear.toString() + '-' + stMonth.toString()
-      } else {
+      } else if (stMonth < 10 && stMonth >= 2) {
         this.stDateSelection = stYear.toString() + '-0' + stMonth.toString()
+      } else {
+        this.stDateSelection = (stYear - 1).toString() + '-12'
       }
       // 为截止时间设置默认值
       this.edDateSelection = this.customDateSelection
