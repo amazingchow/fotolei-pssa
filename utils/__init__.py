@@ -136,12 +136,13 @@ update_lookup_table_brand_classification_1_2_association()
 def init_lookup_table_sku_brand_classification_1_2_association():
     global lookup_table_sku_brand_classification_1_2_association
 
-    stmt = "SELECT specification_code, brand, classification_1, classification_2 FROM ggfilm.products;"
+    stmt = "SELECT specification_code, brand, classification_1, classification_2, is_combined FROM ggfilm.products;"
     rets = db_connector.query(stmt)
     if type(rets) is list and len(rets) > 0:
         for ret in rets:
             lookup_table_sku_brand_classification_1_2_association[ret[0]].append(ret[1])
             lookup_table_sku_brand_classification_1_2_association[ret[0]].append(ret[2])
             lookup_table_sku_brand_classification_1_2_association[ret[0]].append(ret[3])
+            lookup_table_sku_brand_classification_1_2_association[ret[0]].append(ret[4])
 
 init_lookup_table_sku_brand_classification_1_2_association()

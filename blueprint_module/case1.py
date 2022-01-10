@@ -203,7 +203,7 @@ def preview_report_file_case1():
     preview_table.append(["{} ~ {}销售报表".format(st_date, ed_date), "", "占比"])
     # 计算202X年XX月~202X年XX月的总销售额
     stmt = "SELECT SUM(sale_total) as sum_sale_total, SUM(sale_then_return_total) as sum_sale_then_return_total \
-FROM ggfilm.inventories WHERE create_time >= '{}' AND create_time <= '{}';".format(
+FROM ggfilm.inventories WHERE extra_is_combined = '否' AND create_time >= '{}' AND create_time <= '{}';".format(
         st_date, ed_date
     )
     rets = db_connector.query(stmt)
@@ -215,7 +215,7 @@ FROM ggfilm.inventories WHERE create_time >= '{}' AND create_time <= '{}';".form
             topk = ui_classification1_topk_lookup_table["传统耗材"]
             # 计算龟龟销售额
             stmt = "SELECT sale_total, sale_then_return_total, extra_classification_2 \
-FROM ggfilm.inventories WHERE extra_classification_1 = '传统耗材' AND create_time >= '{}' AND create_time <= '{}';".format(
+FROM ggfilm.inventories WHERE extra_classification_1 = '传统耗材' AND extra_is_combined = '否' AND create_time >= '{}' AND create_time <= '{}';".format(
                 st_date, ed_date
             )
             rets = db_connector.query(stmt)
@@ -282,7 +282,7 @@ FROM ggfilm.inventories WHERE extra_classification_1 = '传统耗材' AND create
             topk = ui_classification1_topk_lookup_table["数码"]
             # 计算2店销售额
             stmt = "SELECT sale_total, sale_then_return_total, extra_classification_2 \
-FROM ggfilm.inventories WHERE extra_classification_1 = '数码' AND create_time >= '{}' AND create_time <= '{}';".format(
+FROM ggfilm.inventories WHERE extra_classification_1 = '数码' AND extra_is_combined = '否' AND create_time >= '{}' AND create_time <= '{}';".format(
                 st_date, ed_date
             )
             rets = db_connector.query(stmt)
@@ -352,7 +352,7 @@ FROM ggfilm.inventories WHERE extra_classification_1 = '数码' AND create_time 
             # 如果选中的待计算项目 >= topk，则直接处理待计算项目
             for brand_tag in ui_brand_tags:
                 stmt = "SELECT SUM(sale_total) as sum_sale_total, SUM(sale_then_return_total) as sum_sale_then_return_total \
-FROM ggfilm.inventories WHERE extra_brand = '{}' AND create_time >= '{}' AND create_time <= '{}';".format(
+FROM ggfilm.inventories WHERE extra_brand = '{}' AND extra_is_combined = '否' AND create_time >= '{}' AND create_time <= '{}';".format(
                     brand_tag, st_date, ed_date
                 )
                 rets = db_connector.query(stmt)
@@ -367,7 +367,7 @@ FROM ggfilm.inventories WHERE extra_brand = '{}' AND create_time >= '{}' AND cre
             topk = int(brand_topk)
             # 如果选中的待计算项目 < topk，待计算项目必须被处理且出现在结果中，空位用topk来填充
             stmt = "SELECT sale_total, sale_then_return_total, extra_brand \
-FROM ggfilm.inventories WHERE create_time >= '{}' AND create_time <= '{}';".format(
+FROM ggfilm.inventories WHERE extra_is_combined = '否' AND create_time >= '{}' AND create_time <= '{}';".format(
                 st_date, ed_date
             )
             rets = db_connector.query(stmt)
