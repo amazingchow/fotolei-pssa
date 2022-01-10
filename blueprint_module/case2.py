@@ -36,7 +36,8 @@ def preview_report_file_case2():
         response_object = {"status": "not found"}
         return jsonify(response_object)
 
-    stmt = "SELECT specification_code, product_series, jit_inventory FROM ggfilm.products WHERE COALESCE(CHAR_LENGTH(product_series), 0) != 0;"
+    stmt = "SELECT specification_code, product_series, jit_inventory FROM ggfilm.products \
+WHERE COALESCE(CHAR_LENGTH(product_series), 0) != 0 AND is_combined = '否';"
     rets = db_connector.query(stmt)
     if type(rets) is list and len(rets) > 0:
         lookup_table = {}  # product_series -> [(specification_code, jit_inventory)]

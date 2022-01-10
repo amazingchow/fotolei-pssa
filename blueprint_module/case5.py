@@ -53,9 +53,9 @@ jit_inventory, product_weight, product_length, product_width, product_height, mo
         conds.append("be_aggregated = '{}'".format(be_aggregated))
     stmt_suffix = " AND ".join(conds)
     if len(stmt_suffix) > 0:
-        stmt = stmt + " WHERE " + stmt_suffix + ";"
+        stmt = stmt + " WHERE " + stmt_suffix + " AND is_combined = '否';"
     else:
-        stmt = stmt + ";"
+        stmt = stmt + " WHERE is_combined = '否';"
 
     preview_table = []
     specification_code_list = []
