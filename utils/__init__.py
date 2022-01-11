@@ -47,7 +47,7 @@ def generate_digest(s: str):
 
 # 数据库连接器 + 查询表
 db_connector = MySQLConnector.instance()
-db_connector.init_conn("ggfilm")
+db_connector.init_conn("fotolei_pssa")
 
 lookup_table_sku_get_or_put = defaultdict(bool)
 lookup_table_inventory_update_without_repetition = defaultdict(bool)
