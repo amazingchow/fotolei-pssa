@@ -18,7 +18,7 @@ def pick_one_product():
         response_object = {"status": "not found"}
         return response_object
 
-    stmt = "SELECT * FROM ggfilm.products WHERE specification_code = '{}';".format(specification_code)
+    stmt = "SELECT * FROM fotolei_pssa.products WHERE specification_code = '{}';".format(specification_code)
     products = db_connector.query(stmt)
 
     response_object = {"status": "success"}

@@ -12,7 +12,7 @@ from utils import cost_count
 @blueprint.route("/api/v1/inventories/total", methods=["GET"])
 @cost_count
 def get_inventories_total():
-    stmt = "SELECT SUM(total) FROM ggfilm.inventory_summary;"
+    stmt = "SELECT SUM(total) FROM fotolei_pssa.inventory_summary;"
     ret = db_connector.query(stmt)
     response_object = {"status": "success"}
     if type(ret) is list and len(ret) > 0 and ret[0][0] is not None:

@@ -71,7 +71,7 @@ def preview_report_file_case6():
     for item in demand_table:
         stmt = "SELECT product_name, specification_name, \
 product_weight, product_length, product_width, product_height \
-FROM ggfilm.products WHERE specification_code = '{}';".format(item["specification_code"])
+FROM fotolei_pssa.products WHERE specification_code = '{}';".format(item["specification_code"])
         rets = db_connector.query(stmt)
         cache = {}
         cache["specification_code"] = item["specification_code"]

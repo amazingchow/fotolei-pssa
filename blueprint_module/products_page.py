@@ -18,7 +18,7 @@ def list_products():
     stmt = "SELECT product_code, specification_code, product_name, specification_name, \
 brand, classification_1, classification_2, product_series, stop_status, \
 is_combined, is_import, supplier_name, purchase_name, jit_inventory, moq \
-FROM ggfilm.products ORDER BY specification_code LIMIT {}, {};".format(
+FROM fotolei_pssa.products ORDER BY specification_code LIMIT {}, {};".format(
         page_offset, page_limit)
     products = db_connector.query(stmt)
 

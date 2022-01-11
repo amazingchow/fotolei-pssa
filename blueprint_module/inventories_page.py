@@ -18,7 +18,7 @@ def list_inventories():
     stmt = "SELECT specification_code, \
 st_inventory_qty, purchase_qty, purchase_then_return_qty, sale_qty, \
 sale_then_return_qty, others_qty, ed_inventory_qty, create_time \
-FROM ggfilm.inventories ORDER BY create_time DESC LIMIT {}, {};".format(
+FROM fotolei_pssa.inventories ORDER BY create_time DESC LIMIT {}, {};".format(
         page_offset, page_limit)
     inventories = db_connector.query(stmt)
 

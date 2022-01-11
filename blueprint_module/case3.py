@@ -47,7 +47,7 @@ def preview_report_file_case3():
         for scode in specification_code_list:
             cache = {}
 
-            stmt = "SELECT * FROM ggfilm.inventories WHERE specification_code = '{}' AND create_time >= '{}' AND create_time <= '{}' ORDER BY create_time ASC;".format(
+            stmt = "SELECT * FROM fotolei_pssa.inventories WHERE specification_code = '{}' AND create_time >= '{}' AND create_time <= '{}' ORDER BY create_time ASC;".format(
                 scode, st_date, ed_date
             )
             rets = db_connector.query(stmt)
@@ -67,7 +67,7 @@ def preview_report_file_case3():
                 cache["ed_inventory_qty"] = rets[len(rets) - 1][17]
                 cache["ed_inventory_total"] = rets[len(rets) - 1][18]
 
-                stmt = "SELECT * FROM ggfilm.products WHERE specification_code = '{}';".format(scode)
+                stmt = "SELECT * FROM fotolei_pssa.products WHERE specification_code = '{}';".format(scode)
                 inner_rets = db_connector.query(stmt)
                 cache["product_code"] = inner_rets[0][1]
                 cache["product_name"] = inner_rets[0][2]
@@ -110,7 +110,7 @@ def preview_report_file_case3():
         is_import = payload.get("is_import", "全部").strip()
         supplier_name = payload.get("supplier_name", "").strip().lower()
 
-        stmt = "SELECT specification_code FROM ggfilm.products WHERE "
+        stmt = "SELECT specification_code FROM fotolei_pssa.products WHERE "
         selections = []
         if len(product_code) > 0:
             selections.append("product_code = '{}'".format(product_code))

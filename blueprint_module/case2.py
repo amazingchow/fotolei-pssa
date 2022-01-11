@@ -36,7 +36,7 @@ def preview_report_file_case2():
         response_object = {"status": "not found"}
         return jsonify(response_object)
 
-    stmt = "SELECT specification_code, product_series, jit_inventory FROM ggfilm.products \
+    stmt = "SELECT specification_code, product_series, jit_inventory FROM fotolei_pssa.products \
 WHERE COALESCE(CHAR_LENGTH(product_series), 0) != 0 AND is_combined = '否';"
     rets = db_connector.query(stmt)
     if type(rets) is list and len(rets) > 0:
@@ -75,7 +75,7 @@ WHERE COALESCE(CHAR_LENGTH(product_series), 0) != 0 AND is_combined = '否';"
                 jit_inventory = vv[1]
                 cache[product_series]["jit_inventory"] += jit_inventory
 
-                stmt = "SELECT * FROM ggfilm.inventories WHERE specification_code = '{}' AND create_time >= '{}' AND create_time <= '{}';".format(
+                stmt = "SELECT * FROM fotolei_pssa.inventories WHERE specification_code = '{}' AND create_time >= '{}' AND create_time <= '{}';".format(
                     specification_code, st_date, ed_date
                 )
                 inner_rets = db_connector.query(stmt)

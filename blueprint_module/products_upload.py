@@ -61,7 +61,7 @@ def upload_products():
 
         db_connector.load_data_infile(
             """LOAD DATA LOCAL INFILE "{}" """.format(csv_file) +
-            "INTO TABLE ggfilm.products " +
+            "INTO TABLE fotolei_pssa.products " +
             "FIELDS TERMINATED BY ',' " +
             """ENCLOSED BY '"' """ +
             "LINES TERMINATED BY '\n' " +
@@ -77,9 +77,9 @@ def upload_products():
             csv_reader = csv.reader(fd, delimiter=",")
             for _ in csv_reader:
                 pass
-            stmt = "INSERT INTO ggfilm.product_summary (total) VALUES (%s);"
+            stmt = "INSERT INTO fotolei_pssa.product_summary (total) VALUES (%s);"
             db_connector.insert(stmt, (csv_reader.line_num - 1,))
-        stmt = "INSERT INTO ggfilm.operation_logs (oplog) VALUES (%s);"
+        stmt = "INSERT INTO fotolei_pssa.operation_logs (oplog) VALUES (%s);"
         db_connector.insert(stmt, ("导入{}".format(csv_files[0].filename),))
 
         update_lookup_table_brand_classification_1_2_association()

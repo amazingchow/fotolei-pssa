@@ -36,7 +36,7 @@ def update_one_product():
     jit_inventory = payload.get("jit_inventory", "")
     moq = payload.get("moq", "")
 
-    stmt = "UPDATE ggfilm.products SET "
+    stmt = "UPDATE fotolei_pssa.products SET "
     updates = []
     if len(specification_code) > 0:
         updates.append("specification_code = '{}'".format(specification_code))

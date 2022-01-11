@@ -1,1 +1,1 @@
-DROP TABLE IF EXISTS ggfilm.inventory_summary;
+DROP TABLE IF EXISTS fotolei_pssa.inventory_summary;
