@@ -50,11 +50,11 @@ CREATE TABLE IF NOT EXISTS ggfilm.inventories (
     extra_is_combined          VARCHAR(32),            /* 是否是组合商品 */
     anchor                     TINYINT,                /* 锚，防止‘组合商品‘读出来带空格 */
     PRIMARY KEY (id),
-    KEY (specification_code)
-    KEY (create_time)
-    KEY (extra_brand)
-    KEY (extra_classification_1)
-    KEY (extra_classification_2)
+    KEY (specification_code),
+    KEY (create_time),
+    KEY (extra_brand),
+    KEY (extra_classification_1),
+    KEY (extra_classification_2),
     KEY (extra_is_combined)
 ) ENGINE=InnoDB;
 '''
