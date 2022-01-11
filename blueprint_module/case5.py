@@ -43,7 +43,7 @@ def preview_report_file_case5():
     # 1. “供应商”选项为空，则为全部供应商（包括没有供应商的商品条目）
     # 2. “筛选2”和“筛选1”的区别是不用做阈值判断
     stmt = "SELECT specification_code, brand, product_name, specification_name, supplier_name, \
-jit_inventory, product_weight, product_length, product_width, product_height, moq FROM ggfilm.products"
+jit_inventory, product_weight, product_length, product_width, product_height, moq FROM fotolei_pssa.products"
     conds = []
     if len(supplier_name) > 0:
         conds.append("supplier_name = '{}'".format(supplier_name))
@@ -214,7 +214,7 @@ def prepare_report_file_case5():
 
 def process_sale_qty_m_months(g_cache, specification_code, the_past_m_month, the_time_quantum, is_the_past_x_month, reduced_btn_option):
     stmt = "SELECT st_inventory_qty, ed_inventory_qty, purchase_qty, sale_qty, sale_then_return_qty \
-FROM ggfilm.inventories WHERE specification_code = '{}' AND create_time >= '{}' \
+FROM fotolei_pssa.inventories WHERE specification_code = '{}' AND create_time >= '{}' \
 ORDER BY create_time DESC;".format(specification_code, the_past_m_month)
     rets = db_connector.query(stmt)
     if type(rets) is list:

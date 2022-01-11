@@ -59,7 +59,7 @@ lookup_table_sku_brand_classification_1_2_association = defaultdict(list)
 def init_lookup_table_sku_get_or_put():
     global lookup_table_sku_get_or_put
 
-    stmt = "SELECT specification_code FROM ggfilm.products;"
+    stmt = "SELECT specification_code FROM fotolei_pssa.products;"
     rets = db_connector.query(stmt)
     if type(rets) is list and len(rets) > 0:
         for ret in rets:
@@ -73,7 +73,7 @@ init_lookup_table_sku_get_or_put()
 def init_lookup_table_inventory_update_without_repetition():
     global lookup_table_inventory_update_without_repetition
 
-    stmt = "SELECT create_time, specification_code FROM ggfilm.inventories;"
+    stmt = "SELECT create_time, specification_code FROM fotolei_pssa.inventories;"
     rets = db_connector.query(stmt)
     if type(rets) is list and len(rets) > 0:
         for ret in rets:
@@ -91,7 +91,7 @@ def update_lookup_table_brand_classification_1_2_association():
 
     # 品牌 -> 分类1 -> 分类2 -> 产品系列 -> 供应商名称
     lookup_table_brand_classification_1_2_association.clear()
-    stmt = "SELECT brand, classification_1, classification_2, product_series, supplier_name FROM ggfilm.products;"
+    stmt = "SELECT brand, classification_1, classification_2, product_series, supplier_name FROM fotolei_pssa.products;"
     rets = db_connector.query(stmt)
     if type(rets) is list and len(rets) > 0:
         for ret in rets:
@@ -136,7 +136,7 @@ update_lookup_table_brand_classification_1_2_association()
 def init_lookup_table_sku_brand_classification_1_2_association():
     global lookup_table_sku_brand_classification_1_2_association
 
-    stmt = "SELECT specification_code, brand, classification_1, classification_2, is_combined FROM ggfilm.products;"
+    stmt = "SELECT specification_code, brand, classification_1, classification_2, is_combined FROM fotolei_pssa.products;"
     rets = db_connector.query(stmt)
     if type(rets) is list and len(rets) > 0:
         for ret in rets:

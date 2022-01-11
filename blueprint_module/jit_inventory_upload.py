@@ -52,9 +52,9 @@ def upload_jit_inventory_data():
         response_object["added_skus"] = not_inserted_sku_list
         return jsonify(response_object)
 
-    stmt = "UPDATE ggfilm.products SET jit_inventory = %s WHERE specification_code = %s;"
+    stmt = "UPDATE fotolei_pssa.products SET jit_inventory = %s WHERE specification_code = %s;"
     db_connector.batch_update(stmt, sku_inventory_tuple_list)
-    stmt = "INSERT INTO ggfilm.operation_logs (oplog) VALUES (%s);"
+    stmt = "INSERT INTO fotolei_pssa.operation_logs (oplog) VALUES (%s);"
     db_connector.insert(stmt, ("导入{}".format(csv_files[0].filename),))
 
     response_object = {"status": "success"}

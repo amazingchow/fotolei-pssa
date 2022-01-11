@@ -1,1 +1,1 @@
-DROP TABLE IF EXISTS ggfilm.product_summary;
+DROP TABLE IF EXISTS fotolei_pssa.product_summary;

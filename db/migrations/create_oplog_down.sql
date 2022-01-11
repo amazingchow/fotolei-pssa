@@ -1,1 +1,1 @@
-DROP DATABASE IF EXISTS ggfilm.operation_logs;
+DROP DATABASE IF EXISTS fotolei_pssa.operation_logs;

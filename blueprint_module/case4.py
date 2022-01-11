@@ -58,7 +58,7 @@ def export_report_file_case4():
     threshold_ssr = int(payload.get("threshold_ssr", "4"))
     reduced_btn_option = payload.get("reduced_btn_option", True)
 
-    stmt = "SELECT * FROM ggfilm.products"
+    stmt = "SELECT * FROM fotolei_pssa.products"
     selections = []
     if len(brand) > 0:
         selections.append("brand = '{}'".format(brand))
@@ -90,7 +90,7 @@ def export_report_file_case4():
             specification_code = ret[3]
             jit_inventory = ret[19]
 
-            stmt = "SELECT * FROM ggfilm.inventories WHERE specification_code = '{}' AND create_time >= '{}' AND create_time <= '{}' ORDER BY create_time ASC;".format(
+            stmt = "SELECT * FROM fotolei_pssa.inventories WHERE specification_code = '{}' AND create_time >= '{}' AND create_time <= '{}' ORDER BY create_time ASC;".format(
                 specification_code, st_date, ed_date
             )
             inner_rets = db_connector.query(stmt)

@@ -18,12 +18,12 @@ def clean_all_inventories():
     admin_usr = payload.get("admin_usr", "").strip()
     admin_pwd = payload.get("admin_pwd", "").strip()
     if admin_usr == "fotolei" and admin_pwd == "asdf5678":
-        stmt = "DROP TABLE IF EXISTS ggfilm.inventories;"
+        stmt = "DROP TABLE IF EXISTS fotolei_pssa.inventories;"
         db_connector.drop_table(stmt)
-        stmt = "DROP TABLE IF EXISTS ggfilm.inventory_summary;"
+        stmt = "DROP TABLE IF EXISTS fotolei_pssa.inventory_summary;"
         db_connector.drop_table(stmt)
         stmt = '''
-CREATE TABLE IF NOT EXISTS ggfilm.inventories (
+CREATE TABLE IF NOT EXISTS fotolei_pssa.inventories (
     id                         INT           NOT NULL AUTO_INCREMENT,
     product_code               VARCHAR(64),            /* 商品编码 */
     product_name               VARCHAR(128),           /* 商品名称 */
@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS ggfilm.inventories (
 '''
         db_connector.create_table(stmt)
         stmt = '''
-CREATE TABLE IF NOT EXISTS ggfilm.inventory_summary (
+CREATE TABLE IF NOT EXISTS fotolei_pssa.inventory_summary (
     id          INT      NOT NULL AUTO_INCREMENT,
     total       INT      NOT NULL,
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP(),
