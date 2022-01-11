@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS ggfilm.inventories (
-    id                         INT        NOT NULL AUTO_INCREMENT,
-    product_code               VARCHAR(64)   NOT NULL, /* 商品编码 */
-    product_name               VARCHAR(128)  NOT NULL, /* 商品名称 */
+    id                         INT           NOT NULL AUTO_INCREMENT,
+    product_code               VARCHAR(64),            /* 商品编码 */
+    product_name               VARCHAR(128),           /* 商品名称 */
     specification_code         VARCHAR(64)   NOT NULL, /* 规格编码 */
     specification_name         VARCHAR(128),           /* 规格名称 */
     st_inventory_qty           INT,                    /* 起始库存数量 */
@@ -25,5 +25,10 @@ CREATE TABLE IF NOT EXISTS ggfilm.inventories (
     extra_is_combined          VARCHAR(32),            /* 是否是组合商品 */
     anchor                     TINYINT,                /* 锚，防止‘组合商品‘读出来带空格 */
     PRIMARY KEY (id),
-    KEY (specification_code, extra_brand, extra_classification_1, extra_classification_2, extra_is_combined)
+    KEY (specification_code)
+    KEY (create_time)
+    KEY (extra_brand)
+    KEY (extra_classification_1)
+    KEY (extra_classification_2)
+    KEY (extra_is_combined)
 ) ENGINE=InnoDB;
