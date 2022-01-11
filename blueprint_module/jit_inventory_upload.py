@@ -37,14 +37,12 @@ def upload_jit_inventory_data():
     not_inserted_sku_list = []
     with open(csv_file, "r", encoding='utf-8-sig') as fd:
         csv_reader = csv.reader(fd, delimiter=",")
-        line = 0
+        next(csv_reader, None)  # skip the header line
         for row in csv_reader:
-            if line > 0:
-                if not lookup_table_sku_get_or_put.get(row[0], False):
-                    not_inserted_sku_list.append(row[0])
-                else:
-                    sku_inventory_tuple_list.append((row[1], row[0]))
-            line += 1
+            if not lookup_table_sku_get_or_put.get(row[0], False):
+                not_inserted_sku_list.append(row[0])
+            else:
+                sku_inventory_tuple_list.append((row[1], row[0]))
     if len(not_inserted_sku_list) > 0:
         response_object = {"status": "failed"}
         logger.info("There are {} SKUs not inserted".format(len(not_inserted_sku_list)))
@@ -87,14 +85,11 @@ def do_data_check_for_input_jit_inventories(csv_file: str):
     err_msg = ""
     with open(csv_file, "r", encoding='utf-8-sig') as fd:
         csv_reader = csv.reader(fd, delimiter=",")
-        line = 0
         for row in csv_reader:
-            if line > 0:
-                if reg_int.match(row[1]) is None:
-                    is_valid = False
-                    err_msg = "'实时可用库存'数据存在非法输入，出现在第{}行。".format(line + 1)
-                    break
-            line += 1
+            if reg_int.match(row[1]) is None:
+                is_valid = False
+                err_msg = "'实时可用库存'数据存在非法输入，出现在第{}行。".format(line + 1)
+                break
     if not is_valid:
         os.remove(csv_file)
     return is_valid, err_msg

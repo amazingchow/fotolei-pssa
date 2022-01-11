@@ -40,12 +40,10 @@ def upload_inventories():
             not_inserted_sku_list = []
             with open(csv_file, "r", encoding='utf-8-sig') as fd:
                 csv_reader = csv.reader(fd, delimiter=",")
-                line = 0
+                next(csv_reader, None)  # skip the header line
                 for row in csv_reader:
-                    if line > 0:
-                        if not lookup_table_sku_get_or_put.get(row[2], False):
-                            not_inserted_sku_list.append(row[2])
-                    line += 1
+                    if not lookup_table_sku_get_or_put.get(row[2], False):
+                        not_inserted_sku_list.append(row[2])
             if len(not_inserted_sku_list) > 0:
                 logger.info("There are {} SKUs not inserted".format(len(not_inserted_sku_list)))
                 response_object = {"status": "new SKUs"}
@@ -140,21 +138,20 @@ def do_data_check_for_input_inventories(csv_file: str):
     line = 0
     with open(csv_file, "r", encoding='utf-8-sig') as fd:
         csv_reader = csv.reader(fd, delimiter=",")
+        next(csv_reader, None)  # skip the header line
         for row in csv_reader:
-            if line > 0:
-                if len(row[4]) > 0 and len(row[16]) > 0:
-                    specification_code = row[2]
-                    st_inventory_qty = int(row[4])
-                    ed_inventory_qty = int(row[16])
-                    if specification_code in inventories_check_table.keys():
-                        if st_inventory_qty != inventories_check_table[specification_code]:
-                            err_msg = "导入的起始库存数量不等于最近一个月的截止库存数量，出现在第{}行。".format(line + 1)
-                            is_valid = False
-                        else:
-                            inventories_check_table_tmp[specification_code] = ed_inventory_qty
+            if len(row[4]) > 0 and len(row[16]) > 0:
+                specification_code = row[2]
+                st_inventory_qty = int(row[4])
+                ed_inventory_qty = int(row[16])
+                if specification_code in inventories_check_table.keys():
+                    if st_inventory_qty != inventories_check_table[specification_code]:
+                        err_msg = "导入的起始库存数量不等于最近一个月的截止库存数量，出现在第{}行。".format(line + 1)
+                        is_valid = False
                     else:
                         inventories_check_table_tmp[specification_code] = ed_inventory_qty
-            line += 1
+                else:
+                    inventories_check_table_tmp[specification_code] = ed_inventory_qty
     if is_valid:
         for k, v in inventories_check_table_tmp.items():
             inventories_check_table[k] = v
