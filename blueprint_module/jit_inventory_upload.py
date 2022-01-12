@@ -85,11 +85,14 @@ def do_data_check_for_input_jit_inventories(csv_file: str):
     err_msg = ""
     with open(csv_file, "r", encoding='utf-8-sig') as fd:
         csv_reader = csv.reader(fd, delimiter=",")
+        next(csv_reader, None)  # skip the header line
+        line = 1
         for row in csv_reader:
             if reg_int.match(row[1]) is None:
                 is_valid = False
-                err_msg = "'实时可用库存'数据存在非法输入，出现在第{}行。".format(line + 1)
+                err_msg = "'实时可用库存'数据存在非法输入，出现在第{}行。".format(line)
                 break
+            line += 1
     if not is_valid:
         os.remove(csv_file)
     return is_valid, err_msg

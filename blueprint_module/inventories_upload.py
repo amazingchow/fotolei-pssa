@@ -135,10 +135,10 @@ def do_data_check_for_input_inventories(csv_file: str):
     # 导入的起始库存数量 =? 最近一个月的截止库存数量
     is_valid = True
     err_msg = ""
-    line = 0
     with open(csv_file, "r", encoding='utf-8-sig') as fd:
         csv_reader = csv.reader(fd, delimiter=",")
         next(csv_reader, None)  # skip the header line
+        line = 1
         for row in csv_reader:
             if len(row[4]) > 0 and len(row[16]) > 0:
                 specification_code = row[2]
@@ -146,12 +146,13 @@ def do_data_check_for_input_inventories(csv_file: str):
                 ed_inventory_qty = int(row[16])
                 if specification_code in inventories_check_table.keys():
                     if st_inventory_qty != inventories_check_table[specification_code]:
-                        err_msg = "导入的起始库存数量不等于最近一个月的截止库存数量，出现在第{}行。".format(line + 1)
+                        err_msg = "导入的起始库存数量不等于最近一个月的截止库存数量，出现在第{}行。".format(line)
                         is_valid = False
                     else:
                         inventories_check_table_tmp[specification_code] = ed_inventory_qty
                 else:
                     inventories_check_table_tmp[specification_code] = ed_inventory_qty
+            line += 1
     if is_valid:
         for k, v in inventories_check_table_tmp.items():
             inventories_check_table[k] = v
