@@ -172,15 +172,17 @@ def do_data_check_for_input_case6_demand_table(csv_file: str):
     with open(csv_file, "r", encoding='utf-8-sig') as fd:
         csv_reader = csv.reader(fd, delimiter=",")
         next(csv_reader, None)  # skip the header line
+        line = 1
         for row in csv_reader:
             if reg_positive_int.match(row[1]) is None:
                 is_valid = False
-                err_msg = "'数量'数据存在非法输入，出现在第{}行。".format(line + 1)
+                err_msg = "'数量'数据存在非法输入，出现在第{}行。".format(line)
                 break
             if not lookup_table_sku_get_or_put.get(row[0], False):
                 is_valid = False
-                err_msg = "'规格编码'不存在系统内，出现在第{}行。".format(line + 1)
+                err_msg = "'规格编码'不存在系统内，出现在第{}行。".format(line)
                 break
+            line += 1
     if not is_valid:
         os.remove(csv_file)
     return is_valid, err_msg
