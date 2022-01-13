@@ -16,14 +16,6 @@ mkdir -p $PWD/tmp
 docker-compose -f "$PWD/test/mysql-deploy/docker-compose.yml" up -d --build
 docker_container_id=`docker container ls | grep mysql-deploy | awk '{print $1}'`
 sleep 2
-docker exec -i ${docker_container_id} /bin/bash -c 'mysql -uroot -p"Pwd123!@" < /mysql/migrations/create_database_up.sql'
-sleep 2
-docker exec -i ${docker_container_id} /bin/bash -c 'mysql -uroot -p"Pwd123!@" < /mysql/migrations/create_product_table_up.sql'
-sleep 2
-docker exec -i ${docker_container_id} /bin/bash -c 'mysql -uroot -p"Pwd123!@" < /mysql/migrations/create_product_summary_table_up.sql'
-sleep 2
-docker exec -i ${docker_container_id} /bin/bash -c 'mysql -uroot -p"Pwd123!@" < /mysql/migrations/create_inventory_table_up.sql'
-sleep 2
-docker exec -i ${docker_container_id} /bin/bash -c 'mysql -uroot -p"Pwd123!@" < /mysql/migrations/create_inventory_summary_table_up.sql'
-sleep 2
-docker exec -i ${docker_container_id} /bin/bash -c 'mysql -uroot -p"Pwd123!@" < /mysql/migrations/create_oplog_up.sql'
+docker exec -i ${docker_container_id} /bin/bash -c 'mysql -uroot -p"Pwd123Pwd" < /mysql/migrations/create_database_up.sql'
+
+migrate -source file://./db/migrations -database "mysql://root:Pwd123Pwd@(127.0.0.1:13306)/fotolei_pssa" up
