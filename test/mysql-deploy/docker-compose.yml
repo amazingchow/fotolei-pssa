@@ -9,7 +9,7 @@ services:
     # 在宿主机文件"/etc/passwd"中找出目标"uid:gid"
     user: 1002:1003
     environment:
-      MYSQL_ROOT_PASSWORD: "Pwd123!@"
+      MYSQL_ROOT_PASSWORD: "Pwd123Pwd"
       MYSQL_USER: "tester"
       MYSQL_PASS: "123456"
     volumes:
