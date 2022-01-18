@@ -788,6 +788,7 @@
             <b-th scope="col">品牌</b-th>
             <b-th scope="col">商品名称</b-th>
             <b-th scope="col">规格名称</b-th>
+            <b-th scope="col">采购名称</b-th>
             <b-th scope="col">供应商</b-th>
             <b-th scope="col">{{ timeQuantumX }}个月销量</b-th>
             <b-th scope="col">{{ timeQuantumY }}个月销量</b-th>
@@ -810,6 +811,7 @@
             <b-td>{{ item.brand }}</b-td>
             <b-td>{{ item.product_name }}</b-td>
             <b-td>{{ item.specification_name }}</b-td>
+            <b-td>{{ item.purchase_name }}</b-td>
             <b-td>{{ item.supplier_name }}</b-td>
             <b-td>{{ item.sale_qty_x_months }}</b-td>
             <b-td>{{ item.sale_qty_y_months }}</b-td>

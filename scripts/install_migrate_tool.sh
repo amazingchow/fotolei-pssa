@@ -12,6 +12,7 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
     mkdir migrate-tmp
     tar -C ./migrate-tmp -zxvf migrate.linux-amd64.tar.gz
     sudo mv ./migrate-tmp/migrate /usr/local/bin
+    sudo chown root:root /usr/local/bin/migrate 
     rm migrate.linux-amd64.tar.gz
     rm -rf migrate-tmp
 fi
