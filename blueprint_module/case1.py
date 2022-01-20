@@ -267,12 +267,12 @@ FROM fotolei_pssa.inventories WHERE extra_classification_1 = '传统耗材' AND 
                         sum_sale_then_return_total_for_c1_c2 = sum([ret[1] for ret in rets if len(ret[2]) > 0 and ret[2] == c2_tag])
                         sum_sale_total_for_c1_c2 = sum_sale_total_for_c1_c2 - sum_sale_then_return_total_for_c1_c2
                         sum_sale_total_for_c1_c2_percent = sum_sale_total_for_c1_c2 / sum_sale_total * 100
-                        if sum_sale_total_for_c1_c2 <= tmp_table[topk-1][1]:
-                            tmp_table[topk-1] = (c2_tag, sum_sale_total_for_c1_c2, sum_sale_total_for_c1_c2_percent)
+                        if sum_sale_total_for_c1_c2 <= tmp_table[topk - 1][1]:
+                            tmp_table[topk - 1] = (c2_tag, sum_sale_total_for_c1_c2, sum_sale_total_for_c1_c2_percent)
                         elif sum_sale_total_for_c1_c2 >= tmp_table[0][1]:
                             tmp_table[0] = (c2_tag, sum_sale_total_for_c1_c2, sum_sale_total_for_c1_c2_percent)
                         else:
-                            for i in range(topk-2,0,-1):
+                            for i in range(topk - 2, 0, -1):
                                 if sum_sale_total_for_c1_c2 <= tmp_table[i][1]:
                                     tmp_table[i] = (c2_tag, sum_sale_total_for_c1_c2, sum_sale_total_for_c1_c2_percent)
                                     break
@@ -334,12 +334,12 @@ FROM fotolei_pssa.inventories WHERE extra_classification_1 = '数码' AND extra_
                         sum_sale_then_return_total_for_c1_c2 = sum([ret[1] for ret in rets if len(ret[2]) > 0 and ret[2] == c2_tag])
                         sum_sale_total_for_c1_c2 = sum_sale_total_for_c1_c2 - sum_sale_then_return_total_for_c1_c2
                         sum_sale_total_for_c1_c2_percent = sum_sale_total_for_c1_c2 / sum_sale_total * 100
-                        if sum_sale_total_for_c1_c2 <= tmp_table[topk-1][1]:
-                            tmp_table[topk-1] = (c2_tag, sum_sale_total_for_c1_c2, sum_sale_total_for_c1_c2_percent)
+                        if sum_sale_total_for_c1_c2 <= tmp_table[topk - 1][1]:
+                            tmp_table[topk - 1] = (c2_tag, sum_sale_total_for_c1_c2, sum_sale_total_for_c1_c2_percent)
                         elif sum_sale_total_for_c1_c2 >= tmp_table[0][1]:
                             tmp_table[0] = (c2_tag, sum_sale_total_for_c1_c2, sum_sale_total_for_c1_c2_percent)
                         else:
-                            for i in range(topk-2,0,-1):
+                            for i in range(topk - 2, 0, -1):
                                 if sum_sale_total_for_c1_c2 <= tmp_table[i][1]:
                                     tmp_table[i] = (c2_tag, sum_sale_total_for_c1_c2, sum_sale_total_for_c1_c2_percent)
                                     break
@@ -399,12 +399,12 @@ FROM fotolei_pssa.inventories WHERE extra_is_combined = '否' AND create_time >=
                     sum_sale_then_return_total_for_brand = sum([ret[1] for ret in rets if len(ret[2]) > 0 and ret[2] == brand_tag])
                     sum_sale_total_for_brand = sum_sale_total_for_brand - sum_sale_then_return_total_for_brand
                     sum_sale_total_for_brand_percent = sum_sale_total_for_brand / sum_sale_total * 100
-                    if sum_sale_total_for_brand <= tmp_table[topk-1][1]:
-                        tmp_table[topk-1] = (brand_tag, sum_sale_total_for_brand, sum_sale_total_for_brand_percent)
+                    if sum_sale_total_for_brand <= tmp_table[topk - 1][1]:
+                        tmp_table[topk - 1] = (brand_tag, sum_sale_total_for_brand, sum_sale_total_for_brand_percent)
                     elif sum_sale_total_for_brand >= tmp_table[0][1]:
                         tmp_table[0] = (brand_tag, sum_sale_total_for_brand, sum_sale_total_for_brand_percent)
                     else:
-                        for i in range(topk-2,0,-1):
+                        for i in range(topk - 2, 0, -1):
                             if sum_sale_total_for_brand <= tmp_table[i][1]:
                                 tmp_table[i] = (brand_tag, sum_sale_total_for_brand, sum_sale_total_for_brand_percent)
                                 break
@@ -444,7 +444,7 @@ FROM fotolei_pssa.inventories WHERE extra_brand = '{}' AND extra_classification_
                 er_dian_idx = i
         if gui_gui_idx != -1 and er_dian_idx != -1:
             er_dian = preview_table[er_dian_idx]
-            preview_table = preview_table[:er_dian_idx] + preview_table[er_dian_idx+1:]
+            preview_table = preview_table[:er_dian_idx] + preview_table[er_dian_idx + 1:]
             preview_table.insert(gui_gui_idx + 1, er_dian)
 
         response_object["preview_table"] = preview_table
