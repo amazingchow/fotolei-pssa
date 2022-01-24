@@ -45,6 +45,20 @@ def generate_digest(s: str):
     return hashlib.sha256(s.encode("utf-8")).hexdigest()
 
 
+# 通用工具函数 - 去除列表中的重复项
+def remove_duplicates_for_list(arr :list):
+    if len(arr) == 0:
+        return []
+    arr.sort(reverse=False)
+    new_arr = [arr[0]]
+    if len(arr) == 1:
+        return new_arr
+    for i in range(1, len(arr)):
+        if arr[i] != arr[i - 1]:
+            new_arr.append(arr[i])
+    return new_arr
+
+
 # 数据库连接器 + 查询表
 db_connector = MySQLConnector.instance()
 db_connector.init_conn("fotolei_pssa")

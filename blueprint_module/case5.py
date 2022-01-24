@@ -8,8 +8,10 @@ from flask import jsonify, request
 sys.path.append(os.path.abspath("../utils"))
 from . import blueprint
 from utils import db_connector
+from utils import logger
 from utils import cost_count
 from utils import generate_digest
+from utils import remove_duplicates_for_list
 
 
 '''
@@ -27,6 +29,15 @@ def preview_report_file_case5():
     screening_way = request.args.get("way", "1")
     payload = request.get_json()
     supplier_name = payload.get("supplier_name", "").lower()
+
+    supplier_name_list_from_screening_way1 = []
+    if screening_way == "2":
+        if len(supplier_name) == 0:
+            supplier_name_list_from_screening_way1 = payload.get("supplier_name_list_from_screening_way1", [])
+            if len(supplier_name_list_from_screening_way1) == 0:
+                response_object = {"status": "invalid operation"}
+                return jsonify(response_object)
+
     # 过去X个月
     time_quantum_in_month_x = int(payload.get("time_quantum_x", "6"))
     # 过去X个月的库销比
@@ -52,6 +63,9 @@ jit_inventory, product_weight, product_length, product_width, product_height, mo
     conds = []
     if len(supplier_name) > 0:
         conds.append("supplier_name = '{}'".format(supplier_name))
+    else:
+        if screening_way == "2":
+            conds.append("supplier_name IN ('{}')".format("', '".join(supplier_name_list_from_screening_way1))) 
     if stop_status != "全部":
         conds.append("stop_status = '{}'".format(stop_status))
     if be_aggregated != "全部":
@@ -62,7 +76,6 @@ jit_inventory, product_weight, product_length, product_width, product_height, mo
     else:
         stmt = stmt + " WHERE is_combined = '否';"
 
-    preview_table = []
     specification_code_list = []
     cache = {}
 
@@ -82,6 +95,10 @@ jit_inventory, product_weight, product_length, product_width, product_height, mo
             cache[specification_code]["weight"] = ret[7]
             cache[specification_code]["volume"] = ret[8] * ret[9] * ret[10]
             cache[specification_code]["moq"] = ret[11]
+    if screening_way == "1":
+        logger.info("筛选1, 满足条件的SKU数量等于{}".format(len(specification_code_list)))
+    else:
+        logger.info("筛选2, 满足条件的SKU数量等于{}".format(len(specification_code_list)))
     if len(specification_code_list) > 0:
         for specification_code in specification_code_list:
             process_sale_qty(cache, specification_code, the_past_x_month, time_quantum_in_month_x, True, reduced_btn_option)
@@ -90,6 +107,7 @@ jit_inventory, product_weight, product_length, product_width, product_height, mo
                 if screening_way == "1":
                     if cache[specification_code]["inventory"] > 0:
                         del cache[specification_code]
+                        continue
                     else:
                         cache[specification_code]["projected_purchase"] = 0
                         cache[specification_code]["weight_total"] = 0.0
@@ -130,7 +148,8 @@ jit_inventory, product_weight, product_length, product_width, product_height, mo
                         if cache[specification_code]["projected_purchase"] < 0:
                             cache[specification_code]["projected_purchase"] = 0
                     else:
-                        cache[specification_code]["projected_purchase"] = -999999
+                        del cache[specification_code]
+                        continue
                 else:
                     tmp = int((x3 / time_quantum_in_month_x) * projected_purchase_months)
                     cache[specification_code]["projected_purchase"] = tmp - cache[specification_code]["inventory"]
@@ -142,8 +161,6 @@ jit_inventory, product_weight, product_length, product_width, product_height, mo
                 if cache[specification_code]["projected_purchase"] == 0:
                     cache[specification_code]["weight_total"] = 0.0
                     cache[specification_code]["volume_total"] = 0.0
-                elif cache[specification_code]["projected_purchase"] == -999999:
-                    del cache[specification_code]
                 else:
                     if cache[specification_code]["moq"] > 1:
                         '''
@@ -164,17 +181,29 @@ jit_inventory, product_weight, product_length, product_width, product_height, mo
                         cache[specification_code]["projected_purchase"] = x
                     cache[specification_code]["weight_total"] = float("{:.3f}".format((cache[specification_code]["weight"] * cache[specification_code]["projected_purchase"]) / 1e3))
                     cache[specification_code]["volume_total"] = float("{:.3f}".format((cache[specification_code]["volume"] * cache[specification_code]["projected_purchase"]) / 1e6))
+        
+        preview_table = []
         for _, v in cache.items():
             if v["inventory"] < 0:
                 v["inventory_divided_by_sale_qty_x_months"] = "#DIV/0!"
                 v["inventory_divided_by_reduced_sale_qty_x_months"] = "#DIV/0!"
                 v["inventory_divided_by_sale_qty_y_months"] = "#DIV/0!"
                 v["inventory_divided_by_reduced_sale_qty_y_months"] = "#DIV/0!"
-
             preview_table.append(v)
+            if screening_way == "1" and len(supplier_name) == 0:
+                supplier_name_list_from_screening_way1.append(v["supplier_name"])
+                supplier_name_list_from_screening_way1 = remove_duplicates_for_list(supplier_name_list_from_screening_way1)
+        if screening_way == "1":
+            logger.info("筛选1, 输出的SKU数量等于{}".format(len(preview_table)))
+        else:
+            logger.info("筛选2, 输出的SKU数量等于{}".format(len(preview_table)))
+
         if len(preview_table) > 0:
             response_object = {"status": "success"}
+            if len(supplier_name) == 0:
+                preview_table.sort(key=lambda x:x["supplier_name"], reverse=False)
             response_object["preview_table"] = preview_table
+            response_object["supplier_name_list_from_screening_way1"] = supplier_name_list_from_screening_way1
             return jsonify(response_object)
         else:
             response_object = {"status": "not found"}

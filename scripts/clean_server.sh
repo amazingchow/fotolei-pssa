@@ -11,3 +11,5 @@ rm -rf $PWD/tmp/inventories_load_file_repetition_lookup_table
 rm -rf $PWD/tmp/inventories_load_file_repetition_lookup_table.db
 rm -rf $PWD/tmp/inventories_check_table
 rm -rf $PWD/tmp/inventories_check_table.db
+rm -rf $PWD/tmp/inventories_import_date_record_table
+rm -rf $PWD/tmp/inventories_import_date_record_table.db
