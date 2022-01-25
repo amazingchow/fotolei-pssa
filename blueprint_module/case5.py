@@ -2,6 +2,7 @@
 import csv
 import os
 import pendulum
+import shelve
 import sys
 import time
 from flask import jsonify, request
@@ -9,6 +10,7 @@ sys.path.append(os.path.abspath("../utils"))
 from . import blueprint
 from utils import db_connector
 from utils import logger
+from utils import calc_gap_months
 from utils import cost_count
 from utils import generate_digest
 from utils import remove_duplicates_for_list
@@ -54,8 +56,8 @@ def preview_report_file_case5():
     be_aggregated = payload.get("be_aggregated", "全部")
 
     today = pendulum.today()
-    the_past_x_month = today.subtract(months=time_quantum_in_month_x).strftime('%Y-%m')
-    the_past_y_month = today.subtract(months=time_quantum_in_month_y).strftime('%Y-%m')
+    the_past_x_month = today.subtract(months=time_quantum_in_month_x).strftime("%Y-%m")
+    the_past_y_month = today.subtract(months=time_quantum_in_month_y).strftime("%Y-%m")
 
     # “供应商”选项为空，则为全部供应商（包括没有供应商的商品条目）
     stmt = "SELECT specification_code, brand, product_name, specification_name, purchase_name, supplier_name, \
@@ -65,7 +67,7 @@ jit_inventory, product_weight, product_length, product_width, product_height, mo
         conds.append("supplier_name = '{}'".format(supplier_name))
     else:
         if screening_way == "2":
-            conds.append("supplier_name IN ('{}')".format("', '".join(supplier_name_list_from_screening_way1))) 
+            conds.append("supplier_name IN ('{}')".format("', '".join(supplier_name_list_from_screening_way1)))
     if stop_status != "全部":
         conds.append("stop_status = '{}'".format(stop_status))
     if be_aggregated != "全部":
@@ -100,9 +102,11 @@ jit_inventory, product_weight, product_length, product_width, product_height, mo
     else:
         logger.info("筛选2, 满足条件的SKU数量等于{}".format(len(specification_code_list)))
     if len(specification_code_list) > 0:
+        inventories_import_date_record_table = shelve.open("./tmp/inventories_import_date_record_table", flag='c', writeback=False)
+
         for specification_code in specification_code_list:
-            process_sale_qty(cache, specification_code, the_past_x_month, time_quantum_in_month_x, True, reduced_btn_option)
-            process_sale_qty(cache, specification_code, the_past_y_month, time_quantum_in_month_y, False, reduced_btn_option)
+            time_quantum_in_month_x_returned = process_sale_qty(cache, specification_code, the_past_x_month, time_quantum_in_month_x, True, reduced_btn_option, inventories_import_date_record_table[specification_code][0])
+            time_quantum_in_month_y_returned = process_sale_qty(cache, specification_code, the_past_y_month, time_quantum_in_month_y, False, reduced_btn_option, inventories_import_date_record_table[specification_code][0])
             if cache[specification_code]["sale_qty_x_months"] == 0 and cache[specification_code]["sale_qty_y_months"] == 0:
                 if screening_way == "1":
                     if cache[specification_code]["inventory"] > 0:
@@ -138,12 +142,12 @@ jit_inventory, product_weight, product_length, product_width, product_height, mo
                         x4 = cache[specification_code]["sale_qty_y_months"]
                 if screening_way == "1":
                     if x3 > 0 and x1 <= threshold_x:
-                        tmp = int((x3 / time_quantum_in_month_x) * projected_purchase_months)
+                        tmp = int((x3 / time_quantum_in_month_x_returned) * projected_purchase_months)
                         cache[specification_code]["projected_purchase"] = tmp - cache[specification_code]["inventory"]
                         if cache[specification_code]["projected_purchase"] < 0:
                             cache[specification_code]["projected_purchase"] = 0
                     elif x4 > 0 and x2 <= threshold_y:
-                        tmp = int((x4 / time_quantum_in_month_y) * projected_purchase_months)
+                        tmp = int((x4 / time_quantum_in_month_y_returned) * projected_purchase_months)
                         cache[specification_code]["projected_purchase"] = tmp - cache[specification_code]["inventory"]
                         if cache[specification_code]["projected_purchase"] < 0:
                             cache[specification_code]["projected_purchase"] = 0
@@ -151,10 +155,10 @@ jit_inventory, product_weight, product_length, product_width, product_height, mo
                         del cache[specification_code]
                         continue
                 else:
-                    tmp = int((x3 / time_quantum_in_month_x) * projected_purchase_months)
+                    tmp = int((x3 / time_quantum_in_month_x_returned) * projected_purchase_months)
                     cache[specification_code]["projected_purchase"] = tmp - cache[specification_code]["inventory"]
                     if cache[specification_code]["projected_purchase"] <= 0:
-                        tmp = int((x4 / time_quantum_in_month_y) * projected_purchase_months)
+                        tmp = int((x4 / time_quantum_in_month_y_returned) * projected_purchase_months)
                         cache[specification_code]["projected_purchase"] = tmp - cache[specification_code]["inventory"]
                         if cache[specification_code]["projected_purchase"] < 0:
                             cache[specification_code]["projected_purchase"] = 0
@@ -181,7 +185,8 @@ jit_inventory, product_weight, product_length, product_width, product_height, mo
                         cache[specification_code]["projected_purchase"] = x
                     cache[specification_code]["weight_total"] = float("{:.3f}".format((cache[specification_code]["weight"] * cache[specification_code]["projected_purchase"]) / 1e3))
                     cache[specification_code]["volume_total"] = float("{:.3f}".format((cache[specification_code]["volume"] * cache[specification_code]["projected_purchase"]) / 1e6))
-        
+        inventories_import_date_record_table.close()
+
         preview_table = []
         for _, v in cache.items():
             if v["inventory"] < 0:
@@ -201,7 +206,7 @@ jit_inventory, product_weight, product_length, product_width, product_height, mo
         if len(preview_table) > 0:
             response_object = {"status": "success"}
             if len(supplier_name) == 0:
-                preview_table.sort(key=lambda x:x["supplier_name"], reverse=False)
+                preview_table.sort(key=lambda x: x["supplier_name"], reverse=False)
             response_object["preview_table"] = preview_table
             response_object["supplier_name_list_from_screening_way1"] = supplier_name_list_from_screening_way1
             return jsonify(response_object)
@@ -256,7 +261,7 @@ def prepare_report_file_case5():
     return jsonify(response_object)
 
 
-def process_sale_qty(g_cache, specification_code, the_past_m_month, the_time_quantum, is_the_past_x_month, reduced_btn_option):
+def process_sale_qty(g_cache, specification_code, the_past_m_month, the_time_quantum, is_the_past_x_month, reduced_btn_option, first_import_date):
     stmt = "SELECT st_inventory_qty, ed_inventory_qty, purchase_qty, sale_qty, sale_then_return_qty \
 FROM fotolei_pssa.inventories WHERE specification_code = '{}' AND create_time >= '{}' \
 ORDER BY create_time DESC;".format(specification_code, the_past_m_month)
@@ -307,7 +312,7 @@ ORDER BY create_time DESC;".format(specification_code, the_past_m_month)
                             g_cache[specification_code]["remark"] = "过去{}个月库存为零，销量为负".format(the_time_quantum)
                         else:
                             g_cache[specification_code]["remark"] = "过去{}个月销量为负".format(the_time_quantum)
-                    return
+                    return the_time_quantum
             else:
                 g_cache[specification_code]["sale_qty_y_months"] = sum(ret[3] for ret in rets) - sum(ret[4] for ret in rets)
                 if g_cache[specification_code]["sale_qty_y_months"] <= 0:
@@ -337,12 +342,24 @@ ORDER BY create_time DESC;".format(specification_code, the_past_m_month)
                                 g_cache[specification_code]["remark"] = "过去{}个月库存为零，销量为负".format(the_time_quantum)
                             else:
                                 g_cache[specification_code]["remark"] = "过去{}个月销量为负".format(the_time_quantum)
-                    return
+                    return the_time_quantum
             if len(g_cache[specification_code].get("remark", "")) == 0:
                 g_cache[specification_code]["remark"] = ""
             # 计算M个月折算销量
+            is_new_arrival = False
             if reduced_btn_option:
-                reduced_months = the_time_quantum - len(rets)
+                # the_past_m_month  : 过去M个月的那个月份, 比如2021-07
+                # first_import_date : 对于某个产品, 第一次导入进销存数据的月份, 比如2020-10或2021-09
+                # first_import_date可能早于the_past_m_month, 也可能晚于the_past_m_month
+                reduced_months = 0
+                if first_import_date <= the_past_m_month:
+                    # first_import_date早于the_past_m_month的情况, 不用做特殊的处理
+                    reduced_months = the_time_quantum - len(rets)
+                else:
+                    # first_import_date晚于the_past_m_month的情况, 说明该产品是新品
+                    the_time_quantum = calc_gap_months(first_import_date, pendulum.today().strftime("%Y-%m"))
+                    reduced_months = the_time_quantum - len(rets)
+                    is_new_arrival = True
                 for ret in rets:
                     if ret[0] == 0 and ret[1] == 0:
                         if (ret[2] > 0 and ret[2] <= 10) and (ret[2] <= (ret[3] - ret[4])):
@@ -372,7 +389,10 @@ ORDER BY create_time DESC;".format(specification_code, the_past_m_month)
                 else:
                     g_cache[specification_code]["inventory_divided_by_sale_qty_y_months"] = 0.0
                     g_cache[specification_code]["inventory_divided_by_reduced_sale_qty_y_months"] = 0.0
-                    g_cache[specification_code]["remark"] = "过去{}个月库存为零".format(the_time_quantum)
+                    if is_new_arrival:
+                        g_cache[specification_code]["remark"] = "[新品] 过去{}个月库存为零".format(the_time_quantum)
+                    else:
+                        g_cache[specification_code]["remark"] = "过去{}个月库存为零".format(the_time_quantum)
             else:
                 if is_the_past_x_month:
                     g_cache[specification_code]["inventory_divided_by_sale_qty_x_months"] = \
@@ -384,3 +404,4 @@ ORDER BY create_time DESC;".format(specification_code, the_past_m_month)
                         float("{:.3f}".format(g_cache[specification_code]["inventory"] / g_cache[specification_code]["sale_qty_y_months"]))
                     g_cache[specification_code]["inventory_divided_by_reduced_sale_qty_y_months"] = \
                         float("{:.3f}".format(g_cache[specification_code]["inventory"] / g_cache[specification_code]["reduced_sale_qty_y_months"]))
+    return the_time_quantum
