@@ -1071,6 +1071,7 @@ export default {
         previewTable: [],
         previewSummaryTable: []
       },
+      supplierNameListFromScreeningWay1: [],
       timeQuantumX: '6',
       thresholdX: '2',
       timeQuantumY: '12',
@@ -1185,6 +1186,7 @@ export default {
       this.previewCase5.previewTable = []
       this.previewCase6.previewTable = []
       this.previewCase6.previewSummaryTable = []
+      this.supplierNameListFromScreeningWay1 = []
       this.timeQuantumX = '6'
       this.thresholdX = '2'
       this.timeQuantumY = '12'
@@ -1651,7 +1653,11 @@ export default {
         .then((res) => {
           if (res.data.status === 'success') {
             this.previewCase5.previewTable = res.data.preview_table
+            this.supplierNameListFromScreeningWay1 = res.data.supplier_name_list_from_screening_way1
             this.$refs.previewCase5Modal.show()
+          } else if (res.data.status === 'invalid operation') {
+            this.message = '预览失败！请先操作筛选1！！！'
+            this.showMessage = true
           } else {
             this.message = '预览失败！不存在指定的库存条目。'
             this.showMessage = true
@@ -1687,6 +1693,7 @@ export default {
       this.$refs.processingModal.show()
       const payload = {
         supplier_name: this.supplierNameSelection,
+        supplier_name_list_from_screening_way1: this.supplierNameListFromScreeningWay1,
         time_quantum_x: this.timeQuantumX,
         threshold_x: this.thresholdX,
         time_quantum_y: this.timeQuantumY,

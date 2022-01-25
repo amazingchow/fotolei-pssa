@@ -71,9 +71,11 @@ CREATE TABLE IF NOT EXISTS fotolei_pssa.inventory_summary (
         if platform.system() == "Linux":
             os.remove("./tmp/inventories_load_file_repetition_lookup_table")
             os.remove("./tmp/inventories_check_table")
+            os.remove("./tmp/inventories_import_date_record_table")
         else:
             os.remove("./tmp/inventories_load_file_repetition_lookup_table.db")
             os.remove("./tmp/inventories_check_table.db")
+            os.remove("./tmp/inventories_import_date_record_table.db")
         lookup_table_inventory_update_without_repetition.clear()
         response_object = {"status": "success"}
         return jsonify(response_object)

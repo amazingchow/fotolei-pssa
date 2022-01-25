@@ -65,6 +65,8 @@ def upload_inventories():
                     import_date = last_month.strftime('%Y-%m')
                 add_date_brand_c1_c2_for_input_inventories(csv_file, import_date.strip())
 
+                record_first_and_last_import_date_for_input_inventories(csv_file)
+
                 repeat = do_remove_repeat_inventories_updates(csv_file)
 
                 db_connector.load_data_infile(
@@ -317,6 +319,26 @@ def add_date_brand_c1_c2_for_input_inventories(csv_file: str, import_date: str):
     fw.close()
     fr.close()
     shutil.move(csv_file + ".tmp", csv_file)
+
+
+def record_first_and_last_import_date_for_input_inventories(csv_file: str):
+    inventories_import_date_record_table = shelve.open("./tmp/inventories_import_date_record_table", flag='c', writeback=False)
+
+    with open(csv_file, "r", encoding='utf-8-sig') as fd:
+        csv_reader = csv.reader(fd, delimiter=",")
+        next(csv_reader, None)  # skip the header line
+        for row in csv_reader:
+            import_date = row[0]
+            specification_code = row[1]
+            if specification_code in inventories_import_date_record_table.keys():
+                v = inventories_import_date_record_table[specification_code]
+                v[1] = import_date
+                inventories_import_date_record_table[specification_code] = v
+            else:
+                inventories_import_date_record_table[specification_code] = [import_date, import_date]
+
+    inventories_import_date_record_table.close()
+    return
 
 
 def do_remove_repeat_inventories_updates(csv_file: str):

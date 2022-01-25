@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 import csv
-import datetime
 import os
+import shelve
 import sys
 import time
 from flask import jsonify, request
 sys.path.append(os.path.abspath("../utils"))
 from . import blueprint
 from utils import db_connector
+from utils import calc_gap_months
 from utils import cost_count
 from utils import generate_digest
 
@@ -38,13 +39,7 @@ def export_report_file_case4():
         response_object = {"status": "not found"}
         return jsonify(response_object)
 
-    st_datetime = datetime.datetime.strptime(st_date, "%Y-%m").date()
-    ed_datetime = datetime.datetime.strptime(ed_date, "%Y-%m").date()
-    time_quantum_x = 0
-    if ed_datetime.month - st_datetime.month < 0:
-        time_quantum_x = ed_datetime.month - st_datetime.month + 12
-    else:
-        time_quantum_x = ed_datetime.month - st_datetime.month
+    time_quantum_x = calc_gap_months(st_date, ed_date)
 
     brand = payload.get("brand", "").strip().lower()
     classification_1 = payload.get("classification_1", "").strip().lower()
@@ -86,9 +81,15 @@ def export_report_file_case4():
 
     rets = db_connector.query(stmt)
     if type(rets) is list and len(rets) > 0:
+        inventories_import_date_record_table = shelve.open("./tmp/inventories_import_date_record_table", flag='c', writeback=False)
+
         for ret in rets:
             specification_code = ret[3]
             jit_inventory = ret[19]
+
+            first_import_date = inventories_import_date_record_table[specification_code][0]
+            if first_import_date > ed_date:
+                continue
 
             stmt = "SELECT * FROM fotolei_pssa.inventories WHERE specification_code = '{}' AND create_time >= '{}' AND create_time <= '{}' ORDER BY create_time ASC;".format(
                 specification_code, st_date, ed_date
@@ -99,17 +100,24 @@ def export_report_file_case4():
                 sale_qty_x_months = sum(inner_ret[11] - inner_ret[13] for inner_ret in inner_rets)
                 if sale_qty_x_months > 0:
                     if reduced_btn_option:
-                        reduced_months = time_quantum_x - len(inner_rets)
+                        reduced_months = 0
+                        time_quantum_x_update = time_quantum_x
+                        if first_import_date <= st_date:
+                            reduced_months = time_quantum_x - len(inner_rets)
+                        else:
+                            time_quantum_x_update = calc_gap_months(first_import_date, ed_date)
+                            reduced_months = time_quantum_x_update - len(rets)
+
                         for inner_ret in inner_rets:
                             if inner_ret[5] == 0 and inner_ret[17] == 0:
                                 if inner_ret[7] > 0 and inner_ret[7] <= 10 and inner_ret[7] <= (inner_ret[11] - inner_ret[13]):
                                     reduced_months += 1
                                 elif inner_ret[7] > 10 and inner_ret[7] > (inner_ret[11] - inner_ret[13]):
                                     reduced_months += 1
-                        if time_quantum_x == reduced_months:
-                            sale_qty_x_months = int(sale_qty_x_months * (time_quantum_x / len(inner_rets)))
+                        if time_quantum_x_update == reduced_months:
+                            sale_qty_x_months = int(sale_qty_x_months * (time_quantum_x_update / len(inner_rets)))
                         else:
-                            sale_qty_x_months = int(sale_qty_x_months * (time_quantum_x / (time_quantum_x - reduced_months)))
+                            sale_qty_x_months = int(sale_qty_x_months * (time_quantum_x_update / (time_quantum_x_update - reduced_months)))
                     if (sale_qty_x_months > 0 and (jit_inventory / sale_qty_x_months) > threshold_ssr) or (sale_qty_x_months == 0 and jit_inventory > 0):
                         is_unsalable = True
                 else:
@@ -156,6 +164,9 @@ def export_report_file_case4():
                     else:
                         cache["ssr"] = float("{:.3f}".format(jit_inventory / sale_qty_x_months))
                     preview_table.append(cache)
+
+        inventories_import_date_record_table.close()
+
         response_object = {"status": "success"}
         response_object["preview_table"] = preview_table
         return jsonify(response_object)
