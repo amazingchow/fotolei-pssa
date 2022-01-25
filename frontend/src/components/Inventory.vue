@@ -672,6 +672,7 @@
             <b-th scope="col">起始库存数量</b-th>
             <b-th scope="col">采购数量</b-th>
             <b-th scope="col">销售数量</b-th>
+            <b-th scope="col">销售退货数量</b-th>
             <b-th scope="col">截止库存数量</b-th>
             <b-th scope="col">实时可用库存</b-th>
             <b-th scope="col">库销比</b-th>
@@ -686,6 +687,7 @@
             <b-td>{{ item.st_inventory_qty }}</b-td>
             <b-td>{{ item.purchase_qty }}</b-td>
             <b-td>{{ item.sale_qty }}</b-td>
+            <b-td>{{ item.sale_then_return_qty }}</b-td>
             <b-td>{{ item.ed_inventory_qty }}</b-td>
             <b-td>{{ item.jit_inventory }}</b-td>
             <b-td>{{ item.ssr }}</b-td>

@@ -8,7 +8,7 @@ from flask import jsonify, request
 sys.path.append(os.path.abspath("../utils"))
 from . import blueprint
 from utils import db_connector
-from utils import calc_gap_months
+from utils import calc_month_num
 from utils import cost_count
 from utils import generate_digest
 
@@ -35,11 +35,11 @@ def export_report_file_case4():
     # 2. 先用其他非空条件筛选出规格编码，再用规格编码筛选出想要的数据
     st_date = payload.get("st_date", "").strip()
     ed_date = payload.get("ed_date", "").strip()
-    if (st_date > ed_date):
+    if st_date > ed_date:
         response_object = {"status": "not found"}
         return jsonify(response_object)
 
-    time_quantum_x = calc_gap_months(st_date, ed_date)
+    time_quantum_x = calc_month_num(st_date, ed_date)
 
     brand = payload.get("brand", "").strip().lower()
     classification_1 = payload.get("classification_1", "").strip().lower()
@@ -50,7 +50,7 @@ def export_report_file_case4():
     be_aggregated = payload.get("be_aggregated", "全部").strip()
     is_import = payload.get("is_import", "全部").strip()
     supplier_name = payload.get("supplier_name", "").strip().lower()
-    threshold_ssr = int(payload.get("threshold_ssr", "4"))
+    threshold_ssr = float(payload.get("threshold_ssr", "4"))
     reduced_btn_option = payload.get("reduced_btn_option", True)
 
     stmt = "SELECT * FROM fotolei_pssa.products"
@@ -63,13 +63,13 @@ def export_report_file_case4():
         selections.append("classification_2 = '{}'".format(classification_2))
     if len(product_series) > 0:
         selections.append("product_series = '{}'".format(product_series))
-    if stop_status != '全部':
+    if stop_status != "全部":
         selections.append("stop_status = '{}'".format(stop_status))
-    if is_combined != '全部':
+    if is_combined != "全部":
         selections.append("is_combined = '{}'".format(is_combined))
-    if be_aggregated != '全部':
+    if be_aggregated != "全部":
         selections.append("be_aggregated = '{}'".format(be_aggregated))
-    if is_import != '全部':
+    if is_import != "全部":
         selections.append("is_import = '{}'".format(is_import))
     if len(supplier_name) > 0:
         selections.append("supplier_name = '{}'".format(supplier_name))
@@ -87,7 +87,11 @@ def export_report_file_case4():
             specification_code = ret[3]
             jit_inventory = ret[19]
 
-            first_import_date = inventories_import_date_record_table[specification_code][0]
+            v = inventories_import_date_record_table.get(specification_code, [])
+            if len(v) == 0:
+                # 从未录过进销存报表的商品, 直接忽略
+                continue
+            first_import_date = v[0]
             if first_import_date > ed_date:
                 continue
 
@@ -97,31 +101,33 @@ def export_report_file_case4():
             inner_rets = db_connector.query(stmt)
             if type(inner_rets) is list and len(inner_rets) > 0:
                 is_unsalable = False
-                sale_qty_x_months = sum(inner_ret[11] - inner_ret[13] for inner_ret in inner_rets)
-                if sale_qty_x_months > 0:
-                    if reduced_btn_option:
-                        reduced_months = 0
-                        time_quantum_x_update = time_quantum_x
-                        if first_import_date <= st_date:
-                            reduced_months = time_quantum_x - len(inner_rets)
-                        else:
-                            time_quantum_x_update = calc_gap_months(first_import_date, ed_date)
-                            reduced_months = time_quantum_x_update - len(rets)
+                if jit_inventory > 0:
+                    sale_qty_x_months = sum(inner_ret[11] - inner_ret[13] for inner_ret in inner_rets)
+                    if sale_qty_x_months > 0:
+                        if reduced_btn_option:
+                            reduced_months = 0
+                            time_quantum_x_update = time_quantum_x
+                            if first_import_date <= st_date:
+                                reduced_months = time_quantum_x - len(inner_rets)
+                            else:
+                                time_quantum_x_update = calc_month_num(first_import_date, ed_date)
+                                reduced_months = time_quantum_x_update - len(inner_rets)
 
-                        for inner_ret in inner_rets:
-                            if inner_ret[5] == 0 and inner_ret[17] == 0:
-                                if inner_ret[7] > 0 and inner_ret[7] <= 10 and inner_ret[7] <= (inner_ret[11] - inner_ret[13]):
-                                    reduced_months += 1
-                                elif inner_ret[7] > 10 and inner_ret[7] > (inner_ret[11] - inner_ret[13]):
-                                    reduced_months += 1
-                        if time_quantum_x_update == reduced_months:
-                            sale_qty_x_months = int(sale_qty_x_months * (time_quantum_x_update / len(inner_rets)))
-                        else:
-                            sale_qty_x_months = int(sale_qty_x_months * (time_quantum_x_update / (time_quantum_x_update - reduced_months)))
-                    if (sale_qty_x_months > 0 and (jit_inventory / sale_qty_x_months) > threshold_ssr) or (sale_qty_x_months == 0 and jit_inventory > 0):
+                            for inner_ret in inner_rets:
+                                if inner_ret[5] == 0 and inner_ret[17] == 0:
+                                    if (inner_ret[7] > 0 and inner_ret[7] <= 10) and (inner_ret[7] <= (inner_ret[11] - inner_ret[13])):
+                                        reduced_months += 1
+                                    elif (inner_ret[7] > 10) and (inner_ret[7] > (inner_ret[11] - inner_ret[13])):
+                                        reduced_months += 1
+                            if time_quantum_x_update == reduced_months:
+                                sale_qty_x_months = int(sale_qty_x_months * (time_quantum_x_update / len(inner_rets)))
+                            else:
+                                sale_qty_x_months = int(sale_qty_x_months * (time_quantum_x_update / (time_quantum_x_update - reduced_months)))
+                        if (jit_inventory / sale_qty_x_months) > threshold_ssr:
+                            is_unsalable = True
+                    else:
                         is_unsalable = True
-                else:
-                    is_unsalable = True
+                
                 if is_unsalable:
                     # 滞销了
                     cache = {}
@@ -157,9 +163,7 @@ def export_report_file_case4():
                     cache["ed_inventory_qty"] = inner_rets[len(inner_rets) - 1][17]
                     cache["ed_inventory_total"] = inner_rets[len(inner_rets) - 1][18]
                     cache["jit_inventory"] = jit_inventory
-                    if sale_qty_x_months == 0:
-                        cache["ssr"] = "{}/0".format(jit_inventory)
-                    elif sale_qty_x_months < 0:
+                    if sale_qty_x_months <= 0:
                         cache["ssr"] = "{}/{}".format(jit_inventory, sale_qty_x_months)
                     else:
                         cache["ssr"] = float("{:.3f}".format(jit_inventory / sale_qty_x_months))
