@@ -59,11 +59,11 @@ def remove_duplicates_for_list(arr :list):
     return new_arr
 
 
-# 通用工具函数 - 计算两个月份之间的间隔月份数
-def calc_gap_months(from_date: str, to_date: str):
+# 通用工具函数 - 计算两个月份之间的月份数
+def calc_month_num(from_date: str, to_date: str):
     from_t = time.strptime(from_date, "%Y-%m")
     to_t = time.strptime(to_date, "%Y-%m")
-    gap_months = (to_t.tm_year - from_t.tm_year) * 12 + (to_t.tm_mon - from_t.tm_mon)
+    gap_months = (to_t.tm_year - from_t.tm_year) * 12 + (to_t.tm_mon - from_t.tm_mon) + 1
     return gap_months
 
 

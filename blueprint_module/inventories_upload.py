@@ -65,9 +65,9 @@ def upload_inventories():
                     import_date = last_month.strftime('%Y-%m')
                 add_date_brand_c1_c2_for_input_inventories(csv_file, import_date.strip())
 
-                record_first_and_last_import_date_for_input_inventories(csv_file)
-
                 repeat = do_remove_repeat_inventories_updates(csv_file)
+
+                record_first_and_last_import_date_for_input_inventories(csv_file)
 
                 db_connector.load_data_infile(
                     """LOAD DATA LOCAL INFILE "{}" """.format(csv_file) +
@@ -329,13 +329,17 @@ def record_first_and_last_import_date_for_input_inventories(csv_file: str):
         next(csv_reader, None)  # skip the header line
         for row in csv_reader:
             import_date = row[0]
-            specification_code = row[1]
-            if specification_code in inventories_import_date_record_table.keys():
-                v = inventories_import_date_record_table[specification_code]
-                v[1] = import_date
-                inventories_import_date_record_table[specification_code] = v
-            else:
+            specification_code = row[3]
+
+            v = inventories_import_date_record_table.get(specification_code, [])
+            if len(v) == 0:
                 inventories_import_date_record_table[specification_code] = [import_date, import_date]
+            else:
+                if import_date < v[0]:
+                    v[0] = import_date
+                elif import_date > v[1]:
+                    v[1] = import_date
+                inventories_import_date_record_table[specification_code] = v        
 
     inventories_import_date_record_table.close()
     return

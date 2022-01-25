@@ -10,7 +10,7 @@ sys.path.append(os.path.abspath("../utils"))
 from . import blueprint
 from utils import db_connector
 from utils import logger
-from utils import calc_gap_months
+from utils import calc_month_num
 from utils import cost_count
 from utils import generate_digest
 from utils import remove_duplicates_for_list
@@ -97,16 +97,29 @@ jit_inventory, product_weight, product_length, product_width, product_height, mo
             cache[specification_code]["weight"] = ret[7]
             cache[specification_code]["volume"] = ret[8] * ret[9] * ret[10]
             cache[specification_code]["moq"] = ret[11]
-    if screening_way == "1":
-        logger.info("筛选1, 满足条件的SKU数量等于{}".format(len(specification_code_list)))
-    else:
-        logger.info("筛选2, 满足条件的SKU数量等于{}".format(len(specification_code_list)))
+
     if len(specification_code_list) > 0:
         inventories_import_date_record_table = shelve.open("./tmp/inventories_import_date_record_table", flag='c', writeback=False)
-
+        
+        real_specification_code_list = []
         for specification_code in specification_code_list:
-            time_quantum_in_month_x_returned = process_sale_qty(cache, specification_code, the_past_x_month, time_quantum_in_month_x, True, reduced_btn_option, inventories_import_date_record_table[specification_code][0])
-            time_quantum_in_month_y_returned = process_sale_qty(cache, specification_code, the_past_y_month, time_quantum_in_month_y, False, reduced_btn_option, inventories_import_date_record_table[specification_code][0])
+            v = inventories_import_date_record_table.get(specification_code, [])
+            if len(v) == 0:
+                # 从未录过进销存报表的商品, 直接忽略
+                del cache[specification_code]
+            else:
+                real_specification_code_list.append(specification_code)
+
+        if screening_way == "1":
+            logger.info("筛选1, 满足条件的SKU数量等于{}".format(len(real_specification_code_list)))
+        else:
+            logger.info("筛选2, 满足条件的SKU数量等于{}".format(len(real_specification_code_list)))
+
+        for specification_code in real_specification_code_list:
+            v = inventories_import_date_record_table.get(specification_code, [])
+
+            time_quantum_in_month_x_returned = process_sale_qty(cache, specification_code, the_past_x_month, time_quantum_in_month_x, True, reduced_btn_option, v[0])
+            time_quantum_in_month_y_returned = process_sale_qty(cache, specification_code, the_past_y_month, time_quantum_in_month_y, False, reduced_btn_option, v[0])
             if cache[specification_code]["sale_qty_x_months"] == 0 and cache[specification_code]["sale_qty_y_months"] == 0:
                 if screening_way == "1":
                     if cache[specification_code]["inventory"] > 0:
@@ -357,7 +370,7 @@ ORDER BY create_time DESC;".format(specification_code, the_past_m_month)
                     reduced_months = the_time_quantum - len(rets)
                 else:
                     # first_import_date晚于the_past_m_month的情况, 说明该产品是新品
-                    the_time_quantum = calc_gap_months(first_import_date, pendulum.today().strftime("%Y-%m"))
+                    the_time_quantum = calc_month_num(first_import_date, pendulum.today().strftime("%Y-%m"))
                     reduced_months = the_time_quantum - len(rets)
                     is_new_arrival = True
                 for ret in rets:
