@@ -69,6 +69,7 @@ def preview_report_file_case3():
 
                 stmt = "SELECT * FROM fotolei_pssa.products WHERE specification_code = '{}';".format(scode)
                 inner_rets = db_connector.query(stmt)
+                cache["id"] = inner_rets[0][0]
                 cache["product_code"] = inner_rets[0][1]
                 cache["product_name"] = inner_rets[0][2]
                 cache["specification_code"] = inner_rets[0][3]

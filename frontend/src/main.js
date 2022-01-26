@@ -8,8 +8,12 @@ import BootstrapVue from 'bootstrap-vue'
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
 
+import VueVirtualScroller from 'vue-virtual-scroller'
+import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
+
 Vue.config.productionTip = false
 Vue.use(BootstrapVue)
+Vue.use(VueVirtualScroller)
 
 /* eslint-disable no-new */
 new Vue({

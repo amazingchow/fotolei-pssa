@@ -60,7 +60,7 @@ def preview_report_file_case5():
     the_past_y_month = today.subtract(months=time_quantum_in_month_y).strftime("%Y-%m")
 
     # “供应商”选项为空，则为全部供应商（包括没有供应商的商品条目）
-    stmt = "SELECT specification_code, brand, product_name, specification_name, purchase_name, supplier_name, \
+    stmt = "SELECT id, specification_code, brand, product_name, specification_name, purchase_name, supplier_name, \
 jit_inventory, product_weight, product_length, product_width, product_height, moq FROM fotolei_pssa.products"
     conds = []
     if len(supplier_name) > 0:
@@ -84,19 +84,20 @@ jit_inventory, product_weight, product_length, product_width, product_height, mo
     rets = db_connector.query(stmt)
     if type(rets) is list and len(rets) > 0:
         for ret in rets:
-            specification_code = ret[0]
+            specification_code = ret[1]
             specification_code_list.append(specification_code)
             cache[specification_code] = {}
+            cache[specification_code]["id"] = ret[0]
             cache[specification_code]["specification_code"] = specification_code
-            cache[specification_code]["brand"] = ret[1]
-            cache[specification_code]["product_name"] = ret[2]
-            cache[specification_code]["specification_name"] = ret[3]
-            cache[specification_code]["purchase_name"] = ret[4]
-            cache[specification_code]["supplier_name"] = ret[5]
-            cache[specification_code]["inventory"] = ret[6]
-            cache[specification_code]["weight"] = ret[7]
-            cache[specification_code]["volume"] = ret[8] * ret[9] * ret[10]
-            cache[specification_code]["moq"] = ret[11]
+            cache[specification_code]["brand"] = ret[2]
+            cache[specification_code]["product_name"] = ret[3]
+            cache[specification_code]["specification_name"] = ret[4]
+            cache[specification_code]["purchase_name"] = ret[5]
+            cache[specification_code]["supplier_name"] = ret[6]
+            cache[specification_code]["inventory"] = ret[7]
+            cache[specification_code]["weight"] = ret[8]
+            cache[specification_code]["volume"] = ret[9] * ret[10] * ret[11]
+            cache[specification_code]["moq"] = ret[12]
 
     if len(specification_code_list) > 0:
         inventories_import_date_record_table = shelve.open("./tmp/inventories_import_date_record_table", flag='c', writeback=False)

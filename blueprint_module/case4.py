@@ -131,6 +131,7 @@ def export_report_file_case4():
                 if is_unsalable:
                     # 滞销了
                     cache = {}
+                    cache["id"] = ret[0]
                     cache["product_code"] = inner_rets[0][1]
                     cache["specification_code"] = inner_rets[0][3]
                     cache["product_name"] = inner_rets[0][2]

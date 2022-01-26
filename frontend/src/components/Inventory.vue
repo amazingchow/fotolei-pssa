@@ -509,17 +509,24 @@
           </b-tr>
         </b-thead>
         <b-tbody>
-          <b-tr v-for="(item, index) in previewCase3.previewTable" :key="index">
-            <b-td>{{ item.product_code }}</b-td>
-            <b-td>{{ item.specification_code }}</b-td>
-            <b-td>{{ item.product_name }}</b-td>
-            <b-td>{{ item.specification_name }}</b-td>
-            <b-td>{{ item.st_inventory_qty }}</b-td>
-            <b-td>{{ item.purchase_qty }}</b-td>
-            <b-td>{{ item.sale_qty }}</b-td>
-            <b-td>{{ item.ed_inventory_qty }}</b-td>
-            <b-td>{{ item.jit_inventory }}</b-td>
-          </b-tr>
+          <RecycleScroller
+            class="scroller"
+            :items="previewCase3.previewTable"
+            key-field="id"
+            v-slot="{ item }"
+          >
+            <b-tr>
+              <b-td>{{ item.product_code }}</b-td>
+              <b-td>{{ item.specification_code }}</b-td>
+              <b-td>{{ item.product_name }}</b-td>
+              <b-td>{{ item.specification_name }}</b-td>
+              <b-td>{{ item.st_inventory_qty }}</b-td>
+              <b-td>{{ item.purchase_qty }}</b-td>
+              <b-td>{{ item.sale_qty }}</b-td>
+              <b-td>{{ item.ed_inventory_qty }}</b-td>
+              <b-td>{{ item.jit_inventory }}</b-td>
+            </b-tr>
+          </RecycleScroller>
         </b-tbody>
       </b-table-simple>
       <div id="inventory-table-operate-btn" class="w-100 d-block">
@@ -679,19 +686,26 @@
           </b-tr>
         </b-thead>
         <b-tbody>
-          <b-tr v-for="(item, index) in previewCase4.previewTable" :key="index">
-            <b-td>{{ item.product_code }}</b-td>
-            <b-td>{{ item.specification_code }}</b-td>
-            <b-td>{{ item.product_name }}</b-td>
-            <b-td>{{ item.specification_name }}</b-td>
-            <b-td>{{ item.st_inventory_qty }}</b-td>
-            <b-td>{{ item.purchase_qty }}</b-td>
-            <b-td>{{ item.sale_qty }}</b-td>
-            <b-td>{{ item.sale_then_return_qty }}</b-td>
-            <b-td>{{ item.ed_inventory_qty }}</b-td>
-            <b-td>{{ item.jit_inventory }}</b-td>
-            <b-td>{{ item.ssr }}</b-td>
-          </b-tr>
+          <RecycleScroller
+            class="scroller"
+            :items="previewCase4.previewTable"
+            key-field="id"
+            v-slot="{ item }"
+          >
+            <b-tr>
+              <b-td>{{ item.product_code }}</b-td>
+              <b-td>{{ item.specification_code }}</b-td>
+              <b-td>{{ item.product_name }}</b-td>
+              <b-td>{{ item.specification_name }}</b-td>
+              <b-td>{{ item.st_inventory_qty }}</b-td>
+              <b-td>{{ item.purchase_qty }}</b-td>
+              <b-td>{{ item.sale_qty }}</b-td>
+              <b-td>{{ item.sale_then_return_qty }}</b-td>
+              <b-td>{{ item.ed_inventory_qty }}</b-td>
+              <b-td>{{ item.jit_inventory }}</b-td>
+              <b-td>{{ item.ssr }}</b-td>
+            </b-tr>
+          </RecycleScroller>
         </b-tbody>
       </b-table-simple>
       <div id="inventory-table-operate-btn" class="w-100 d-block">
@@ -808,27 +822,34 @@
           </b-tr>
         </b-thead>
         <b-tbody>
-          <b-tr v-for="(item, index) in previewCase5.previewTable" :key="index">
-            <b-td>{{ item.specification_code }}</b-td>
-            <b-td>{{ item.brand }}</b-td>
-            <b-td>{{ item.product_name }}</b-td>
-            <b-td>{{ item.specification_name }}</b-td>
-            <b-td>{{ item.purchase_name }}</b-td>
-            <b-td>{{ item.supplier_name }}</b-td>
-            <b-td>{{ item.sale_qty_x_months }}</b-td>
-            <b-td>{{ item.sale_qty_y_months }}</b-td>
-            <b-td>{{ item.inventory }}</b-td>
-            <b-td>{{ item.inventory_divided_by_sale_qty_x_months }}</b-td>
-            <b-td>{{ item.inventory_divided_by_sale_qty_y_months }}</b-td>
-            <b-td>{{ item.inventory_divided_by_reduced_sale_qty_x_months }}</b-td>
-            <b-td>{{ item.inventory_divided_by_reduced_sale_qty_y_months }}</b-td>
-            <b-td>{{ item.projected_purchase }}</b-td>
-            <b-td>{{ item.weight }}</b-td>
-            <b-td>{{ item.weight_total }}</b-td>
-            <b-td>{{ item.volume }}</b-td>
-            <b-td>{{ item.volume_total }}</b-td>
-            <b-td>{{ item.remark }}</b-td>
-          </b-tr>
+          <RecycleScroller
+            class="scroller"
+            :items="previewCase5.previewTable"
+            key-field="id"
+            v-slot="{ item }"
+          >
+            <b-tr>
+              <b-td>{{ item.specification_code }}</b-td>
+              <b-td>{{ item.brand }}</b-td>
+              <b-td>{{ item.product_name }}</b-td>
+              <b-td>{{ item.specification_name }}</b-td>
+              <b-td>{{ item.purchase_name }}</b-td>
+              <b-td>{{ item.supplier_name }}</b-td>
+              <b-td>{{ item.sale_qty_x_months }}</b-td>
+              <b-td>{{ item.sale_qty_y_months }}</b-td>
+              <b-td>{{ item.inventory }}</b-td>
+              <b-td>{{ item.inventory_divided_by_sale_qty_x_months }}</b-td>
+              <b-td>{{ item.inventory_divided_by_sale_qty_y_months }}</b-td>
+              <b-td>{{ item.inventory_divided_by_reduced_sale_qty_x_months }}</b-td>
+              <b-td>{{ item.inventory_divided_by_reduced_sale_qty_y_months }}</b-td>
+              <b-td>{{ item.projected_purchase }}</b-td>
+              <b-td>{{ item.weight }}</b-td>
+              <b-td>{{ item.weight_total }}</b-td>
+              <b-td>{{ item.volume }}</b-td>
+              <b-td>{{ item.volume_total }}</b-td>
+              <b-td>{{ item.remark }}</b-td>
+            </b-tr>
+          </RecycleScroller>
         </b-tbody>
       </b-table-simple>
       <div id="inventory-table-operate-btn" class="w-100 d-block">
