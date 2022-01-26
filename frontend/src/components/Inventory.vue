@@ -1380,7 +1380,8 @@ export default {
       axios.post(this.serverBaseURL + '/api/v1/case1/preview', payload)
         .then((res) => {
           if (res.data.status === 'success') {
-            this.previewCase1.previewTable = Object.freeze(res.data.preview_table)
+            const pt = Object.freeze(res.data.preview_table)
+            this.previewCase1.previewTable = pt
             this.$refs.previewCase1Modal.show()
           } else if (res.data.status === 'not found') {
             this.message = '预览失败！不存在指定的库存条目。'
@@ -1448,7 +1449,8 @@ export default {
       axios.post(this.serverBaseURL + '/api/v1/case2/preview', payload)
         .then((res) => {
           if (res.data.status === 'success') {
-            this.previewCase2.previewTable = Object.freeze(res.data.preview_table)
+            const pt = Object.freeze(res.data.preview_table)
+            this.previewCase2.previewTable = pt
             this.$refs.previewCase2Modal.show()
           } else if (res.data.status === 'not found') {
             this.message = '预览失败！不存在指定的库存条目。'
@@ -1509,7 +1511,8 @@ export default {
       axios.post(this.serverBaseURL + '/api/v1/case3/preview', payload)
         .then((res) => {
           if (res.data.status === 'success') {
-            this.previewCase3.previewTable = Object.freeze(res.data.preview_table)
+            const pt = Object.freeze(res.data.preview_table)
+            this.previewCase3.previewTable = pt
             this.$refs.previewCase3Modal.show()
           } else if (res.data.status === 'not found') {
             this.message = '预览失败！不存在指定的库存条目。'
@@ -1592,7 +1595,8 @@ export default {
       axios.post(this.serverBaseURL + '/api/v1/case4/preview', payload)
         .then((res) => {
           if (res.data.status === 'success') {
-            this.previewCase4.previewTable = Object.freeze(res.data.preview_table)
+            const pt = Object.freeze(res.data.preview_table)
+            this.previewCase4.previewTable = pt
             this.$refs.previewCase4Modal.show()
           } else {
             this.message = '预览失败！不存在指定的库存条目。'
@@ -1654,7 +1658,8 @@ export default {
       axios.post(this.serverBaseURL + url, payload)
         .then((res) => {
           if (res.data.status === 'success') {
-            this.previewCase5.previewTable = Object.freeze(res.data.preview_table)
+            const pt = Object.freeze(res.data.preview_table)
+            this.previewCase5.previewTable = pt
             this.supplierNameListFromScreeningWay1 = res.data.supplier_name_list_from_screening_way1
             this.$refs.previewCase5Modal.show()
           } else if (res.data.status === 'invalid operation') {
@@ -1799,8 +1804,10 @@ export default {
       axios.post(this.serverBaseURL + '/api/v1/case6/preview', payload)
         .then((res) => {
           if (res.data.status === 'success') {
-            this.previewCase6.previewTable = Object.freeze(res.data.preview_table)
-            this.previewCase6.previewSummaryTable = res.data.preview_summary_table
+            const pt = Object.freeze(res.data.preview_table)
+            this.previewCase6.previewTable = pt
+            const pst = Object.freeze(res.data.preview_summary_table)
+            this.previewCase6.previewSummaryTable = pst
             this.$refs.previewCase6Modal.show()
           } else {
             this.message = '预览失败！不存在指定的商品条目。'
