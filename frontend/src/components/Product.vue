@@ -467,10 +467,11 @@ export default {
     alert: Alert
   },
   methods: {
-    listProducts () {
-      axios.get(this.serverBaseURL + `/api/v1/products?page.offset=${this.pageOffset}&page.limit=20`)
+    async listProducts () {
+      await axios.get(this.serverBaseURL + `/api/v1/products?page.offset=${this.pageOffset}&page.limit=20`)
         .then((res) => {
-          this.products = res.data.products
+          const products = Object.freeze(res.data.products)
+          this.products = products
           this.productsNum = res.data.products.length
           if (this.productsNum > 0) {
             this.pageCurr = this.pageOffset / 20 + 1
@@ -485,8 +486,8 @@ export default {
           this.showMessage = true
         })
     },
-    getProductsTotal () {
-      axios.get(this.serverBaseURL + '/api/v1/products/total')
+    async getProductsTotal () {
+      await axios.get(this.serverBaseURL + '/api/v1/products/total')
         .then((res) => {
           this.productsTotal = res.data.products_total
           this.pageOffsetMax = this.productsTotal - this.productsTotal % 20
@@ -567,7 +568,8 @@ export default {
           } else if (res.data.status === 'failed') {
             this.message = '导入失败，有新增SKU，请人工复核！'
             this.showMessage = true
-            this.addedSkus = res.data.added_skus
+            const addedSkus = Object.freeze(res.data.added_skus)
+            this.addedSkus = addedSkus
             this.shouldOpenSidebar = true
           }
           this.importJITInventoryCSVFileClose()
@@ -593,8 +595,8 @@ export default {
       this.adminUsr = ''
       this.adminPwd = ''
     },
-    cleanAllProducts (payload) {
-      axios.post(this.serverBaseURL + '/api/v1/products/all/clean', payload)
+    async cleanAllProducts (payload) {
+      await axios.post(this.serverBaseURL + '/api/v1/products/all/clean', payload)
         .then((res) => {
           if (res.data.status === 'success') {
             this.message = '删除成功！'
@@ -619,8 +621,8 @@ export default {
       this.adminPwd = ''
       this.specificationCode = ''
     },
-    cleanOneProduct (payload) {
-      axios.post(this.serverBaseURL + '/api/v1/products/one/clean', payload)
+    async cleanOneProduct (payload) {
+      await axios.post(this.serverBaseURL + '/api/v1/products/one/clean', payload)
         .then((res) => {
           if (res.data.status === 'success') {
             this.message = '删除成功！'
@@ -642,8 +644,8 @@ export default {
     loadOldProductDataClose () {
       this.$refs.processingModal.hide()
     },
-    loadOldProductData (specificationCode) {
-      axios.get(this.serverBaseURL + '/api/v1/products/one/pick?specification_code=' + specificationCode)
+    async loadOldProductData (specificationCode) {
+      await axios.get(this.serverBaseURL + '/api/v1/products/one/pick?specification_code=' + specificationCode)
         .then((res) => {
           if (res.data.status === 'success') {
             this.updateProduct.id = res.data.product.id
@@ -706,8 +708,8 @@ export default {
       this.updateProduct.jitInventory = ''
       this.updateProduct.moq = ''
     },
-    updateNewProductData (payload) {
-      axios.post(this.serverBaseURL + '/api/v1/products/one/update', payload)
+    async updateNewProductData (payload) {
+      await axios.post(this.serverBaseURL + '/api/v1/products/one/update', payload)
         .then((res) => {
           if (res.data.status === 'success') {
             this.message = '更新成功！'
@@ -731,8 +733,8 @@ export default {
       this.shouldOpenSidebar = false
       this.addedSkus = []
     },
-    preDownloadAddedSKUs (payload) {
-      axios.post(this.serverBaseURL + '/api/v1/addedskus/prepare', payload)
+    async preDownloadAddedSKUs (payload) {
+      await axios.post(this.serverBaseURL + '/api/v1/addedskus/prepare', payload)
         .then((res) => {
           this.downloadAddedSKUs(res.data.server_send_queue_file, res.data.output_file)
           this.preDownloadAddedSKUsClose()
@@ -745,8 +747,8 @@ export default {
           this.preDownloadAddedSKUsClose()
         })
     },
-    downloadAddedSKUs (queryFile, saveFile) {
-      axios.get(this.serverBaseURL + '/api/v1/download/' + queryFile)
+    async downloadAddedSKUs (queryFile, saveFile) {
+      await axios.get(this.serverBaseURL + '/api/v1/download/' + queryFile)
         .then((res) => {
           const evt = document.createEvent('MouseEvents')
           var docUrl = document.createElement('a')
