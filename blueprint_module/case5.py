@@ -100,7 +100,6 @@ jit_inventory, product_weight, product_length, product_width, product_height, mo
 
     if len(specification_code_list) > 0:
         inventories_import_date_record_table = shelve.open("./tmp/inventories_import_date_record_table", flag='c', writeback=False)
-        
         real_specification_code_list = []
         for specification_code in specification_code_list:
             v = inventories_import_date_record_table.get(specification_code, [])
