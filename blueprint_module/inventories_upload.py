@@ -339,7 +339,7 @@ def record_first_and_last_import_date_for_input_inventories(csv_file: str):
                     v[0] = import_date
                 elif import_date > v[1]:
                     v[1] = import_date
-                inventories_import_date_record_table[specification_code] = v        
+                inventories_import_date_record_table[specification_code] = v
 
     inventories_import_date_record_table.close()
     return

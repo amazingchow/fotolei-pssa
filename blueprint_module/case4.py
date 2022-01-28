@@ -127,7 +127,6 @@ def export_report_file_case4():
                             is_unsalable = True
                     else:
                         is_unsalable = True
-                
                 if is_unsalable:
                     # 滞销了
                     cache = {}
