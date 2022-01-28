@@ -13,3 +13,4 @@ log-output                     = FILE
 log-timestamps                 = SYSTEM
 innodb_flush_log_at_trx_commit = 1
 sync_binlog                    = 1
+max_allowed_packet             = 67108864
