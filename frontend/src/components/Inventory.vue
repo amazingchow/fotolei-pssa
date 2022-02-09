@@ -1299,7 +1299,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '导入失败!'
+          this.message = '删除失败!'
           this.showMessage = true
           this.cleanAllInventoriesClose()
         })

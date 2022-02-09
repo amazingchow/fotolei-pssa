@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import errno
 import hashlib
 import logging
 import os
@@ -65,6 +66,15 @@ def calc_month_num(from_date: str, to_date: str):
     to_t = time.strptime(to_date, "%Y-%m")
     gap_months = (to_t.tm_year - from_t.tm_year) * 12 + (to_t.tm_mon - from_t.tm_mon) + 1
     return gap_months
+
+
+# 通用工具函数 - 删除文件, 即使文件不存在也不报错
+def silent_remove(filename):
+    try:
+        os.remove(filename)
+    except OSError as e:
+        if e.errno != errno.ENOENT:
+            raise
 
 
 # 数据库连接器 + 查询表
