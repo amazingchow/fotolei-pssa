@@ -12,6 +12,7 @@ from utils import lookup_table_classification_1_2_association
 from utils import lookup_table_brand_classification_2_association
 from utils import lookup_table_sku_brand_classification_1_2_association
 from utils import cost_count
+from utils import silent_remove
 
 
 # 删除所有商品条目的接口
@@ -64,9 +65,9 @@ CREATE TABLE IF NOT EXISTS fotolei_pssa.product_summary (
 '''
         db_connector.create_table(stmt)
         if platform.system() == "Linux":
-            os.remove("./tmp/products_load_file_repetition_lookup_table")
+            silent_remove("./tmp/products_load_file_repetition_lookup_table")
         else:
-            os.remove("./tmp/products_load_file_repetition_lookup_table.db")
+            silent_remove("./tmp/products_load_file_repetition_lookup_table.db")
         lookup_table_sku_get_or_put.clear()
         lookup_table_brand_classification_1_2_association.clear()
         lookup_table_classification_1_2_association.clear()

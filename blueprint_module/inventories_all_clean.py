@@ -8,6 +8,7 @@ from . import blueprint
 from utils import db_connector
 from utils import lookup_table_inventory_update_without_repetition
 from utils import cost_count
+from utils import silent_remove
 
 
 # 删除所有库存条目的接口
@@ -69,13 +70,13 @@ CREATE TABLE IF NOT EXISTS fotolei_pssa.inventory_summary (
 '''
         db_connector.create_table(stmt)
         if platform.system() == "Linux":
-            os.remove("./tmp/inventories_load_file_repetition_lookup_table")
-            os.remove("./tmp/inventories_check_table")
-            os.remove("./tmp/inventories_import_date_record_table")
+            silent_remove("./tmp/inventories_load_file_repetition_lookup_table")
+            silent_remove("./tmp/inventories_check_table")
+            silent_remove("./tmp/inventories_import_date_record_table")
         else:
-            os.remove("./tmp/inventories_load_file_repetition_lookup_table.db")
-            os.remove("./tmp/inventories_check_table.db")
-            os.remove("./tmp/inventories_import_date_record_table.db")
+            silent_remove("./tmp/inventories_load_file_repetition_lookup_table.db")
+            silent_remove("./tmp/inventories_check_table.db")
+            silent_remove("./tmp/inventories_import_date_record_table.db")
         lookup_table_inventory_update_without_repetition.clear()
         response_object = {"status": "success"}
         return jsonify(response_object)
