@@ -9,13 +9,21 @@ check:
 	@pycodestyle db/*.py --ignore=E501,W504,E502,E131,E402
 	@pycodestyle scripts/*.py --ignore=E501,W504,E502,E131,E402
 
-.PHONY: init
-init:
-	@./scripts/init_server.sh
+.PHONY: init_env
+init_env:
+	@./scripts/init_env.sh
 
-.PHONY: clean
-clean:
-	@./scripts/clean_server.sh
+.PHONY: clean_env
+clean_env:
+	@./scripts/clean_env.sh
+
+.PHONY: run_mysql
+run_mysql:
+	@./scripts/run_mysql.sh
+
+.PHONY: stop_mysql
+stop_mysql:
+	@./scripts/stop_mysql.sh
 
 .PHONY: run_server_local
 run_server_local:
