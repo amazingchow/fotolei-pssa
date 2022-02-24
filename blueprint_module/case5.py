@@ -153,13 +153,13 @@ jit_inventory, product_weight, product_length, product_width, product_height, mo
                         x2 = cache[specification_code]["inventory_divided_by_sale_qty_y_months"]
                         x4 = cache[specification_code]["sale_qty_y_months"]
                 if screening_way == "1":
-                    if x3 > 0 and x1 <= threshold_x:
-                        tmp = int((x3 / time_quantum_in_month_x_returned) * projected_purchase_months)
+                    if x4 > 0 and x2 <= threshold_y:
+                        tmp = int((x4 / time_quantum_in_month_y_returned) * projected_purchase_months)
                         cache[specification_code]["projected_purchase"] = tmp - cache[specification_code]["inventory"]
                         if cache[specification_code]["projected_purchase"] < 0:
                             cache[specification_code]["projected_purchase"] = 0
-                    elif x4 > 0 and x2 <= threshold_y:
-                        tmp = int((x4 / time_quantum_in_month_y_returned) * projected_purchase_months)
+                    elif x3 > 0 and x1 <= threshold_x:
+                        tmp = int((x3 / time_quantum_in_month_x_returned) * projected_purchase_months)
                         cache[specification_code]["projected_purchase"] = tmp - cache[specification_code]["inventory"]
                         if cache[specification_code]["projected_purchase"] < 0:
                             cache[specification_code]["projected_purchase"] = 0
@@ -167,10 +167,10 @@ jit_inventory, product_weight, product_length, product_width, product_height, mo
                         del cache[specification_code]
                         continue
                 else:
-                    tmp = int((x3 / time_quantum_in_month_x_returned) * projected_purchase_months)
+                    tmp = int((x4 / time_quantum_in_month_y_returned) * projected_purchase_months)
                     cache[specification_code]["projected_purchase"] = tmp - cache[specification_code]["inventory"]
                     if cache[specification_code]["projected_purchase"] <= 0:
-                        tmp = int((x4 / time_quantum_in_month_y_returned) * projected_purchase_months)
+                        tmp = int((x3 / time_quantum_in_month_x_returned) * projected_purchase_months)
                         cache[specification_code]["projected_purchase"] = tmp - cache[specification_code]["inventory"]
                         if cache[specification_code]["projected_purchase"] < 0:
                             cache[specification_code]["projected_purchase"] = 0
