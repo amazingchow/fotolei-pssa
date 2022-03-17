@@ -8,7 +8,7 @@ import sys
 import time
 from collections import defaultdict
 sys.path.append(os.path.abspath("../db"))
-from db.mysqlcli import MySQLConnector
+from db import MySQLConnector
 from functools import wraps
 
 # 日志工具
@@ -79,7 +79,7 @@ def silent_remove(filename):
 
 # 数据库连接器 + 查询表
 db_connector = MySQLConnector.instance()
-db_connector.init_conn("fotolei_pssa")
+db_connector.init_conn_pool("fotolei_pssa")
 
 lookup_table_sku_get_or_put = defaultdict(bool)
 lookup_table_inventory_update_without_repetition = defaultdict(bool)
