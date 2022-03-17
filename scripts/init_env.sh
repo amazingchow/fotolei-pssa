@@ -6,6 +6,7 @@ mkdir -p ~/mysql/conf.d
 cp $PWD/test/mysql-deploy/conf.d/*.cnf ~/mysql/conf.d
 mkdir -p ~/mysql/migrations
 cp $PWD/db/migrations/*.sql ~/mysql/migrations
+mkdir -p ~/fotolei-pssa/logs
 mkdir -p ~/fotolei-pssa/inventories
 mkdir -p ~/fotolei-pssa/jit_inventory
 mkdir -p ~/fotolei-pssa/products
