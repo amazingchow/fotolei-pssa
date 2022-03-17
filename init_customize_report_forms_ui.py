@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
+import os
 import shelve
 
+
 if __name__ == '__main__':
-    customize_report_forms_ui = shelve.open("./tmp/customize_report_forms_ui", flag='c', writeback=False)
+    customize_report_forms_ui = shelve.open("{}/fotolei-pssa/tmp-files/customize_report_forms_ui".format(
+        os.path.expanduser("~")), flag='c', writeback=False)
     customize_report_forms_ui["classification1_tags"] = ['数码', '传统耗材']
     customize_report_forms_ui["classification1_classification2_tags"] = [
         '数码|背带',

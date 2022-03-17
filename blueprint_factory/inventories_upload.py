@@ -34,7 +34,8 @@ def upload_inventories():
     if not do_data_schema_validation_for_input_inventories(csv_file):
         response_object = {"status": "invalid input data schema"}
     else:
-        load_file_repetition_lookup_table = shelve.open("./tmp/inventories_load_file_repetition_lookup_table", flag='c', writeback=False)
+        load_file_repetition_lookup_table = shelve.open("{}/fotolei-pssa/tmp-files/inventories_load_file_repetition_lookup_table".format(
+            os.path.expanduser("~")), flag='c', writeback=False)
         file_digest = generate_file_digest(csv_file)
         if not load_file_repetition_lookup_table.get(file_digest, False):
             not_inserted_sku_list = []
@@ -131,7 +132,8 @@ def do_data_schema_validation_for_input_inventories(csv_file: str):
 
 
 def do_data_check_for_input_inventories(csv_file: str):
-    inventories_check_table = shelve.open("./tmp/inventories_check_table", flag='c', writeback=False)
+    inventories_check_table = shelve.open("{}/fotolei-pssa/tmp-files/inventories_check_table".format(
+        os.path.expanduser("~")), flag='c', writeback=False)
     inventories_check_table_tmp = {}
 
     # 导入的起始库存数量 =? 最近一个月的截止库存数量
@@ -322,7 +324,8 @@ def add_date_brand_c1_c2_for_input_inventories(csv_file: str, import_date: str):
 
 
 def record_first_and_last_import_date_for_input_inventories(csv_file: str):
-    inventories_import_date_record_table = shelve.open("./tmp/inventories_import_date_record_table", flag='c', writeback=False)
+    inventories_import_date_record_table = shelve.open("{}/fotolei-pssa/tmp-files/inventories_import_date_record_table".format(
+        os.path.expanduser("~")), flag='c', writeback=False)
 
     with open(csv_file, "r", encoding='utf-8-sig') as fd:
         csv_reader = csv.reader(fd, delimiter=",")

@@ -65,9 +65,11 @@ CREATE TABLE IF NOT EXISTS fotolei_pssa.product_summary (
 '''
         db_connector.create_table(stmt)
         if platform.system() == "Linux":
-            silent_remove("./tmp/products_load_file_repetition_lookup_table")
+            silent_remove("{}/fotolei-pssa/tmp-files/products_load_file_repetition_lookup_table".format(
+                os.path.expanduser("~")))
         else:
-            silent_remove("./tmp/products_load_file_repetition_lookup_table.db")
+            silent_remove("{}/fotolei-pssa/tmp-files/products_load_file_repetition_lookup_table.db".format(
+                os.path.expanduser("~")))
         lookup_table_sku_get_or_put.clear()
         lookup_table_brand_classification_1_2_association.clear()
         lookup_table_classification_1_2_association.clear()

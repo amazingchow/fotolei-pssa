@@ -19,7 +19,7 @@ from utils import generate_digest
 def upload_csv_file_for_case6():
     csv_files = request.files.getlist("file")
     csv_file_sha256 = generate_digest("{}_{}".format(int(time.time()), csv_files[0].filename))
-    csv_file = "{}/fotolei-pssa/recev_queue/{}".format(
+    csv_file = "{}/fotolei-pssa/recv_queue/{}".format(
         os.path.expanduser("~"), csv_file_sha256
     )
     csv_files[0].save(csv_file)

@@ -20,7 +20,8 @@ from utils import generate_digest
 @blueprint.route("/api/v1/case1/ui/fetch", methods=["GET"])
 @cost_count
 def fetch_ui():
-    customize_report_forms_ui = shelve.open("./tmp/customize_report_forms_ui", flag='c', writeback=False)
+    customize_report_forms_ui = shelve.open("{}/fotolei-pssa/tmp-files/customize_report_forms_ui".format(
+        os.path.expanduser("~")), flag='c', writeback=False)
     ui = dict()
     for k, v in customize_report_forms_ui.items():
         ui[k] = v
@@ -42,7 +43,8 @@ def save_ui():
     brand_topk_tag = payload.get("brand_topk_tag", '')
     brand_classification2_tags = payload.get("brand_classification2_tags", [])
 
-    customize_report_forms_ui = shelve.open("./tmp/customize_report_forms_ui", flag='c', writeback=False)
+    customize_report_forms_ui = shelve.open("{}/fotolei-pssa/tmp-files/customize_report_forms_ui".format(
+        os.path.expanduser("~")), flag='c', writeback=False)
     customize_report_forms_ui["classification1_tags"] = classification1_tags
     customize_report_forms_ui["classification1_classification2_tags"] = classification1_classification2_tags
     customize_report_forms_ui["classification1_topk_tags"] = classification1_topk_tags
