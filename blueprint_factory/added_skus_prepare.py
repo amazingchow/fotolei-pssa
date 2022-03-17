@@ -19,7 +19,7 @@ def prepare_added_skus():
 
     ts = int(time.time())
     csv_file_sha256 = generate_digest("新增SKU_{}.csv".format(ts))
-    csv_file = "{}/ggfilm-server/send_queue/{}".format(os.path.expanduser("~"), csv_file_sha256)
+    csv_file = "{}/fotolei-pssa/send_queue/{}".format(os.path.expanduser("~"), csv_file_sha256)
     output_file = "新增SKU_{}.csv".format(ts)
     with open(csv_file, "w", encoding='utf-8-sig') as fd:
         csv_writer = csv.writer(fd, delimiter=",")
