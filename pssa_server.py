@@ -2,8 +2,8 @@
 import atexit
 import os
 import sys
-sys.path.append(os.path.abspath("./blueprint_module"))
-from blueprint_module import blueprint
+sys.path.append(os.path.abspath("./blueprint_factory"))
+from blueprint_factory import blueprint
 sys.path.append(os.path.abspath("./utils"))
 from utils import db_connector
 from flask import Flask
