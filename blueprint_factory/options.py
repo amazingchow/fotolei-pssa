@@ -14,6 +14,7 @@ from utils import cost_count
 def list_all_options():
     response_object = {"status": "success"}
 
+    # TODO: 优化SQL
     stmt = "SELECT DISTINCT brand FROM fotolei_pssa.products;"
     brand_options = db_connector.query(stmt)
     if len(brand_options) == 0:

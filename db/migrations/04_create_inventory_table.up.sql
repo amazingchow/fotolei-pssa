@@ -25,10 +25,10 @@ CREATE TABLE IF NOT EXISTS fotolei_pssa.inventories (
     extra_is_combined          VARCHAR(32),            /* 是否是组合商品 */
     anchor                     TINYINT,                /* 锚，防止‘组合商品‘读出来带空格 */
     PRIMARY KEY (id),
-    KEY fotolei_pssa_inventories_specification_code (specification_code),
-    KEY fotolei_pssa_inventories_create_time (create_time),
-    KEY fotolei_pssa_inventories_extra_brand (extra_brand),
-    KEY fotolei_pssa_inventories_extra_classification_1 (extra_classification_1),
-    KEY fotolei_pssa_inventories_extra_classification_2 (extra_classification_2),
-    KEY fotolei_pssa_inventories_extra_is_combined (extra_is_combined)
+    KEY inventories_ct (create_time),
+    KEY inventories_specification_code_ct (specification_code, create_time),
+    KEY inventories_extra_is_combined_ct (extra_is_combined, create_time),
+    KEY inventories_extra_is_combined_extra_brand_ct (extra_is_combined, extra_brand, create_time),
+    KEY inventories_extra_is_combined_extra_c1_ct (extra_is_combined, extra_classification_1, create_time),
+    KEY inventories_extra_is_combined_extra_c2_ct (extra_is_combined, extra_classification_2, create_time)
 ) ENGINE=InnoDB;

@@ -21,5 +21,7 @@ CREATE TABLE IF NOT EXISTS fotolei_pssa.products (
     jit_inventory      INT,                    /* 实时可用库存 */
     moq                INT,                    /* 最小订货单元 */
     PRIMARY KEY (id),
-    KEY (specification_code)
+    KEY products_specification_code (specification_code),
+    KEY products_is_combined_product_series (is_combined, product_series),
+    KEY products_is_combined_stop_status_be_aggregated_supplier_name (is_combined, stop_status, be_aggregated, supplier_name)
 ) ENGINE=InnoDB;

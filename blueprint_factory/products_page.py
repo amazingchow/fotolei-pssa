@@ -15,6 +15,7 @@ def list_products():
     page_offset = request.args.get("page.offset")
     page_limit = request.args.get("page.limit")
 
+    # TODO: 优化SQL
     stmt = "SELECT product_code, specification_code, product_name, specification_name, \
 brand, classification_1, classification_2, product_series, stop_status, \
 is_combined, is_import, supplier_name, purchase_name, jit_inventory, moq \

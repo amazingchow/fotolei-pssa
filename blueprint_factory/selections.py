@@ -14,6 +14,7 @@ from utils import cost_count
 def list_all_brand_selections():
     response_object = {"status": "success"}
 
+    # TODO: 优化SQL
     stmt = "SELECT DISTINCT brand FROM fotolei_pssa.products;"
     brand_selections = db_connector.query(stmt)
     if len(brand_selections) == 0:
@@ -34,6 +35,7 @@ def list_all_brand_selections():
 def list_all_classification_1_selections():
     response_object = {"status": "success"}
 
+    # TODO: 优化SQL
     stmt = "SELECT DISTINCT classification_1 FROM fotolei_pssa.products;"
     classification_1_selections = db_connector.query(stmt)
     if len(classification_1_selections) == 0:
@@ -54,6 +56,7 @@ def list_all_classification_1_selections():
 def list_all_supplier_selections():
     response_object = {"status": "success"}
 
+    # TODO: 优化SQL
     stmt = "SELECT DISTINCT supplier_name FROM fotolei_pssa.products;"
     supplier_name_selections = db_connector.query(stmt)
     if len(supplier_name_selections) == 0:

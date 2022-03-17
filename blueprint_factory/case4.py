@@ -53,6 +53,7 @@ def export_report_file_case4():
     threshold_ssr = float(payload.get("threshold_ssr", "4"))
     reduced_btn_option = payload.get("reduced_btn_option", True)
 
+    # TODO: 优化SQL
     stmt = "SELECT * FROM fotolei_pssa.products"
     selections = []
     if len(brand) > 0:
