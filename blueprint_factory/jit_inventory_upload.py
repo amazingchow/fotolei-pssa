@@ -18,7 +18,7 @@ from utils import cost_count
 @cost_count
 def upload_jit_inventory_data():
     csv_files = request.files.getlist("file")
-    csv_file = "{}/fotolei-pssa/jit_inventory/{}_{}".format(
+    csv_file = "{}/fotolei-pssa/jit-inventory/{}_{}".format(
         os.path.expanduser("~"), int(time.time()), csv_files[0].filename
     )
     csv_files[0].save(csv_file)

@@ -13,7 +13,7 @@ services:
       MYSQL_USER: "tester"
       MYSQL_PASS: "123456"
     volumes:
-      - ~/mysql/data:/var/lib/mysql
-      - ~/mysql/logs:/var/log/mysql
-      - ~/mysql/conf.d:/etc/mysql/mysql.conf.d
-      - ~/mysql/migrations:/mysql/migrations
+      - ~/fotolei-pssa-db/data:/var/lib/mysql
+      - ~/fotolei-pssa-db/logs:/var/log/mysql
+      - ~/fotolei-pssa-db/conf.d:/etc/mysql/mysql.conf.d
+      - ~/fotolei-pssa-db/migrations:/mysql/migrations

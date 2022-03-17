@@ -5,7 +5,7 @@ from functools import wraps
 import logging
 import logging.handlers
 rotate_file_handler = logging.handlers.WatchedFileHandler(
-    finame="{}/fotolei-pssa/logs/fotolei-pssa-db.log".format(os.path.expanduser("~")),
+    filename="{}/fotolei-pssa/logs/fotolei-pssa-db.log".format(os.path.expanduser("~")),
     mode="a"
 )
 rotate_file_handler_formatter = logging.Formatter(
@@ -128,7 +128,7 @@ class MySQLConnector():
                     self._conn_used_cnt = 0
                     cnx.close()
                 else:
-                    self._cnx_pool.add_connection(cnx)
+                    self._cnx_pool.add_connection(cnx.cnx)
 
     @cost_count
     def batch_insert(self, stmt: str, records: list):
@@ -148,7 +148,7 @@ class MySQLConnector():
                     self._conn_used_cnt = 0
                     cnx.close()
                 else:
-                    self._cnx_pool.add_connection(cnx)
+                    self._cnx_pool.add_connection(cnx.cnx)
 
     @cost_count
     def load_data_infile(self, stmt: str):
@@ -168,7 +168,7 @@ class MySQLConnector():
                     self._conn_used_cnt = 0
                     cnx.close()
                 else:
-                    self._cnx_pool.add_connection(cnx)
+                    self._cnx_pool.add_connection(cnx.cnx)
 
     @cost_count
     def query(self, stmt: str):
@@ -188,7 +188,7 @@ class MySQLConnector():
                     self._conn_used_cnt = 0
                     cnx.close()
                 else:
-                    self._cnx_pool.add_connection(cnx)
+                    self._cnx_pool.add_connection(cnx.cnx)
             return result
 
     @cost_count
@@ -209,7 +209,7 @@ class MySQLConnector():
                     self._conn_used_cnt = 0
                     cnx.close()
                 else:
-                    self._cnx_pool.add_connection(cnx)
+                    self._cnx_pool.add_connection(cnx.cnx)
 
     @cost_count
     def batch_update(self, stmt: str, records: list):
@@ -229,7 +229,7 @@ class MySQLConnector():
                     self._conn_used_cnt = 0
                     cnx.close()
                 else:
-                    self._cnx_pool.add_connection(cnx)
+                    self._cnx_pool.add_connection(cnx.cnx)
 
     @cost_count
     def delete(self, stmt: str):
@@ -249,7 +249,7 @@ class MySQLConnector():
                     self._conn_used_cnt = 0
                     cnx.close()
                 else:
-                    self._cnx_pool.add_connection(cnx)
+                    self._cnx_pool.add_connection(cnx.cnx)
 
     @cost_count
     def create_table(self, stmt: str):
@@ -269,7 +269,7 @@ class MySQLConnector():
                     self._conn_used_cnt = 0
                     cnx.close()
                 else:
-                    self._cnx_pool.add_connection(cnx)
+                    self._cnx_pool.add_connection(cnx.cnx)
 
     @cost_count
     def drop_table(self, stmt: str):
@@ -289,4 +289,4 @@ class MySQLConnector():
                     self._conn_used_cnt = 0
                     cnx.close()
                 else:
-                    self._cnx_pool.add_connection(cnx)
+                    self._cnx_pool.add_connection(cnx.cnx)

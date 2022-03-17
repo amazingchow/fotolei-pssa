@@ -35,7 +35,8 @@ def upload_products():
         return jsonify(response_object)
 
     # 用于检查是否是重复导入的数据报表？
-    load_file_repetition_lookup_table = shelve.open("./tmp/products_load_file_repetition_lookup_table", flag='c', writeback=False)
+    load_file_repetition_lookup_table = shelve.open("{}/fotolei-pssa/tmp-files/products_load_file_repetition_lookup_table".format(
+        os.path.expanduser("~")), flag='c', writeback=False)
     file_digest = generate_file_digest(csv_file)
     if load_file_repetition_lookup_table.get(file_digest, False):
         load_file_repetition_lookup_table.close()

@@ -82,7 +82,8 @@ def export_report_file_case4():
 
     rets = db_connector.query(stmt)
     if type(rets) is list and len(rets) > 0:
-        inventories_import_date_record_table = shelve.open("./tmp/inventories_import_date_record_table", flag='c', writeback=False)
+        inventories_import_date_record_table = shelve.open("{}/fotolei-pssa/tmp-files/inventories_import_date_record_table".format(
+            os.path.expanduser("~")), flag='c', writeback=False)
 
         for ret in rets:
             specification_code = ret[3]
