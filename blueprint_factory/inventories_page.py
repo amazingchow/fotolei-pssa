@@ -15,6 +15,7 @@ def list_inventories():
     page_offset = request.args.get("page.offset")
     page_limit = request.args.get("page.limit")
 
+    # TODO: 优化SQL
     stmt = "SELECT specification_code, \
 st_inventory_qty, purchase_qty, purchase_then_return_qty, sale_qty, \
 sale_then_return_qty, others_qty, ed_inventory_qty, create_time \

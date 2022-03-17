@@ -110,6 +110,7 @@ def preview_report_file_case3():
         is_import = payload.get("is_import", "全部").strip()
         supplier_name = payload.get("supplier_name", "").strip().lower()
 
+        # TODO: 优化SQL
         stmt = "SELECT specification_code FROM fotolei_pssa.products WHERE "
         selections = []
         if len(product_code) > 0:
