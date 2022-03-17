@@ -26,7 +26,7 @@ def upload_inventories():
     csv_files = request.files.getlist("file")
     import_date = request.form.get("import_date", "")
     csv_file_sha256 = generate_digest("{}_{}".format(int(time.time()), csv_files[0].filename))
-    csv_file = "{}/ggfilm-server/inventories/{}".format(
+    csv_file = "{}/fotolei-pssa/inventories/{}".format(
         os.path.expanduser("~"), csv_file_sha256
     )
     csv_files[0].save(csv_file)

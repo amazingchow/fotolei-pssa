@@ -19,7 +19,7 @@ from utils import generate_digest
 def upload_csv_file_for_case6():
     csv_files = request.files.getlist("file")
     csv_file_sha256 = generate_digest("{}_{}".format(int(time.time()), csv_files[0].filename))
-    csv_file = "{}/ggfilm-server/recev_queue/{}".format(
+    csv_file = "{}/fotolei-pssa/recev_queue/{}".format(
         os.path.expanduser("~"), csv_file_sha256
     )
     csv_files[0].save(csv_file)
@@ -119,7 +119,7 @@ def prepare_report_file_case6():
 
     ts = int(time.time())
     csv_file_sha256 = generate_digest("体积、重量计算汇总单_{}.csv".format(ts))
-    csv_file = "{}/ggfilm-server/send_queue/{}".format(os.path.expanduser("~"), csv_file_sha256)
+    csv_file = "{}/fotolei-pssa/send_queue/{}".format(os.path.expanduser("~"), csv_file_sha256)
     output_file = "体积、重量计算汇总单_{}.csv".format(ts)
     with open(csv_file, "w", encoding='utf-8-sig') as fd:
         csv_writer = csv.writer(fd, delimiter=",")

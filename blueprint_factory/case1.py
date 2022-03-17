@@ -463,7 +463,7 @@ def prepare_report_file_case1():
 
     ts = int(time.time())
     csv_file_sha256 = generate_digest("销售报表（按分类汇总）_{}.csv".format(ts))
-    csv_file = "{}/ggfilm-server/send_queue/{}".format(os.path.expanduser("~"), csv_file_sha256)
+    csv_file = "{}/fotolei-pssa/send_queue/{}".format(os.path.expanduser("~"), csv_file_sha256)
     output_file = "销售报表（按分类汇总）_{}.csv".format(ts)
     with open(csv_file, "w", encoding='utf-8-sig') as fd:
         csv_writer = csv.writer(fd, delimiter=",")

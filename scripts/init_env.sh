@@ -6,11 +6,11 @@ mkdir -p ~/mysql/conf.d
 cp $PWD/test/mysql-deploy/conf.d/*.cnf ~/mysql/conf.d
 mkdir -p ~/mysql/migrations
 cp $PWD/db/migrations/*.sql ~/mysql/migrations
-mkdir -p ~/ggfilm-server/inventories
-mkdir -p ~/ggfilm-server/jit_inventory
-mkdir -p ~/ggfilm-server/products
-mkdir -p ~/ggfilm-server/send_queue
-mkdir -p ~/ggfilm-server/recev_queue
+mkdir -p ~/fotolei-pssa/inventories
+mkdir -p ~/fotolei-pssa/jit_inventory
+mkdir -p ~/fotolei-pssa/products
+mkdir -p ~/fotolei-pssa/send_queue
+mkdir -p ~/fotolei-pssa/recev_queue
 mkdir -p $PWD/tmp
 
 docker-compose -f "$PWD/test/mysql-deploy/docker-compose.yml" up -d --build

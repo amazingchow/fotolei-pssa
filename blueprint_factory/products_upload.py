@@ -24,7 +24,7 @@ from utils import init_lookup_table_sku_brand_classification_1_2_association
 def upload_products():
     csv_files = request.files.getlist("file")
     csv_file_sha256 = generate_digest("{}_{}".format(int(time.time()), csv_files[0].filename))
-    csv_file = "{}/ggfilm-server/products/{}".format(
+    csv_file = "{}/fotolei-pssa/products/{}".format(
         os.path.expanduser("~"), csv_file_sha256
     )
     csv_files[0].save(csv_file)

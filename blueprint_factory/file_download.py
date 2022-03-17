@@ -11,4 +11,4 @@ from utils import cost_count
 @blueprint.route("/api/v1/download/<path:filename>", methods=["GET"])
 @cost_count
 def download(filename):
-    return send_from_directory(directory="{}/ggfilm-server/send_queue".format(os.path.expanduser("~")), path=filename)
+    return send_from_directory(directory="{}/fotolei-pssa/send_queue".format(os.path.expanduser("~")), path=filename)
