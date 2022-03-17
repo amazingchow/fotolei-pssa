@@ -1,11 +1,11 @@
 .PHONY: check
 check:
 	@pyflakes pssa_server.py
-	@pyflakes blueprint_module/*.py
+	@pyflakes blueprint_factory/*.py
 	@pyflakes db/*.py
 	@pyflakes scripts/*.py
 	@pycodestyle pssa_server.py --ignore=E501,W504,E502,E131,E402
-	@pycodestyle blueprint_module/*.py --ignore=E501,W504,E502,E131,E402
+	@pycodestyle blueprint_factory/*.py --ignore=E501,W504,E502,E131,E402
 	@pycodestyle db/*.py --ignore=E501,W504,E502,E131,E402
 	@pycodestyle scripts/*.py --ignore=E501,W504,E502,E131,E402
 
