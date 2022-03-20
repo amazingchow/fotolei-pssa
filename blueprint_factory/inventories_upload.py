@@ -1,31 +1,39 @@
 # -*- coding: utf-8 -*-
-import csv
 import os
+import sys
+sys.path.append(os.path.abspath("../db"))
+sys.path.append(os.path.abspath("../utils"))
+
+import csv
 import pendulum
 import shelve
 import shutil
-import sys
 import time
-from flask import jsonify, request
-sys.path.append(os.path.abspath("../utils"))
+
+from flask import current_app
+from flask import jsonify
+from flask import request
+
 from . import blueprint
-from utils import logger
-from utils import reg_int, reg_int_and_float
-from utils import db_connector
-from utils import lookup_table_sku_get_or_put
-from utils import lookup_table_inventory_update_without_repetition
-from utils import lookup_table_sku_brand_classification_1_2_association
-from utils import cost_count
-from utils import generate_file_digest, generate_digest
+from db import db_connector
+from utils import init_lookup_table_k_ct_sku_v_boolean
+from utils import get_lookup_table_k_ct_sku_v_boolean
+from utils import get_lookup_table_k_sku_v_boolean
+from utils import get_lookup_table_k_sku_v_brand_c1_c2_is_combined
+from utils import put_lookup_table_k_ct_sku_v_boolean
+from utils import REG_INT
+from utils import REG_INT_AND_FLOAT
+from utils import util_cost_count
+from utils import util_generate_file_digest, util_generate_digest
 
 
 # 载入"库存数据报表"的接口
 @blueprint.route("/api/v1/inventories/upload", methods=["POST"])
-@cost_count
+@util_cost_count
 def upload_inventories():
     csv_files = request.files.getlist("file")
     import_date = request.form.get("import_date", "")
-    csv_file_sha256 = generate_digest("{}_{}".format(int(time.time()), csv_files[0].filename))
+    csv_file_sha256 = util_generate_digest("{}_{}".format(int(time.time()), csv_files[0].filename))
     csv_file = "{}/fotolei-pssa/inventories/{}".format(
         os.path.expanduser("~"), csv_file_sha256
     )
@@ -36,17 +44,17 @@ def upload_inventories():
     else:
         load_file_repetition_lookup_table = shelve.open("{}/fotolei-pssa/tmp-files/inventories_load_file_repetition_lookup_table".format(
             os.path.expanduser("~")), flag='c', writeback=False)
-        file_digest = generate_file_digest(csv_file)
+        file_digest = util_generate_file_digest(csv_file)
         if not load_file_repetition_lookup_table.get(file_digest, False):
             not_inserted_sku_list = []
             with open(csv_file, "r", encoding='utf-8-sig') as fd:
                 csv_reader = csv.reader(fd, delimiter=",")
                 next(csv_reader, None)  # skip the header line
                 for row in csv_reader:
-                    if not lookup_table_sku_get_or_put.get(row[2], False):
+                    if not get_lookup_table_k_sku_v_boolean(row[2]):
                         not_inserted_sku_list.append(row[2])
             if len(not_inserted_sku_list) > 0:
-                logger.info("There are {} SKUs not inserted".format(len(not_inserted_sku_list)))
+                current_app.logger.info("There are {} SKUs not inserted".format(len(not_inserted_sku_list)))
                 response_object = {"status": "new SKUs"}
                 response_object["added_skus"] = not_inserted_sku_list
             else:
@@ -55,8 +63,6 @@ def upload_inventories():
                     response_object = {"status": "invalid input data"}
                     response_object["err_msg"] = err_msg
                     return jsonify(response_object)
-
-                load_file_repetition_lookup_table[file_digest] = True
 
                 do_intelligent_calibration_for_input_inventories(csv_file)
 
@@ -94,6 +100,10 @@ def upload_inventories():
 
                 stmt = "INSERT INTO fotolei_pssa.operation_logs (oplog) VALUES (%s);"
                 db_connector.insert(stmt, ("导入{}".format(csv_files[0].filename),))
+
+                init_lookup_table_k_ct_sku_v_boolean()
+
+                load_file_repetition_lookup_table[file_digest] = True
 
                 response_object = {"status": "success"}
                 if repeat > 0:
@@ -186,101 +196,101 @@ def do_intelligent_calibration_for_input_inventories(csv_file: str):
         else:
             if len(row[4]) == 0:
                 row[4] = "0"
-            elif reg_int.match(row[4]) is None:
+            elif REG_INT.match(row[4]) is None:
                 is_valid = False
                 err_msg = "'起始库存数量'数据存在非法输入，出现在第{}行。".format(line + 1)
-                logger.error("invalid '起始库存数量': {}".format(row[4]))
+                current_app.logger.error("invalid '起始库存数量': {}".format(row[4]))
                 break
             if len(row[5]) == 0:
                 row[5] = "0"
-            elif reg_int_and_float.match(row[5]) is None:
+            elif REG_INT_AND_FLOAT.match(row[5]) is None:
                 is_valid = False
                 err_msg = "'起始库存总额'数据存在非法输入，出现在第{}行。".format(line + 1)
-                logger.error("invalid '起始库存总额': {}".format(row[5]))
+                current_app.logger.error("invalid '起始库存总额': {}".format(row[5]))
                 break
             if len(row[6]) == 0:
                 row[6] = "0"
-            elif reg_int.match(row[6]) is None:
+            elif REG_INT.match(row[6]) is None:
                 is_valid = False
                 err_msg = "'采购数量'数据存在非法输入，出现在第{}行。".format(line + 1)
-                logger.error("invalid '采购数量': {}".format(row[6]))
+                current_app.logger.error("invalid '采购数量': {}".format(row[6]))
                 break
             if len(row[7]) == 0:
                 row[7] = "0"
-            elif reg_int_and_float.match(row[7]) is None:
+            elif REG_INT_AND_FLOAT.match(row[7]) is None:
                 is_valid = False
                 err_msg = "'采购总额'数据存在非法输入，出现在第{}行。".format(line + 1)
-                logger.error("invalid '采购总额': {}".format(row[7]))
+                current_app.logger.error("invalid '采购总额': {}".format(row[7]))
                 break
             if len(row[8]) == 0:
                 row[8] = "0"
-            elif reg_int.match(row[8]) is None:
+            elif REG_INT.match(row[8]) is None:
                 is_valid = False
                 err_msg = "'采购退货数量'数据存在非法输入，出现在第{}行。".format(line + 1)
-                logger.error("invalid '采购退货数量': {}".format(row[8]))
+                current_app.logger.error("invalid '采购退货数量': {}".format(row[8]))
                 break
             if len(row[9]) == 0:
                 row[9] = "0"
-            elif reg_int_and_float.match(row[9]) is None:
+            elif REG_INT_AND_FLOAT.match(row[9]) is None:
                 is_valid = False
                 err_msg = "'采购退货总额'数据存在非法输入，出现在第{}行。".format(line + 1)
-                logger.error("invalid '采购退货总额': {}".format(row[9]))
+                current_app.logger.error("invalid '采购退货总额': {}".format(row[9]))
                 break
             if len(row[10]) == 0:
                 row[10] = "0"
-            elif reg_int.match(row[10]) is None:
+            elif REG_INT.match(row[10]) is None:
                 is_valid = False
                 err_msg = "'销售数量'数据存在非法输入，出现在第{}行。".format(line + 1)
-                logger.error("invalid '销售数量': {}".format(row[10]))
+                current_app.logger.error("invalid '销售数量': {}".format(row[10]))
                 break
             if len(row[11]) == 0:
                 row[11] = "0"
-            elif reg_int_and_float.match(row[11]) is None:
+            elif REG_INT_AND_FLOAT.match(row[11]) is None:
                 is_valid = False
                 err_msg = "'销售总额'数据存在非法输入，出现在第{}行。".format(line + 1)
-                logger.error("invalid '销售总额': {}".format(row[11]))
+                current_app.logger.error("invalid '销售总额': {}".format(row[11]))
                 break
             if len(row[12]) == 0:
                 row[12] = "0"
-            elif reg_int.match(row[12]) is None:
+            elif REG_INT.match(row[12]) is None:
                 is_valid = False
                 err_msg = "'销售退货数量'数据存在非法输入，出现在第{}行。".format(line + 1)
-                logger.error("invalid '销售退货数量': {}".format(row[12]))
+                current_app.logger.error("invalid '销售退货数量': {}".format(row[12]))
                 break
             if len(row[13]) == 0:
                 row[13] = "0"
-            elif reg_int_and_float.match(row[13]) is None:
+            elif REG_INT_AND_FLOAT.match(row[13]) is None:
                 is_valid = False
                 err_msg = "'销售退货总额'数据存在非法输入，出现在第{}行。".format(line + 1)
-                logger.error("invalid '销售退货总额': {}".format(row[13]))
+                current_app.logger.error("invalid '销售退货总额': {}".format(row[13]))
                 break
             if len(row[14]) == 0:
                 row[14] = "0"
-            elif reg_int.match(row[14]) is None:
+            elif REG_INT.match(row[14]) is None:
                 is_valid = False
                 err_msg = "'其他变更数量'数据存在非法输入，出现在第{}行。".format(line + 1)
-                logger.error("invalid '其他变更数量': {}".format(row[14]))
+                current_app.logger.error("invalid '其他变更数量': {}".format(row[14]))
                 break
             if len(row[15]) == 0:
                 row[15] = "0"
-            elif reg_int_and_float.match(row[15]) is None:
+            elif REG_INT_AND_FLOAT.match(row[15]) is None:
                 is_valid = False
                 err_msg = "'其他变更总额'数据存在非法输入，出现在第{}行。".format(line + 1)
-                logger.error("invalid '其他变更总额': {}".format(row[15]))
+                current_app.logger.error("invalid '其他变更总额': {}".format(row[15]))
                 break
             if len(row[16]) == 0:
                 row[16] = "0"
-            elif reg_int.match(row[16]) is None:
+            elif REG_INT.match(row[16]) is None:
                 is_valid = False
                 err_msg = "'截止库存数量'数据存在非法输入，出现在第{}行。".format(line + 1)
-                logger.error("invalid '截止库存数量': {}".format(row[16]))
+                current_app.logger.error("invalid '截止库存数量': {}".format(row[16]))
                 break
             if len(row[17]) == 0:
                 row[17] = "0"
-            elif reg_int_and_float.match(row[17]) is None:
+            elif REG_INT_AND_FLOAT.match(row[17]) is None:
                 is_valid = False
                 err_msg = "'截止库存总额'数据存在非法输入，出现在第{}行。".format(line + 1)
-                logger.error("invalid '截止库存总额': {}".format(row[17]))
+                current_app.logger.error("invalid '截止库存总额': {}".format(row[17]))
                 break
             if len(row) < 18:
                 while len(row) < 18:
@@ -310,10 +320,10 @@ def add_date_brand_c1_c2_for_input_inventories(csv_file: str, import_date: str):
             csv_writer.writerow(new_row)
         else:
             new_row = [import_date] + row + [
-                lookup_table_sku_brand_classification_1_2_association[row[2]][0],
-                lookup_table_sku_brand_classification_1_2_association[row[2]][1],
-                lookup_table_sku_brand_classification_1_2_association[row[2]][2],
-                lookup_table_sku_brand_classification_1_2_association[row[2]][3],
+                get_lookup_table_k_sku_v_brand_c1_c2_is_combined(row[2])[0],
+                get_lookup_table_k_sku_v_brand_c1_c2_is_combined(row[2])[1],
+                get_lookup_table_k_sku_v_brand_c1_c2_is_combined(row[2])[2],
+                get_lookup_table_k_sku_v_brand_c1_c2_is_combined(row[2])[3],
                 "0"
             ]
             csv_writer.writerow(new_row)
@@ -360,9 +370,9 @@ def do_remove_repeat_inventories_updates(csv_file: str):
         if line == 0:
             csv_writer.writerow(row)
         else:
-            k = generate_digest("{} | {}".format(row[0], row[3]))
-            if not lookup_table_inventory_update_without_repetition.get(k, False):
-                lookup_table_inventory_update_without_repetition[k] = True
+            k = util_generate_digest("{} | {}".format(row[0], row[3]))
+            if not get_lookup_table_k_ct_sku_v_boolean(k):
+                put_lookup_table_k_ct_sku_v_boolean(k, True)
                 csv_writer.writerow(row)
             else:
                 repeat += 1

@@ -1,14 +1,19 @@
 # -*- coding: utf-8 -*-
-import csv
 import os
 import sys
-import time
-from flask import jsonify, request
+sys.path.append(os.path.abspath("../db"))
 sys.path.append(os.path.abspath("../utils"))
+
+import csv
+import time
+
+from flask import jsonify
+from flask import request
+
 from . import blueprint
-from utils import db_connector
-from utils import cost_count
-from utils import generate_digest
+from db import db_connector
+from utils import util_cost_count
+from utils import util_generate_digest
 
 
 '''
@@ -26,7 +31,7 @@ from utils import generate_digest
 
 # 预览"销售报表（按系列汇总）"的接口
 @blueprint.route("/api/v1/case2/preview", methods=["POST"])
-@cost_count
+@util_cost_count
 def preview_report_file_case2():
     payload = request.get_json()
     # 起始日期和截止日期用于过滤掉时间条件不符合的记录项
@@ -117,13 +122,13 @@ WHERE COALESCE(CHAR_LENGTH(product_series), 0) != 0 AND is_combined = '否';"
 
 # 预下载"销售报表（按系列汇总）"的接口
 @blueprint.route("/api/v1/case2/prepare", methods=["POST"])
-@cost_count
+@util_cost_count
 def prepare_report_file_case2():
     payload = request.get_json()
     preview_table = payload.get("preview_table", [])
 
     ts = int(time.time())
-    csv_file_sha256 = generate_digest("销售报表（按系列汇总）_{}.csv".format(ts))
+    csv_file_sha256 = util_generate_digest("销售报表（按系列汇总）_{}.csv".format(ts))
     csv_file = "{}/fotolei-pssa/send_queue/{}".format(os.path.expanduser("~"), csv_file_sha256)
     output_file = "销售报表（按系列汇总）_{}.csv".format(ts)
     with open(csv_file, "w", encoding='utf-8-sig') as fd:

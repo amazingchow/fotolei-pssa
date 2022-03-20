@@ -1,23 +1,28 @@
 # -*- coding: utf-8 -*-
 import os
-import platform
 import sys
-from flask import jsonify, request
+sys.path.append(os.path.abspath("../db"))
 sys.path.append(os.path.abspath("../utils"))
+
+import platform
+
+from flask import jsonify
+from flask import request
+
 from . import blueprint
-from utils import db_connector
-from utils import lookup_table_sku_get_or_put
-from utils import lookup_table_brand_classification_1_2_association
-from utils import lookup_table_classification_1_2_association
-from utils import lookup_table_brand_classification_2_association
-from utils import lookup_table_sku_brand_classification_1_2_association
-from utils import cost_count
-from utils import silent_remove
+from db import db_connector
+from utils import clean_lookup_table_k_brand_k_c1_k_c2_k_product_series_v_supplier_name
+from utils import clean_lookup_table_k_brand_v_brand_c2
+from utils import clean_lookup_table_k_c1_v_c1_c2
+from utils import clean_lookup_table_k_sku_v_boolean
+from utils import clean_lookup_table_k_sku_v_brand_c1_c2_is_combined
+from utils import util_cost_count
+from utils import util_silent_remove
 
 
 # 删除所有商品条目的接口
 @blueprint.route("/api/v1/products/all/clean", methods=["POST"])
-@cost_count
+@util_cost_count
 def clean_all_products():
     payload = request.get_json()
     admin_usr = payload.get("admin_usr", "").strip()
@@ -29,29 +34,31 @@ def clean_all_products():
         db_connector.drop_table(stmt)
         stmt = '''
 CREATE TABLE IF NOT EXISTS fotolei_pssa.products (
-    id                 INT          NOT NULL AUTO_INCREMENT,
-    product_code       VARCHAR(64)  NOT NULL, /* 商品编码 */
-    product_name       VARCHAR(128) NOT NULL, /* 商品名称 */
-    specification_code VARCHAR(64)  NOT NULL, /* 规格编码 */
-    specification_name VARCHAR(128),          /* 规格名称 */
-    brand              VARCHAR(64),           /* 品牌 */
-    classification_1   VARCHAR(64),           /* 分类1 */
-    classification_2   VARCHAR(64),           /* 分类2 */
-    product_series     VARCHAR(64),           /* 产品系列 */
-    stop_status        VARCHAR(32),           /* STOP状态 */
-    product_weight     INT,                   /* 重量/g */
-    product_length     INT,                   /* 长度/cm */
-    product_width      INT,                   /* 宽度/cm */
-    product_height     INT,                   /* 高度/cm */
-    is_combined        VARCHAR(32),           /* 是否是组合商品 */
-    be_aggregated      VARCHAR(32),           /* 是否参与统计 */
-    is_import          VARCHAR(32),           /* 是否是进口商品 */
-    supplier_name      VARCHAR(128),          /* 供应商名称 */
-    purchase_name      VARCHAR(128),          /* 采购名称 */
-    jit_inventory      INT,                   /* 实时可用库存 */
-    moq                INT,                   /* 最小订货单元 */
+    id                 INT           NOT NULL AUTO_INCREMENT,
+    product_code       VARCHAR(64),            /* 商品编码 */
+    product_name       VARCHAR(128),           /* 商品名称 */
+    specification_code VARCHAR(64)   NOT NULL, /* 规格编码 */
+    specification_name VARCHAR(128),           /* 规格名称 */
+    brand              VARCHAR(64),            /* 品牌 */
+    classification_1   VARCHAR(64),            /* 分类1 */
+    classification_2   VARCHAR(64),            /* 分类2 */
+    product_series     VARCHAR(64),            /* 产品系列 */
+    stop_status        VARCHAR(32),            /* STOP状态 */
+    product_weight     FLOAT,                  /* 重量/g */
+    product_length     FLOAT,                  /* 长度/cm */
+    product_width      FLOAT,                  /* 宽度/cm */
+    product_height     FLOAT,                  /* 高度/cm */
+    is_combined        VARCHAR(32),            /* 是否是组合商品 */
+    be_aggregated      VARCHAR(32),            /* 是否参与统计 */
+    is_import          VARCHAR(32),            /* 是否是进口商品 */
+    supplier_name      VARCHAR(128),           /* 供应商名称 */
+    purchase_name      VARCHAR(128),           /* 采购名称 */
+    jit_inventory      INT,                    /* 实时可用库存 */
+    moq                INT,                    /* 最小订货单元 */
     PRIMARY KEY (id),
-    KEY (specification_code)
+    KEY products_specification_code (specification_code),
+    KEY products_is_combined_product_series (is_combined, product_series),
+    KEY products_is_combined_stop_status_be_aggregated_supplier_name (is_combined, stop_status, be_aggregated, supplier_name)
 ) ENGINE=InnoDB;
 '''
         db_connector.create_table(stmt)
@@ -65,16 +72,18 @@ CREATE TABLE IF NOT EXISTS fotolei_pssa.product_summary (
 '''
         db_connector.create_table(stmt)
         if platform.system() == "Linux":
-            silent_remove("{}/fotolei-pssa/tmp-files/products_load_file_repetition_lookup_table".format(
+            util_silent_remove("{}/fotolei-pssa/tmp-files/products_load_file_repetition_lookup_table".format(
                 os.path.expanduser("~")))
         else:
-            silent_remove("{}/fotolei-pssa/tmp-files/products_load_file_repetition_lookup_table.db".format(
+            util_silent_remove("{}/fotolei-pssa/tmp-files/products_load_file_repetition_lookup_table.db".format(
                 os.path.expanduser("~")))
-        lookup_table_sku_get_or_put.clear()
-        lookup_table_brand_classification_1_2_association.clear()
-        lookup_table_classification_1_2_association.clear()
-        lookup_table_brand_classification_2_association.clear()
-        lookup_table_sku_brand_classification_1_2_association.clear()
+
+        clean_lookup_table_k_sku_v_boolean()
+        clean_lookup_table_k_sku_v_brand_c1_c2_is_combined()
+        clean_lookup_table_k_c1_v_c1_c2()
+        clean_lookup_table_k_brand_v_brand_c2()
+        clean_lookup_table_k_brand_k_c1_k_c2_k_product_series_v_supplier_name()
+
         response_object = {"status": "success"}
         return jsonify(response_object)
     else:

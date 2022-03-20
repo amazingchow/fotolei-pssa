@@ -1,21 +1,26 @@
 # -*- coding: utf-8 -*-
-import csv
 import os
 import sys
-import time
-from flask import jsonify, request
+sys.path.append(os.path.abspath("../db"))
 sys.path.append(os.path.abspath("../utils"))
+
+import csv
+import time
+
+from flask import current_app
+from flask import jsonify
+from flask import request
+
 from . import blueprint
-from utils import logger
-from utils import reg_int
-from utils import db_connector
-from utils import lookup_table_sku_get_or_put
-from utils import cost_count
+from db import db_connector
+from utils import get_lookup_table_k_sku_v_boolean
+from utils import REG_INT
+from utils import util_cost_count
 
 
 # 载入"实时可用库存报表"的接口
 @blueprint.route("/api/v1/jitinventory/upload", methods=["POST"])
-@cost_count
+@util_cost_count
 def upload_jit_inventory_data():
     csv_files = request.files.getlist("file")
     csv_file = "{}/fotolei-pssa/jit-inventory/{}_{}".format(
@@ -39,13 +44,13 @@ def upload_jit_inventory_data():
         csv_reader = csv.reader(fd, delimiter=",")
         next(csv_reader, None)  # skip the header line
         for row in csv_reader:
-            if not lookup_table_sku_get_or_put.get(row[0], False):
+            if not get_lookup_table_k_sku_v_boolean(row[0]):
                 not_inserted_sku_list.append(row[0])
             else:
                 sku_inventory_tuple_list.append((row[1], row[0]))
     if len(not_inserted_sku_list) > 0:
         response_object = {"status": "failed"}
-        logger.info("There are {} SKUs not inserted".format(len(not_inserted_sku_list)))
+        current_app.logger.info("There are {} SKUs not inserted".format(len(not_inserted_sku_list)))
         # 新增sku，需要向用户展示
         response_object["added_skus"] = not_inserted_sku_list
         return jsonify(response_object)
@@ -88,7 +93,7 @@ def do_data_check_for_input_jit_inventories(csv_file: str):
         next(csv_reader, None)  # skip the header line
         line = 1
         for row in csv_reader:
-            if reg_int.match(row[1]) is None:
+            if REG_INT.match(row[1]) is None:
                 is_valid = False
                 err_msg = "'实时可用库存'数据存在非法输入，出现在第{}行。".format(line)
                 break

@@ -1,16 +1,20 @@
 # -*- coding: utf-8 -*-
 import os
 import sys
-from flask import jsonify, request
+sys.path.append(os.path.abspath("../db"))
 sys.path.append(os.path.abspath("../utils"))
+
+from flask import jsonify
+from flask import request
+
 from . import blueprint
-from utils import db_connector
-from utils import cost_count
+from db import db_connector
+from utils import util_cost_count
 
 
 # 删除单条商品条目的接口
 @blueprint.route("/api/v1/products/one/clean", methods=["POST"])
-@cost_count
+@util_cost_count
 def clean_one_product():
     payload = request.get_json()
     admin_usr = payload.get("admin_usr", "").strip()

@@ -1,24 +1,32 @@
 # -*- coding: utf-8 -*-
-import csv
 import os
-import shelve
 import sys
-import time
-from collections import defaultdict
-from flask import jsonify, request
+sys.path.append(os.path.abspath("../db"))
 sys.path.append(os.path.abspath("../utils"))
+
+import csv
+import shelve
+import time
+
+from collections import defaultdict
+
+from flask import jsonify
+from flask import request
+
 from . import blueprint
-from utils import reg_positive_int
-from utils import db_connector
-from utils import lookup_table_classification_1_2_association
-from utils import lookup_table_brand_classification_2_association
-from utils import cost_count
-from utils import generate_digest
+from db import db_connector
+from utils import get_lookup_table_k_brand_v_brand_c2
+from utils import get_lookup_table_k_brand_v_brand_c2_keys
+from utils import get_lookup_table_k_c1_v_c1_c2
+from utils import get_lookup_table_k_c1_v_c1_c2_keys
+from utils import REG_POSITIVE_INT
+from utils import util_cost_count
+from utils import util_generate_digest
 
 
 # 获取自定义UI
 @blueprint.route("/api/v1/case1/ui/fetch", methods=["GET"])
-@cost_count
+@util_cost_count
 def fetch_ui():
     customize_report_forms_ui = shelve.open("{}/fotolei-pssa/tmp-files/customize_report_forms_ui".format(
         os.path.expanduser("~")), flag='c', writeback=False)
@@ -33,7 +41,7 @@ def fetch_ui():
 
 # 保存自定义UI
 @blueprint.route("/api/v1/case1/ui/save", methods=["POST"])
-@cost_count
+@util_cost_count
 def save_ui():
     payload = request.get_json()
     classification1_tags = payload.get("classification1_tags", [])
@@ -103,7 +111,7 @@ poilotfoto
 
 # 预览"销售报表（按分类汇总）"的接口
 @blueprint.route("/api/v1/case1/preview", methods=["POST"])
-@cost_count
+@util_cost_count
 def preview_report_file_case1():
     payload = request.get_json()
     # 起始日期和截止日期用于过滤掉时间条件不符合的记录项
@@ -116,7 +124,7 @@ def preview_report_file_case1():
     ui_classification1_tags = payload.get("ui_classification1_tags", [])
     ui_classification1_tags = [tag.lower() for tag in ui_classification1_tags]
     for tag in ui_classification1_tags:
-        if tag not in lookup_table_classification_1_2_association.keys():
+        if tag not in get_lookup_table_k_c1_v_c1_c2_keys():
             response_object = {"status": "invalid tag"}
             response_object["err_msg"] = "输入ui参数错误 - 参与统计的分类1：{}不存在！".format(tag)
             return jsonify(response_object)
@@ -130,7 +138,7 @@ def preview_report_file_case1():
             response_object = {"status": "invalid tag"}
             response_object["err_msg"] = "输入ui参数错误 - 参与统计的分类1|分类2 - 分类1：{}不存在！".format(c1_tag)
             return jsonify(response_object)
-        if tag.lower() not in lookup_table_classification_1_2_association[c1_tag]:
+        if tag.lower() not in get_lookup_table_k_c1_v_c1_c2(c1_tag):
             response_object = {"status": "invalid tag"}
             response_object["err_msg"] = "输入ui参数错误 - 参与统计的分类1|分类2 - 分类2：{}不存在！".format(c2_tag)
             return jsonify(response_object)
@@ -150,21 +158,21 @@ def preview_report_file_case1():
             response_object["err_msg"] = "输入ui参数错误 - 销售top必选（分类1）- topk：{}格式不正确！".format(topk_tag)
             return jsonify(response_object)
         topk = topk_tag.lstrip("top")
-        if reg_positive_int.match(topk) is None:
+        if REG_POSITIVE_INT.match(topk) is None:
             response_object = {"status": "invalid tag"}
             response_object["err_msg"] = "输入ui参数错误 - 销售top必选（分类1）- topk：{}格式不正确！".format(topk_tag)
             return jsonify(response_object)
-        if int(topk) > len(lookup_table_classification_1_2_association[c1_tag]):
+        if int(topk) > len(get_lookup_table_k_c1_v_c1_c2(c1_tag)):
             response_object = {"status": "invalid tag"}
             response_object["err_msg"] = "输入ui参数错误 - 销售top必选（分类1）- topk：{}超过最大值top{}".format(
-                topk_tag, len(lookup_table_classification_1_2_association[c1_tag]))
+                topk_tag, len(get_lookup_table_k_c1_v_c1_c2(c1_tag)))
             return jsonify(response_object)
         ui_classification1_topk_lookup_table[c1_tag] = int(topk)
 
     ui_brand_tags = payload.get("ui_brand_tags", [])
     ui_brand_tags = [tag.lower() for tag in ui_brand_tags]
     for tag in ui_brand_tags:
-        if tag not in lookup_table_brand_classification_2_association.keys():
+        if tag not in get_lookup_table_k_brand_v_brand_c2_keys():
             response_object = {"status": "invalid tag"}
             response_object["err_msg"] = "输入ui参数错误 - 参与统计的品牌：{}不存在！".format(tag)
             return jsonify(response_object)
@@ -175,14 +183,14 @@ def preview_report_file_case1():
         response_object["err_msg"] = "输入ui参数错误 - 销售top必选（品牌）- topk：{}格式不正确！".format(ui_brand_topk_tag)
         return jsonify(response_object)
     brand_topk = ui_brand_topk_tag.lstrip("top")
-    if reg_positive_int.match(brand_topk) is None:
+    if REG_POSITIVE_INT.match(brand_topk) is None:
         response_object = {"status": "invalid tag"}
         response_object["err_msg"] = "输入ui参数错误 - 销售top必选（品牌）- topk：{}格式不正确！".format(ui_brand_topk_tag)
         return jsonify(response_object)
-    if int(brand_topk) > len(lookup_table_brand_classification_2_association):
+    if int(brand_topk) > len(get_lookup_table_k_brand_v_brand_c2_keys()):
         response_object = {"status": "invalid tag"}
         response_object["err_msg"] = "输入ui参数错误 - 销售top必选（分类1）- topk：{}超过最大值top{}".format(
-            ui_brand_topk_tag, len(lookup_table_brand_classification_2_association))
+            ui_brand_topk_tag, len(get_lookup_table_k_brand_v_brand_c2_keys()))
         return jsonify(response_object)
 
     ui_brand_classification2_tags = payload.get("ui_brand_classification2_tags", [])
@@ -190,11 +198,11 @@ def preview_report_file_case1():
     for tag in ui_brand_classification2_tags:
         brand_tag, c2_tag = tag.split("|")
         brand_tag, c2_tag = brand_tag.lower(), c2_tag.lower()
-        if brand_tag not in lookup_table_brand_classification_2_association.keys():
+        if brand_tag not in get_lookup_table_k_brand_v_brand_c2_keys():
             response_object = {"status": "invalid tag"}
             response_object["err_msg"] = "输入ui参数错误 - 参与统计的品牌|分类2 - 品牌：{}不存在！".format(brand_tag)
             return jsonify(response_object)
-        if tag not in lookup_table_brand_classification_2_association[brand_tag]:
+        if tag not in get_lookup_table_k_brand_v_brand_c2(brand_tag):
             response_object = {"status": "invalid tag"}
             response_object["err_msg"] = "输入ui参数错误 - 参与统计的品牌|分类2 - 分类2：{}不存在！".format(c2_tag)
             return jsonify(response_object)
@@ -244,7 +252,7 @@ FROM fotolei_pssa.inventories WHERE extra_classification_1 = '传统耗材' AND 
                     # 如果选中的待计算项目 < topk，待计算项目必须被处理且出现在结果中，空位用topk来填充
                     # 获取所有‘分类1‘等于‘传统耗材’的分类2
                     all_c2_tags = []
-                    for item in lookup_table_classification_1_2_association["传统耗材"]:
+                    for item in get_lookup_table_k_c1_v_c1_c2_keys("传统耗材"):
                         all_c2_tags.append(item.split("|")[1].strip())
                     for c2_tag in all_c2_tags:
                         sum_sale_total_for_c1_c2 = sum([ret[0] for ret in rets if len(ret[2]) > 0 and ret[2] == c2_tag])
@@ -311,7 +319,7 @@ FROM fotolei_pssa.inventories WHERE extra_classification_1 = '数码' AND extra_
                     # 如果选中的待计算项目 < topk，待计算项目必须被处理且出现在结果中，空位用topk来填充
                     # 获取所有‘分类1‘等于‘数码’的分类2
                     all_c2_tags = []
-                    for item in lookup_table_classification_1_2_association["数码"]:
+                    for item in get_lookup_table_k_c1_v_c1_c2_keys("数码"):
                         all_c2_tags.append(item.split("|")[1].strip())
                     for c2_tag in all_c2_tags:
                         sum_sale_total_for_c1_c2 = sum([ret[0] for ret in rets if len(ret[2]) > 0 and ret[2] == c2_tag])
@@ -376,7 +384,7 @@ FROM fotolei_pssa.inventories WHERE extra_is_combined = '否' AND create_time >=
             if type(rets) is list and len(rets) > 0:
                 # 获取所有‘品牌‘
                 all_brand_tags = []
-                for item in lookup_table_brand_classification_2_association.keys():
+                for item in get_lookup_table_k_brand_v_brand_c2_keys():
                     all_brand_tags.append(item)
                 for brand_tag in all_brand_tags:
                     sum_sale_total_for_brand = sum([ret[0] for ret in rets if len(ret[2]) > 0 and ret[2] == brand_tag])
@@ -458,13 +466,13 @@ FROM fotolei_pssa.inventories WHERE extra_brand = '{}' AND extra_classification_
 
 # 预下载"销售报表（按分类汇总）"的接口
 @blueprint.route("/api/v1/case1/prepare", methods=["POST"])
-@cost_count
+@util_cost_count
 def prepare_report_file_case1():
     payload = request.get_json()
     preview_table = payload.get("preview_table", [])
 
     ts = int(time.time())
-    csv_file_sha256 = generate_digest("销售报表（按分类汇总）_{}.csv".format(ts))
+    csv_file_sha256 = util_generate_digest("销售报表（按分类汇总）_{}.csv".format(ts))
     csv_file = "{}/fotolei-pssa/send_queue/{}".format(os.path.expanduser("~"), csv_file_sha256)
     output_file = "销售报表（按分类汇总）_{}.csv".format(ts)
     with open(csv_file, "w", encoding='utf-8-sig') as fd:

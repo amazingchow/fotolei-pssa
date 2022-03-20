@@ -1,37 +1,36 @@
 # -*- coding: utf-8 -*-
 import os
 
-from functools import wraps
 import logging
 import logging.handlers
-rotate_file_handler = logging.handlers.WatchedFileHandler(
+_rotate_file_handler = logging.handlers.WatchedFileHandler(
     filename="{}/fotolei-pssa/logs/fotolei-pssa-db.log".format(os.path.expanduser("~")),
     mode="a"
 )
-rotate_file_handler_formatter = logging.Formatter(
+_rotate_file_handler_formatter = logging.Formatter(
     "[%(asctime)-15s][%(levelname)-5s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
 )
-rotate_file_handler.setFormatter(rotate_file_handler_formatter)
-db_logger = logging.getLogger("FotoleiPssA_DB")
-db_logger.setLevel(logging.INFO)
-db_logger.addHandler(rotate_file_handler)
+_rotate_file_handler.setFormatter(_rotate_file_handler_formatter)
+_db_logger = logging.getLogger("FotoleiPssA_DB")
+_db_logger.setLevel(logging.INFO)
+_db_logger.addHandler(_rotate_file_handler)
 # TODO: is log-file-append atomic in unix?
 # See: https://stackoverflow.com/questions/1154446/is-file-append-atomic-in-unix
-import threading
-MYSQL_CONNECTOR_TRX_LOCK = threading.RLock()
 import time
 
 import mysql.connector as mc
 import mysql.connector.errorcode as mc_errorcode
 import mysql.connector.pooling as mc_pooling
 
+from functools import wraps
 
-def cost_count(func):
+
+def db_r_w_cost_count(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         start = time.time()
         t = func(*args, **kwargs)
-        db_logger.info("%s took time: %f secs", func.__name__, time.time() - start)
+        _db_logger.info("%s took time: %f secs", func.__name__, time.time() - start)
         return t
     return wrapper
 
@@ -80,7 +79,6 @@ class MySQLConnector():
         self._port = os.environ.get("MYSQL_PORT", "13306")
         self._usr = os.environ.get("MYSQL_USERNAME", "root")
         self._pwd = os.environ.get("MYSQL_PASSWORD", "Pwd123Pwd")
-        self._conn_used_cnt = 0
 
     def init_conn_pool(self, db: str):
         try:
@@ -106,187 +104,133 @@ class MySQLConnector():
 
     def __exit__(self):
         # TODO: how to release the pooling resources?
-        db_logger.info("Disconnect from MySQL Server ({}:{})".format(
+        _db_logger.info("Disconnect from MySQL Server ({}:{})".format(
             self._host, self._port
         ))
 
-    @cost_count
+    @db_r_w_cost_count
     def insert(self, stmt: str, record: tuple):
-        with MYSQL_CONNECTOR_TRX_LOCK:
-            cnx = self._cnx_pool.get_connection()
-            cur = cnx.cursor()
-            try:
-                cur.execute(stmt, record)
-                cnx.commit()
-            except mc.Error as err:
-                cnx.rollback()
-                db_logger.error("INSERT err: {}".format(err))
-            finally:
-                cur.close()
-                self._conn_used_cnt += 1
-                if self._conn_used_cnt == 32:
-                    self._conn_used_cnt = 0
-                    cnx.close()
-                else:
-                    self._cnx_pool.add_connection(cnx.cnx)
+        cnx = self._cnx_pool.get_connection()
+        cur = cnx.cursor()
+        try:
+            cur.execute(stmt, record)
+            cnx.commit()
+        except mc.Error as err:
+            cnx.rollback()
+            _db_logger.error("INSERT err: {}".format(err))
+        finally:
+            cur.close()
+            cnx.close()
 
-    @cost_count
+    @db_r_w_cost_count
     def batch_insert(self, stmt: str, records: list):
-        with MYSQL_CONNECTOR_TRX_LOCK:
-            cnx = self._cnx_pool.get_connection()
-            cur = cnx.cursor()
-            try:
-                cur.executemany(stmt, records)
-                cnx.commit()
-            except mc.Error as err:
-                cnx.rollback()
-                db_logger.error("BATCH-INSERT err: {}".format(err))
-            finally:
-                cur.close()
-                self._conn_used_cnt += 1
-                if self._conn_used_cnt == 32:
-                    self._conn_used_cnt = 0
-                    cnx.close()
-                else:
-                    self._cnx_pool.add_connection(cnx.cnx)
+        cnx = self._cnx_pool.get_connection()
+        cur = cnx.cursor()
+        try:
+            cur.executemany(stmt, records)
+            cnx.commit()
+        except mc.Error as err:
+            cnx.rollback()
+            _db_logger.error("BATCH-INSERT err: {}".format(err))
+        finally:
+            cur.close()
+            cnx.close()
 
-    @cost_count
+    @db_r_w_cost_count
     def load_data_infile(self, stmt: str):
-        with MYSQL_CONNECTOR_TRX_LOCK:
-            cnx = self._cnx_pool.get_connection()
-            cur = cnx.cursor()
-            try:
-                cur.execute(stmt)
-                cnx.commit()
-            except mc.Error as err:
-                cnx.rollback()
-                db_logger.error("LOAD DATA INFILE err: {}".format(err))
-            finally:
-                cur.close()
-                self._conn_used_cnt += 1
-                if self._conn_used_cnt == 32:
-                    self._conn_used_cnt = 0
-                    cnx.close()
-                else:
-                    self._cnx_pool.add_connection(cnx.cnx)
+        cnx = self._cnx_pool.get_connection()
+        cur = cnx.cursor()
+        try:
+            cur.execute(stmt)
+            cnx.commit()
+        except mc.Error as err:
+            cnx.rollback()
+            _db_logger.error("LOAD DATA INFILE err: {}".format(err))
+        finally:
+            cur.close()
+            cnx.close()
 
-    @cost_count
+    @db_r_w_cost_count
     def query(self, stmt: str):
-        with MYSQL_CONNECTOR_TRX_LOCK:
-            cnx = self._cnx_pool.get_connection()
-            cur = cnx.cursor()
-            result = object()
-            try:
-                cur.execute(stmt)
-                result = cur.fetchall()
-            except mc.Error as err:
-                db_logger.error("QUERY err: {}".format(err))
-            finally:
-                cur.close()
-                self._conn_used_cnt += 1
-                if self._conn_used_cnt == 32:
-                    self._conn_used_cnt = 0
-                    cnx.close()
-                else:
-                    self._cnx_pool.add_connection(cnx.cnx)
-            return result
+        cnx = self._cnx_pool.get_connection()
+        cur = cnx.cursor()
+        result = object()
+        try:
+            cur.execute(stmt)
+            result = cur.fetchall()
+        except mc.Error as err:
+            _db_logger.error("QUERY err: {}".format(err))
+        finally:
+            cur.close()
+            cnx.close()
+        return result
 
-    @cost_count
+    @db_r_w_cost_count
     def update(self, stmt: str):
-        with MYSQL_CONNECTOR_TRX_LOCK:
-            cnx = self._cnx_pool.get_connection()
-            cur = cnx.cursor()
-            try:
-                cur.execute(stmt)
-                cnx.commit()
-            except mc.Error as err:
-                cnx.rollback()
-                db_logger.error("UPDATE err: {}".format(err))
-            finally:
-                cur.close()
-                self._conn_used_cnt += 1
-                if self._conn_used_cnt == 32:
-                    self._conn_used_cnt = 0
-                    cnx.close()
-                else:
-                    self._cnx_pool.add_connection(cnx.cnx)
+        cnx = self._cnx_pool.get_connection()
+        cur = cnx.cursor()
+        try:
+            cur.execute(stmt)
+            cnx.commit()
+        except mc.Error as err:
+            cnx.rollback()
+            _db_logger.error("UPDATE err: {}".format(err))
+        finally:
+            cur.close()
+            cnx.close()
 
-    @cost_count
+    @db_r_w_cost_count
     def batch_update(self, stmt: str, records: list):
-        with MYSQL_CONNECTOR_TRX_LOCK:
-            cnx = self._cnx_pool.get_connection()
-            cur = cnx.cursor()
-            try:
-                cur.executemany(stmt, records)
-                cnx.commit()
-            except mc.Error as err:
-                cnx.rollback()
-                db_logger.error("UPDATE err: {}".format(err))
-            finally:
-                cur.close()
-                self._conn_used_cnt += 1
-                if self._conn_used_cnt == 32:
-                    self._conn_used_cnt = 0
-                    cnx.close()
-                else:
-                    self._cnx_pool.add_connection(cnx.cnx)
+        cnx = self._cnx_pool.get_connection()
+        cur = cnx.cursor()
+        try:
+            cur.executemany(stmt, records)
+            cnx.commit()
+        except mc.Error as err:
+            cnx.rollback()
+            _db_logger.error("UPDATE err: {}".format(err))
+        finally:
+            cur.close()
+            cnx.close()
 
-    @cost_count
+    @db_r_w_cost_count
     def delete(self, stmt: str):
-        with MYSQL_CONNECTOR_TRX_LOCK:
-            cnx = self._cnx_pool.get_connection()
-            cur = cnx.cursor()
-            try:
-                cur.execute(stmt)
-                cnx.commit()
-            except mc.Error as err:
-                cnx.rollback()
-                db_logger.error("DELETE err: {}".format(err))
-            finally:
-                cur.close()
-                self._conn_used_cnt += 1
-                if self._conn_used_cnt == 32:
-                    self._conn_used_cnt = 0
-                    cnx.close()
-                else:
-                    self._cnx_pool.add_connection(cnx.cnx)
+        cnx = self._cnx_pool.get_connection()
+        cur = cnx.cursor()
+        try:
+            cur.execute(stmt)
+            cnx.commit()
+        except mc.Error as err:
+            cnx.rollback()
+            _db_logger.error("DELETE err: {}".format(err))
+        finally:
+            cur.close()
+            cnx.close()
 
-    @cost_count
+    @db_r_w_cost_count
     def create_table(self, stmt: str):
-        with MYSQL_CONNECTOR_TRX_LOCK:
-            cnx = self._cnx_pool.get_connection()
-            cur = cnx.cursor()
-            try:
-                cur.execute(stmt)
-                cnx.commit()
-            except mc.Error as err:
-                cnx.rollback()
-                db_logger.error("CREATE TABLE err: {}".format(err))
-            finally:
-                cur.close()
-                self._conn_used_cnt += 1
-                if self._conn_used_cnt == 32:
-                    self._conn_used_cnt = 0
-                    cnx.close()
-                else:
-                    self._cnx_pool.add_connection(cnx.cnx)
+        cnx = self._cnx_pool.get_connection()
+        cur = cnx.cursor()
+        try:
+            cur.execute(stmt)
+            cnx.commit()
+        except mc.Error as err:
+            cnx.rollback()
+            _db_logger.error("CREATE TABLE err: {}".format(err))
+        finally:
+            cur.close()
+            cnx.close()
 
-    @cost_count
+    @db_r_w_cost_count
     def drop_table(self, stmt: str):
-        with MYSQL_CONNECTOR_TRX_LOCK:
-            cnx = self._cnx_pool.get_connection()
-            cur = cnx.cursor()
-            try:
-                cur.execute(stmt)
-                cnx.commit()
-            except mc.Error as err:
-                cnx.rollback()
-                db_logger.error("DELETE TABLE err: {}".format(err))
-            finally:
-                cur.close()
-                self._conn_used_cnt += 1
-                if self._conn_used_cnt == 32:
-                    self._conn_used_cnt = 0
-                    cnx.close()
-                else:
-                    self._cnx_pool.add_connection(cnx.cnx)
+        cnx = self._cnx_pool.get_connection()
+        cur = cnx.cursor()
+        try:
+            cur.execute(stmt)
+            cnx.commit()
+        except mc.Error as err:
+            cnx.rollback()
+            _db_logger.error("DELETE TABLE err: {}".format(err))
+        finally:
+            cur.close()
+            cnx.close()

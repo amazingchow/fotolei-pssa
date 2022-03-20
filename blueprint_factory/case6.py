@@ -1,24 +1,28 @@
 # -*- coding: utf-8 -*-
-import csv
 import os
 import sys
-import time
-from flask import jsonify, request
+sys.path.append(os.path.abspath("../db"))
 sys.path.append(os.path.abspath("../utils"))
+
+import csv
+import time
+from flask import jsonify
+from flask import request
+
 from . import blueprint
-from utils import reg_positive_int
-from utils import db_connector
-from utils import lookup_table_sku_get_or_put
-from utils import cost_count
-from utils import generate_digest
+from db import db_connector
+from utils import get_lookup_table_k_sku_v_boolean
+from utils import REG_POSITIVE_INT
+from utils import util_cost_count
+from utils import util_generate_digest
 
 
 # 载入用于计算体积、重量的需求表的接口
 @blueprint.route("/api/v1/case6/upload", methods=["POST"])
-@cost_count
+@util_cost_count
 def upload_csv_file_for_case6():
     csv_files = request.files.getlist("file")
-    csv_file_sha256 = generate_digest("{}_{}".format(int(time.time()), csv_files[0].filename))
+    csv_file_sha256 = util_generate_digest("{}_{}".format(int(time.time()), csv_files[0].filename))
     csv_file = "{}/fotolei-pssa/recv_queue/{}".format(
         os.path.expanduser("~"), csv_file_sha256
     )
@@ -60,7 +64,7 @@ def upload_csv_file_for_case6():
 
 # 预览"体积、重量计算汇总单"的接口
 @blueprint.route("/api/v1/case6/preview", methods=["POST"])
-@cost_count
+@util_cost_count
 def preview_report_file_case6():
     payload = request.get_json()
     demand_table = payload.get("demand_table", [])
@@ -111,14 +115,14 @@ FROM fotolei_pssa.products WHERE specification_code = '{}';".format(item["specif
 
 # 预下载"体积、重量计算汇总单"的接口
 @blueprint.route("/api/v1/case6/prepare", methods=["POST"])
-@cost_count
+@util_cost_count
 def prepare_report_file_case6():
     payload = request.get_json()
     preview_table = payload.get("preview_table", [])
     preview_summary_table = payload.get("preview_summary_table", {})
 
     ts = int(time.time())
-    csv_file_sha256 = generate_digest("体积、重量计算汇总单_{}.csv".format(ts))
+    csv_file_sha256 = util_generate_digest("体积、重量计算汇总单_{}.csv".format(ts))
     csv_file = "{}/fotolei-pssa/send_queue/{}".format(os.path.expanduser("~"), csv_file_sha256)
     output_file = "体积、重量计算汇总单_{}.csv".format(ts)
     with open(csv_file, "w", encoding='utf-8-sig') as fd:
@@ -174,11 +178,11 @@ def do_data_check_for_input_case6_demand_table(csv_file: str):
         next(csv_reader, None)  # skip the header line
         line = 1
         for row in csv_reader:
-            if reg_positive_int.match(row[1]) is None:
+            if REG_POSITIVE_INT.match(row[1]) is None:
                 is_valid = False
                 err_msg = "'数量'数据存在非法输入，出现在第{}行。".format(line)
                 break
-            if not lookup_table_sku_get_or_put.get(row[0], False):
+            if not get_lookup_table_k_sku_v_boolean(row[0]):
                 is_valid = False
                 err_msg = "'规格编码'不存在系统内，出现在第{}行。".format(line)
                 break

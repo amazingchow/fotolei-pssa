@@ -1,19 +1,24 @@
 # -*- coding: utf-8 -*-
-import csv
 import os
+import sys
+sys.path.append(os.path.abspath("../db"))
+sys.path.append(os.path.abspath("../utils"))
+
+import csv
 import pendulum
 import shelve
-import sys
 import time
-from flask import jsonify, request
-sys.path.append(os.path.abspath("../utils"))
+
+from flask import current_app
+from flask import jsonify
+from flask import request
+
 from . import blueprint
-from utils import db_connector
-from utils import logger
-from utils import calc_month_num
-from utils import cost_count
-from utils import generate_digest
-from utils import remove_duplicates_for_list
+from db import db_connector
+from utils import util_calc_month_num
+from utils import util_cost_count
+from utils import util_generate_digest
+from utils import util_remove_duplicates_for_list
 
 
 '''
@@ -26,7 +31,7 @@ from utils import remove_duplicates_for_list
 
 # 预览"采购辅助分析报表"的接口
 @blueprint.route("/api/v1/case5/preview", methods=["POST"])
-@cost_count
+@util_cost_count
 def preview_report_file_case5():
     screening_way = request.args.get("way", "1")
     payload = request.get_json()
@@ -111,9 +116,9 @@ jit_inventory, product_weight, product_length, product_width, product_height, mo
                 real_specification_code_list.append(specification_code)
 
         if screening_way == "1":
-            logger.info("筛选1, 满足条件的SKU数量等于{}".format(len(real_specification_code_list)))
+            current_app.logger.info("筛选1, 满足条件的SKU数量等于{}".format(len(real_specification_code_list)))
         else:
-            logger.info("筛选2, 满足条件的SKU数量等于{}".format(len(real_specification_code_list)))
+            current_app.logger.info("筛选2, 满足条件的SKU数量等于{}".format(len(real_specification_code_list)))
 
         for specification_code in real_specification_code_list:
             v = inventories_import_date_record_table.get(specification_code, [])
@@ -210,11 +215,11 @@ jit_inventory, product_weight, product_length, product_width, product_height, mo
             preview_table.append(v)
             if screening_way == "1" and len(supplier_name) == 0:
                 supplier_name_list_from_screening_way1.append(v["supplier_name"])
-                supplier_name_list_from_screening_way1 = remove_duplicates_for_list(supplier_name_list_from_screening_way1)
+                supplier_name_list_from_screening_way1 = util_remove_duplicates_for_list(supplier_name_list_from_screening_way1)
         if screening_way == "1":
-            logger.info("筛选1, 输出的SKU数量等于{}".format(len(preview_table)))
+            current_app.logger.info("筛选1, 输出的SKU数量等于{}".format(len(preview_table)))
         else:
-            logger.info("筛选2, 输出的SKU数量等于{}".format(len(preview_table)))
+            current_app.logger.info("筛选2, 输出的SKU数量等于{}".format(len(preview_table)))
 
         if len(preview_table) > 0:
             response_object = {"status": "success"}
@@ -233,7 +238,7 @@ jit_inventory, product_weight, product_length, product_width, product_height, mo
 
 # 预下载"采购辅助分析报表"的接口
 @blueprint.route("/api/v1/case5/prepare", methods=["POST"])
-@cost_count
+@util_cost_count
 def prepare_report_file_case5():
     payload = request.get_json()
     time_quantum_x = int(payload.get("time_quantum_x", "6"))
@@ -241,7 +246,7 @@ def prepare_report_file_case5():
     preview_table = payload.get("preview_table", [])
 
     ts = int(time.time())
-    csv_file_sha256 = generate_digest("采购辅助分析报表_{}.csv".format(ts))
+    csv_file_sha256 = util_generate_digest("采购辅助分析报表_{}.csv".format(ts))
     csv_file = "{}/fotolei-pssa/send_queue/{}".format(os.path.expanduser("~"), csv_file_sha256)
     output_file = "采购辅助分析报表_{}.csv".format(ts)
     with open(csv_file, "w", encoding='utf-8-sig') as fd:
@@ -370,7 +375,7 @@ ORDER BY create_time DESC;".format(specification_code, the_past_m_month)
                     reduced_months = the_time_quantum - len(rets)
                 else:
                     # first_import_date晚于the_past_m_month的情况, 说明该产品是新品
-                    the_time_quantum = calc_month_num(first_import_date, pendulum.today().strftime("%Y-%m"))
+                    the_time_quantum = util_calc_month_num(first_import_date, pendulum.today().strftime("%Y-%m"))
                     reduced_months = the_time_quantum - len(rets)
                     is_new_arrival = True
                 for ret in rets:
