@@ -13,7 +13,6 @@ mkdir -p ~/fotolei-pssa/jit-inventory
 mkdir -p ~/fotolei-pssa/products
 mkdir -p ~/fotolei-pssa/send_queue
 mkdir -p ~/fotolei-pssa/recv_queue
-mkdir -p $PWD/tmp
 
 docker-compose -f "$PWD/test/mysql-deploy/docker-compose.yml" up -d --build
 docker_container_id=`docker container ls | grep mysql-deploy | awk '{print $1}'`
