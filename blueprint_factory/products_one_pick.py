@@ -1,20 +1,24 @@
 # -*- coding: utf-8 -*-
 import os
 import sys
-from flask import jsonify, request
+sys.path.append(os.path.abspath("../db"))
 sys.path.append(os.path.abspath("../utils"))
+
+from flask import jsonify
+from flask import request
+
 from . import blueprint
-from utils import db_connector
-from utils import lookup_table_sku_get_or_put
-from utils import cost_count
+from db import db_connector
+from utils import get_lookup_table_k_sku_v_boolean
+from utils import util_cost_count
 
 
 # 获取一条商品条目的接口
 @blueprint.route("/api/v1/products/one/pick", methods=["GET"])
-@cost_count
+@util_cost_count
 def pick_one_product():
     specification_code = request.args.get("specification_code")
-    if not lookup_table_sku_get_or_put.get(specification_code, False):
+    if not get_lookup_table_k_sku_v_boolean(specification_code):
         response_object = {"status": "not found"}
         return response_object
 

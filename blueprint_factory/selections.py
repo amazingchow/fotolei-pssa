@@ -1,16 +1,19 @@
 # -*- coding: utf-8 -*-
 import os
 import sys
-from flask import jsonify
+sys.path.append(os.path.abspath("../db"))
 sys.path.append(os.path.abspath("../utils"))
+
+from flask import jsonify
+
 from . import blueprint
-from utils import db_connector
-from utils import cost_count
+from db import db_connector
+from utils import util_cost_count
 
 
 # 导出所有可供选择的品牌列表的接口
 @blueprint.route("/api/v1/brands", methods=["GET"])
-@cost_count
+@util_cost_count
 def list_all_brand_selections():
     response_object = {"status": "success"}
 
@@ -31,7 +34,7 @@ def list_all_brand_selections():
 
 # 导出所有可供选择的分类1的接口
 @blueprint.route("/api/v1/classification1", methods=["GET"])
-@cost_count
+@util_cost_count
 def list_all_classification_1_selections():
     response_object = {"status": "success"}
 
@@ -52,7 +55,7 @@ def list_all_classification_1_selections():
 
 # 导出所有可供选择的供应商列表的接口
 @blueprint.route("/api/v1/suppliers", methods=["GET"])
-@cost_count
+@util_cost_count
 def list_all_supplier_selections():
     response_object = {"status": "success"}
 

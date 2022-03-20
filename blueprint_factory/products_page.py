@@ -1,16 +1,20 @@
 # -*- coding: utf-8 -*-
 import os
 import sys
-from flask import jsonify, request
+sys.path.append(os.path.abspath("../db"))
 sys.path.append(os.path.abspath("../utils"))
+
+from flask import jsonify
+from flask import request
+
 from . import blueprint
-from utils import db_connector
-from utils import cost_count
+from db import db_connector
+from utils import util_cost_count
 
 
 # 获取所有商品条目的接口, 带有翻页功能
 @blueprint.route("/api/v1/products", methods=["GET"])
-@cost_count
+@util_cost_count
 def list_products():
     page_offset = request.args.get("page.offset")
     page_limit = request.args.get("page.limit")

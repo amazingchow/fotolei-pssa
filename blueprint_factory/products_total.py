@@ -1,16 +1,19 @@
 # -*- coding: utf-8 -*-
 import os
 import sys
-from flask import jsonify
+sys.path.append(os.path.abspath("../db"))
 sys.path.append(os.path.abspath("../utils"))
+
+from flask import jsonify
+
 from . import blueprint
-from utils import db_connector
-from utils import cost_count
+from db import db_connector
+from utils import util_cost_count
 
 
 # 获取总商品条目量的接口
 @blueprint.route("/api/v1/products/total", methods=["GET"])
-@cost_count
+@util_cost_count
 def get_products_total():
     stmt = "SELECT SUM(total) FROM fotolei_pssa.product_summary;"
     ret = db_connector.query(stmt)

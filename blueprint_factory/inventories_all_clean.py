@@ -1,19 +1,24 @@
 # -*- coding: utf-8 -*-
 import os
-import platform
 import sys
-from flask import jsonify, request
+sys.path.append(os.path.abspath("../db"))
 sys.path.append(os.path.abspath("../utils"))
+
+import platform
+
+from flask import jsonify
+from flask import request
+
 from . import blueprint
-from utils import db_connector
-from utils import lookup_table_inventory_update_without_repetition
-from utils import cost_count
-from utils import silent_remove
+from db import db_connector
+from utils import clean_lookup_table_k_ct_sku_v_boolean
+from utils import util_cost_count
+from utils import util_silent_remove
 
 
 # 删除所有库存条目的接口
 @blueprint.route("/api/v1/inventories/all/clean", methods=["POST"])
-@cost_count
+@util_cost_count
 def clean_all_inventories():
     payload = request.get_json()
     admin_usr = payload.get("admin_usr", "").strip()
@@ -51,12 +56,12 @@ CREATE TABLE IF NOT EXISTS fotolei_pssa.inventories (
     extra_is_combined          VARCHAR(32),            /* 是否是组合商品 */
     anchor                     TINYINT,                /* 锚，防止‘组合商品‘读出来带空格 */
     PRIMARY KEY (id),
-    KEY (specification_code),
-    KEY (create_time),
-    KEY (extra_brand),
-    KEY (extra_classification_1),
-    KEY (extra_classification_2),
-    KEY (extra_is_combined)
+    KEY inventories_ct (create_time),
+    KEY inventories_specification_code_ct (specification_code, create_time),
+    KEY inventories_extra_is_combined_ct (extra_is_combined, create_time),
+    KEY inventories_extra_is_combined_extra_brand_ct (extra_is_combined, extra_brand, create_time),
+    KEY inventories_extra_is_combined_extra_c1_ct (extra_is_combined, extra_classification_1, create_time),
+    KEY inventories_extra_is_combined_extra_c2_ct (extra_is_combined, extra_classification_2, create_time)
 ) ENGINE=InnoDB;
 '''
         db_connector.create_table(stmt)
@@ -70,20 +75,20 @@ CREATE TABLE IF NOT EXISTS fotolei_pssa.inventory_summary (
 '''
         db_connector.create_table(stmt)
         if platform.system() == "Linux":
-            silent_remove("{}/fotolei-pssa/tmp-files/inventories_load_file_repetition_lookup_table".format(
+            util_silent_remove("{}/fotolei-pssa/tmp-files/inventories_load_file_repetition_lookup_table".format(
                 os.path.expanduser("~")))
-            silent_remove("{}/fotolei-pssa/tmp-files/inventories_check_table".format(
+            util_silent_remove("{}/fotolei-pssa/tmp-files/inventories_check_table".format(
                 os.path.expanduser("~")))
-            silent_remove("{}/fotolei-pssa/tmp-files/inventories_import_date_record_table".format(
+            util_silent_remove("{}/fotolei-pssa/tmp-files/inventories_import_date_record_table".format(
                 os.path.expanduser("~")))
         else:
-            silent_remove("{}/fotolei-pssa/tmp-files/inventories_load_file_repetition_lookup_table.db".format(
+            util_silent_remove("{}/fotolei-pssa/tmp-files/inventories_load_file_repetition_lookup_table.db".format(
                 os.path.expanduser("~")))
-            silent_remove("{}/fotolei-pssa/tmp-files/inventories_check_table.db".format(
+            util_silent_remove("{}/fotolei-pssa/tmp-files/inventories_check_table.db".format(
                 os.path.expanduser("~")))
-            silent_remove("{}/fotolei-pssa/tmp-files/inventories_import_date_record_table.db".format(
+            util_silent_remove("{}/fotolei-pssa/tmp-files/inventories_import_date_record_table.db".format(
                 os.path.expanduser("~")))
-        lookup_table_inventory_update_without_repetition.clear()
+        clean_lookup_table_k_ct_sku_v_boolean()
         response_object = {"status": "success"}
         return jsonify(response_object)
     else:
