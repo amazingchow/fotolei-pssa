@@ -59,10 +59,11 @@ export default {
     }
   },
   methods: {
-    getOpLogs () {
-      axios.get(this.serverBaseURL + '/api/v1/oplogs')
+    async getOpLogs () {
+      await axios.get(this.serverBaseURL + '/api/v1/oplogs')
         .then((res) => {
-          this.oplogs = res.data.oplogs
+          const oplogs = Object.freeze(res.data.oplogs)
+          this.oplogs = oplogs
         })
         .catch((error) => {
           // eslint-disable-next-line

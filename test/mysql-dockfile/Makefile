@@ -3,4 +3,3 @@ build:
 
 push:
 	docker push summychoutoto/mysql:5.7-support-log-files
-	

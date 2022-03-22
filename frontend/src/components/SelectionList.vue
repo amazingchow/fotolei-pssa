@@ -223,11 +223,12 @@ export default {
     alert: Alert
   },
   methods: {
-    listAllBrandSelections () {
-      axios.get(this.serverBaseURL + '/api/v1/brands')
+    async listAllBrandSelections () {
+      await axios.get(this.serverBaseURL + '/api/v1/brands')
         .then((res) => {
-          this.region1.brandSelections = res.data.brand_selections
-          this.region3.brandSelections = res.data.brand_selections
+          const bss = Object.freeze(res.data.brand_selections)
+          this.region1.brandSelections = bss
+          this.region3.brandSelections = bss
         })
         .catch((error) => {
           // eslint-disable-next-line
@@ -236,10 +237,11 @@ export default {
           this.showMessage = true
         })
     },
-    listAllClassification1Selections () {
-      axios.get(this.serverBaseURL + '/api/v1/classification1')
+    async listAllClassification1Selections () {
+      await axios.get(this.serverBaseURL + '/api/v1/classification1')
         .then((res) => {
-          this.region2.classification1Selections = res.data.classification_1_selections
+          const c1ss = Object.freeze(res.data.classification_1_selections)
+          this.region2.classification1Selections = c1ss
         })
         .catch((error) => {
           // eslint-disable-next-line
@@ -248,7 +250,7 @@ export default {
           this.showMessage = true
         })
     },
-    onRegion1FetchAssociations1 (evt) {
+    async onRegion1FetchAssociations1 (evt) {
       evt.preventDefault()
       this.region1.btnEnabled1 = false
       this.region1.btnEnabled2 = false
@@ -260,9 +262,10 @@ export default {
       const payload = {
         brand: this.region1.brandSelection
       }
-      axios.post(this.serverBaseURL + '/api/v1/associations/bc1c2', payload)
+      await axios.post(this.serverBaseURL + '/api/v1/associations/bc1c2', payload)
         .then((res) => {
-          this.region1.classification1Selections = res.data.classification_1_selections
+          const c1ss = Object.freeze(res.data.classification_1_selections)
+          this.region1.classification1Selections = c1ss
           if (this.region1.classification1Selections.length > 0) {
             this.region1.btnEnabled1 = true
           }
@@ -274,7 +277,7 @@ export default {
           this.showMessage = true
         })
     },
-    onRegion1FetchAssociations2 (evt) {
+    async onRegion1FetchAssociations2 (evt) {
       evt.preventDefault()
       this.region1.btnEnabled2 = false
       this.region1.btnEnabled3 = false
@@ -285,9 +288,10 @@ export default {
         brand: this.region1.brandSelection,
         classification_1: this.region1.classification1Selection
       }
-      axios.post(this.serverBaseURL + '/api/v1/associations/bc1c2', payload)
+      await axios.post(this.serverBaseURL + '/api/v1/associations/bc1c2', payload)
         .then((res) => {
-          this.region1.classification2Selections = res.data.classification_2_selections
+          const c2ss = Object.freeze(res.data.classification_2_selections)
+          this.region1.classification2Selections = c2ss
           if (this.region1.classification2Selections.length > 0) {
             this.region1.btnEnabled2 = true
           }
@@ -299,7 +303,7 @@ export default {
           this.showMessage = true
         })
     },
-    onRegion1FetchAssociations3 (evt) {
+    async onRegion1FetchAssociations3 (evt) {
       evt.preventDefault()
       this.region1.btnEnabled3 = false
       this.region1.productSeriesSelection = ''
@@ -309,9 +313,10 @@ export default {
         classification_1: this.region1.classification1Selection,
         classification_2: this.region1.classification2Selection
       }
-      axios.post(this.serverBaseURL + '/api/v1/associations/bc1c2', payload)
+      await axios.post(this.serverBaseURL + '/api/v1/associations/bc1c2', payload)
         .then((res) => {
-          this.region1.productSeriesSelections = res.data.product_series_selections
+          const psss = Object.freeze(res.data.product_series_selections)
+          this.region1.productSeriesSelections = psss
           if (this.region1.productSeriesSelections.length > 0) {
             this.region1.btnEnabled3 = true
           }
@@ -323,7 +328,7 @@ export default {
           this.showMessage = true
         })
     },
-    onRegion1FetchAssociations4 (evt) {
+    async onRegion1FetchAssociations4 (evt) {
       evt.preventDefault()
       this.region1.supplierNameSelection = ''
       const payload = {
@@ -332,9 +337,10 @@ export default {
         classification_2: this.region1.classification2Selection,
         product_series: this.region1.productSeriesSelection
       }
-      axios.post(this.serverBaseURL + '/api/v1/associations/bc1c2', payload)
+      await axios.post(this.serverBaseURL + '/api/v1/associations/bc1c2', payload)
         .then((res) => {
-          this.region1.supplierNameSelections = res.data.supplier_name_selections
+          const snss = Object.freeze(res.data.supplier_name_selections)
+          this.region1.supplierNameSelections = snss
         })
         .catch((error) => {
           // eslint-disable-next-line
@@ -343,15 +349,16 @@ export default {
           this.showMessage = true
         })
     },
-    onRegion2FetchAssociations (evt) {
+    async onRegion2FetchAssociations (evt) {
       evt.preventDefault()
       this.region2.classification2Selection = ''
       const payload = {
         classification_1: this.region2.classification1Selection
       }
-      axios.post(this.serverBaseURL + '/api/v1/associations/c1c2', payload)
+      await axios.post(this.serverBaseURL + '/api/v1/associations/c1c2', payload)
         .then((res) => {
-          this.region2.classification2Selections = res.data.classification_2_selections
+          const c2ss = Object.freeze(res.data.classification_2_selections)
+          this.region2.classification2Selections = c2ss
         })
         .catch((error) => {
           // eslint-disable-next-line
@@ -360,15 +367,16 @@ export default {
           this.showMessage = true
         })
     },
-    onRegion3FetchAssociations (evt) {
+    async onRegion3FetchAssociations (evt) {
       evt.preventDefault()
       this.region3.classification2Selection = ''
       const payload = {
         brand: this.region3.brandSelection
       }
-      axios.post(this.serverBaseURL + '/api/v1/associations/bc2', payload)
+      await axios.post(this.serverBaseURL + '/api/v1/associations/bc2', payload)
         .then((res) => {
-          this.region3.classification2Selections = res.data.classification_2_selections
+          const c2ss = Object.freeze(res.data.classification_2_selections)
+          this.region3.classification2Selections = c2ss
         })
         .catch((error) => {
           // eslint-disable-next-line
