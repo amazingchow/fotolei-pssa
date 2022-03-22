@@ -1104,7 +1104,7 @@ export default {
   },
   methods: {
     listAllOptions () {
-      axios.get(this.serverBaseURL + '/api/v1/alloptions')
+      axios.get(this.serverBaseURL + '/api/v1/options')
         .then((res) => {
           this.brandOptions = res.data.brand_options
           this.classification1Options = res.data.classification_1_options
@@ -1120,7 +1120,7 @@ export default {
         })
     },
     listAllSupplierSelections () {
-      axios.get(this.serverBaseURL + '/api/v1/suppliers')
+      axios.get(this.serverBaseURL + '/api/v1/selections/suppliers')
         .then((res) => {
           this.supplierNameSelections = res.data.supplier_name_selections
         })
@@ -1870,7 +1870,7 @@ export default {
         })
     },
     exportReportFile (queryFile, saveFile) {
-      axios.get(this.serverBaseURL + '/api/v1/download/' + queryFile)
+      axios.get(this.serverBaseURL + '/api/v1/common/download/' + queryFile)
         .then((res) => {
           const evt = document.createEvent('MouseEvents')
           var docUrl = document.createElement('a')
@@ -1892,7 +1892,7 @@ export default {
     },
     // ------------------------------ 新增SKU下载 ------------------------------
     preDownloadAddedSKUs (payload) {
-      axios.post(this.serverBaseURL + '/api/v1/addedskus/prepare', payload)
+      axios.post(this.serverBaseURL + '/api/v1/products/addedskus/prepare', payload)
         .then((res) => {
           this.downloadAddedSKUs(res.data.server_send_queue_file, res.data.output_file)
         })
@@ -1904,7 +1904,7 @@ export default {
         })
     },
     downloadAddedSKUs (queryFile, saveFile) {
-      axios.get(this.serverBaseURL + '/api/v1/download/' + queryFile)
+      axios.get(this.serverBaseURL + '/api/v1/common/download/' + queryFile)
         .then((res) => {
           const evt = document.createEvent('MouseEvents')
           var docUrl = document.createElement('a')

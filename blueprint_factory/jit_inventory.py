@@ -8,18 +8,25 @@ import csv
 import time
 
 from flask import current_app
+from flask import Blueprint
 from flask import jsonify
 from flask import request
 
-from . import blueprint
 from db import db_connector
 from utils import get_lookup_table_k_sku_v_boolean
 from utils import REG_INT
 from utils import util_cost_count
 
 
+jit_inventory_blueprint = Blueprint(
+    name="fotolei_pssa_jit_inventory_blueprint",
+    import_name=__name__,
+    url_prefix="/api/v1/jitinventory",
+)
+
+
 # 载入"实时可用库存报表"的接口
-@blueprint.route("/api/v1/jitinventory/upload", methods=["POST"])
+@jit_inventory_blueprint.route("/upload", methods=["POST"])
 @util_cost_count
 def upload_jit_inventory_data():
     csv_files = request.files.getlist("file")

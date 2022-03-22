@@ -10,15 +10,22 @@ import shelve
 import time
 
 from flask import current_app
+from flask import Blueprint
 from flask import jsonify
 from flask import request
 
-from . import blueprint
 from db import db_connector
 from utils import util_calc_month_num
 from utils import util_cost_count
 from utils import util_generate_digest
 from utils import util_remove_duplicates_for_list
+
+
+case5_blueprint = Blueprint(
+    name="fotolei_pssa_case5_blueprint",
+    import_name=__name__,
+    url_prefix="/api/v1/case5",
+)
 
 
 '''
@@ -30,7 +37,7 @@ from utils import util_remove_duplicates_for_list
 
 
 # 预览"采购辅助分析报表"的接口
-@blueprint.route("/api/v1/case5/preview", methods=["POST"])
+@case5_blueprint.route("/preview", methods=["POST"])
 @util_cost_count
 def preview_report_file_case5():
     screening_way = request.args.get("way", "1")
@@ -237,7 +244,7 @@ jit_inventory, product_weight, product_length, product_width, product_height, mo
 
 
 # 预下载"采购辅助分析报表"的接口
-@blueprint.route("/api/v1/case5/prepare", methods=["POST"])
+@case5_blueprint.route("/prepare", methods=["POST"])
 @util_cost_count
 def prepare_report_file_case5():
     payload = request.get_json()

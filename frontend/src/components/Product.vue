@@ -734,7 +734,7 @@ export default {
       this.addedSkus = []
     },
     async preDownloadAddedSKUs (payload) {
-      await axios.post(this.serverBaseURL + '/api/v1/addedskus/prepare', payload)
+      await axios.post(this.serverBaseURL + '/api/v1/products/addedskus/prepare', payload)
         .then((res) => {
           this.downloadAddedSKUs(res.data.server_send_queue_file, res.data.output_file)
           this.preDownloadAddedSKUsClose()
@@ -748,7 +748,7 @@ export default {
         })
     },
     async downloadAddedSKUs (queryFile, saveFile) {
-      await axios.get(this.serverBaseURL + '/api/v1/download/' + queryFile)
+      await axios.get(this.serverBaseURL + '/api/v1/common/download/' + queryFile)
         .then((res) => {
           const evt = document.createEvent('MouseEvents')
           var docUrl = document.createElement('a')

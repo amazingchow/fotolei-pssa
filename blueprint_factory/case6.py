@@ -6,10 +6,11 @@ sys.path.append(os.path.abspath("../utils"))
 
 import csv
 import time
+
+from flask import Blueprint
 from flask import jsonify
 from flask import request
 
-from . import blueprint
 from db import db_connector
 from utils import get_lookup_table_k_sku_v_boolean
 from utils import REG_POSITIVE_INT
@@ -17,8 +18,15 @@ from utils import util_cost_count
 from utils import util_generate_digest
 
 
+case6_blueprint = Blueprint(
+    name="fotolei_pssa_case6_blueprint",
+    import_name=__name__,
+    url_prefix="/api/v1/case6",
+)
+
+
 # 载入用于计算体积、重量的需求表的接口
-@blueprint.route("/api/v1/case6/upload", methods=["POST"])
+@case6_blueprint.route("/upload", methods=["POST"])
 @util_cost_count
 def upload_csv_file_for_case6():
     csv_files = request.files.getlist("file")
@@ -63,7 +71,7 @@ def upload_csv_file_for_case6():
 
 
 # 预览"体积、重量计算汇总单"的接口
-@blueprint.route("/api/v1/case6/preview", methods=["POST"])
+@case6_blueprint.route("/preview", methods=["POST"])
 @util_cost_count
 def preview_report_file_case6():
     payload = request.get_json()
@@ -114,7 +122,7 @@ FROM fotolei_pssa.products WHERE specification_code = '{}';".format(item["specif
 
 
 # 预下载"体积、重量计算汇总单"的接口
-@blueprint.route("/api/v1/case6/prepare", methods=["POST"])
+@case6_blueprint.route("/prepare", methods=["POST"])
 @util_cost_count
 def prepare_report_file_case6():
     payload = request.get_json()

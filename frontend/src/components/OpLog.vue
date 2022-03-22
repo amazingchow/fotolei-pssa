@@ -60,7 +60,7 @@ export default {
   },
   methods: {
     async getOpLogs () {
-      await axios.get(this.serverBaseURL + '/api/v1/oplogs')
+      await axios.get(this.serverBaseURL + '/api/v1/common/oplogs')
         .then((res) => {
           const oplogs = Object.freeze(res.data.oplogs)
           this.oplogs = oplogs

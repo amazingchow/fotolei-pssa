@@ -4,15 +4,22 @@ import sys
 sys.path.append(os.path.abspath("../db"))
 sys.path.append(os.path.abspath("../utils"))
 
+from flask import Blueprint
 from flask import jsonify
 
-from . import blueprint
 from db import db_connector
 from utils import util_cost_count
 
 
+option_blueprint = Blueprint(
+    name="fotolei_pssa_option_blueprint",
+    import_name=__name__,
+    url_prefix="/api/v1/options",
+)
+
+
 # 导出所有可供选择的选项列表的接口
-@blueprint.route("/api/v1/alloptions", methods=["GET"])
+@option_blueprint.route("/", methods=["GET"])
 @util_cost_count
 def list_all_options():
     response_object = {"status": "success"}

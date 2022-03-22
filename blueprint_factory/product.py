@@ -5,15 +5,16 @@ sys.path.append(os.path.abspath("../db"))
 sys.path.append(os.path.abspath("../utils"))
 
 import csv
+import platform
 import shelve
 import shutil
 import time
 
 from flask import current_app
+from flask import Blueprint
 from flask import jsonify
 from flask import request
 
-from . import blueprint
 from db import db_connector
 from utils import get_lookup_table_k_sku_v_boolean
 from utils import init_lookup_table_k_brand_k_c1_k_c2_k_product_series_v_supplier_name
@@ -21,6 +22,11 @@ from utils import init_lookup_table_k_brand_v_brand_c2
 from utils import init_lookup_table_k_c1_v_c1_c2
 from utils import init_lookup_table_k_sku_v_boolean
 from utils import init_lookup_table_k_sku_v_brand_c1_c2_is_combined
+from utils import clean_lookup_table_k_brand_k_c1_k_c2_k_product_series_v_supplier_name
+from utils import clean_lookup_table_k_brand_v_brand_c2
+from utils import clean_lookup_table_k_c1_v_c1_c2
+from utils import clean_lookup_table_k_sku_v_boolean
+from utils import clean_lookup_table_k_sku_v_brand_c1_c2_is_combined
 from utils import put_lookup_table_k_sku_v_boolean
 from utils import REG_INT
 from utils import REG_INT_AND_FLOAT
@@ -28,10 +34,18 @@ from utils import REG_POSITIVE_INT
 from utils import util_cost_count
 from utils import util_generate_digest
 from utils import util_generate_file_digest
+from utils import util_silent_remove
+
+
+product_blueprint = Blueprint(
+    name="fotolei_pssa_product_blueprint",
+    import_name=__name__,
+    url_prefix="/api/v1/products",
+)
 
 
 # 载入"商品明细数据报表"的接口
-@blueprint.route("/api/v1/products/upload", methods=["POST"])
+@product_blueprint.route("/upload", methods=["POST"])
 @util_cost_count
 def upload_products():
     csv_files = request.files.getlist("file")
@@ -103,6 +117,276 @@ def upload_products():
 
         load_file_repetition_lookup_table[file_digest] = True
     load_file_repetition_lookup_table.close()
+    return jsonify(response_object)
+
+
+# 获取所有商品条目的接口, 带有翻页功能
+@product_blueprint.route("/", methods=["GET"])
+@util_cost_count
+def list_products():
+    page_offset = request.args.get("page.offset")
+    page_limit = request.args.get("page.limit")
+
+    # TODO: 优化SQL
+    stmt = "SELECT product_code, specification_code, product_name, specification_name, \
+brand, classification_1, classification_2, product_series, stop_status, \
+is_combined, is_import, supplier_name, purchase_name, jit_inventory, moq \
+FROM fotolei_pssa.products ORDER BY specification_code LIMIT {}, {};".format(
+        page_offset, page_limit)
+    products = db_connector.query(stmt)
+
+    response_object = {"status": "success"}
+    if len(products) == 0:
+        response_object["status"] = "not found"
+        response_object["products"] = []
+    else:
+        response_object["products"] = products
+    return jsonify(response_object)
+
+
+# 获取总商品条目量的接口
+@product_blueprint.route("/total", methods=["GET"])
+@util_cost_count
+def get_products_total():
+    stmt = "SELECT SUM(total) FROM fotolei_pssa.product_summary;"
+    ret = db_connector.query(stmt)
+    response_object = {"status": "success"}
+    if type(ret) is list and len(ret) > 0 and ret[0][0] is not None:
+        response_object["products_total"] = ret[0][0]
+    else:
+        response_object["products_total"] = 0
+    return jsonify(response_object)
+
+
+# 更新一条商品条目的接口
+@product_blueprint.route("/one/update", methods=["POST"])
+@util_cost_count
+def update_one_product():
+    payload = request.get_json()
+    id = payload["id"]
+
+    specification_code = payload.get("specification_code", "").strip()
+    product_code = payload.get("product_code", "").strip()
+    product_name = payload.get("product_name", "").strip()
+    specification_name = payload.get("specification_name", "").strip()
+    brand = payload.get("brand", "").strip()
+    classification_1 = payload.get("classification_1", "").strip()
+    classification_2 = payload.get("classification_2", "").strip()
+    product_series = payload.get("product_series", "").strip()
+    stop_status = payload.get("stop_status", "全部").strip()
+    product_weight = payload.get("product_weight", "")
+    product_length = payload.get("product_length", "")
+    product_width = payload.get("product_width", "")
+    product_height = payload.get("product_height", "")
+    is_combined = payload.get("is_combined", "全部").strip()
+    be_aggregated = payload.get("be_aggregated", "全部").strip()
+    is_import = payload.get("is_import", "全部").strip()
+    supplier_name = payload.get("supplier_name", "").strip()
+    purchase_name = payload.get("purchase_name", "").strip()
+    jit_inventory = payload.get("jit_inventory", "")
+    moq = payload.get("moq", "")
+
+    stmt = "UPDATE fotolei_pssa.products SET "
+    updates = []
+    if len(specification_code) > 0:
+        updates.append("specification_code = '{}'".format(specification_code))
+    if len(product_code) > 0:
+        updates.append("product_code = '{}'".format(product_code))
+    if len(product_name) > 0:
+        updates.append("product_name = '{}'".format(product_name))
+    if len(specification_name) > 0:
+        updates.append("specification_name = '{}'".format(specification_name))
+    if len(brand) > 0:
+        updates.append("brand = '{}'".format(brand))
+    if len(classification_1) > 0:
+        updates.append("classification_1 = '{}'".format(classification_1))
+    if len(classification_2) > 0:
+        updates.append("classification_2 = '{}'".format(classification_2))
+    if len(product_series) > 0:
+        updates.append("product_series = '{}'".format(product_series))
+    if stop_status != '全部':
+        updates.append("stop_status = '{}'".format(stop_status))
+    if len(product_weight) > 0:
+        updates.append("product_weight = '{}'".format(product_weight))
+    if len(product_length) > 0:
+        updates.append("product_length = '{}'".format(product_length))
+    if len(product_width) > 0:
+        updates.append("product_width = '{}'".format(product_width))
+    if len(product_height) > 0:
+        updates.append("product_height = '{}'".format(product_height))
+    if is_combined != '全部':
+        updates.append("is_combined = '{}'".format(is_combined))
+    if be_aggregated != '全部':
+        updates.append("be_aggregated = '{}'".format(be_aggregated))
+    if is_import != '全部':
+        updates.append("is_import = '{}'".format(is_import))
+    if len(supplier_name) > 0:
+        updates.append("supplier_name = '{}'".format(supplier_name))
+    if len(purchase_name) > 0:
+        updates.append("purchase_name = '{}'".format(purchase_name))
+    if len(jit_inventory) > 0:
+        updates.append("jit_inventory = '{}'".format(jit_inventory))
+    if len(moq) > 0:
+        updates.append("moq = '{}'".format(moq))
+    stmt += ", ".join(updates)
+    stmt += " WHERE id = '{}';".format(id)
+    db_connector.update(stmt)
+
+    response_object = {"status": "success"}
+    return jsonify(response_object)
+
+
+# 获取一条商品条目的接口
+@product_blueprint.route("/one/pick", methods=["GET"])
+@util_cost_count
+def pick_one_product():
+    specification_code = request.args.get("specification_code")
+    if not get_lookup_table_k_sku_v_boolean(specification_code):
+        response_object = {"status": "not found"}
+        return response_object
+
+    stmt = "SELECT * FROM fotolei_pssa.products WHERE specification_code = '{}';".format(specification_code)
+    products = db_connector.query(stmt)
+
+    response_object = {"status": "success"}
+    if len(products) == 0:
+        response_object["status"] = "not found"
+    else:
+        response_object["product"] = {
+            "id": products[0][0],
+            "product_code": products[0][1],
+            "product_name": products[0][2],
+            "specification_name": products[0][4],
+            "brand": products[0][5],
+            "classification_1": products[0][6],
+            "classification_2": products[0][7],
+            "product_series": products[0][8],
+            "stop_status": products[0][9],
+            "product_weight": "{}".format(products[0][10]),
+            "product_length": "{}".format(products[0][11]),
+            "product_width": "{}".format(products[0][12]),
+            "product_height": "{}".format(products[0][13]),
+            "is_combined": products[0][14],
+            "be_aggregated": products[0][15],
+            "is_import": products[0][16],
+            "supplier_name": products[0][17],
+            "purchase_name": products[0][18],
+            "jit_inventory": "{}".format(products[0][19]),
+            "moq": "{}".format(products[0][20]),
+        }
+    return jsonify(response_object)
+
+
+# 删除所有商品条目的接口
+@product_blueprint.route("/all/clean", methods=["POST"])
+@util_cost_count
+def clean_all_products():
+    payload = request.get_json()
+    admin_usr = payload.get("admin_usr", "").strip()
+    admin_pwd = payload.get("admin_pwd", "").strip()
+    if admin_usr == "fotolei" and admin_pwd == "asdf5678":
+        stmt = "DROP TABLE IF EXISTS fotolei_pssa.products;"
+        db_connector.drop_table(stmt)
+        stmt = "DROP TABLE IF EXISTS fotolei_pssa.product_summary;"
+        db_connector.drop_table(stmt)
+        stmt = '''
+CREATE TABLE IF NOT EXISTS fotolei_pssa.products (
+    id                 INT           NOT NULL AUTO_INCREMENT,
+    product_code       VARCHAR(64),            /* 商品编码 */
+    product_name       VARCHAR(128),           /* 商品名称 */
+    specification_code VARCHAR(64)   NOT NULL, /* 规格编码 */
+    specification_name VARCHAR(128),           /* 规格名称 */
+    brand              VARCHAR(64),            /* 品牌 */
+    classification_1   VARCHAR(64),            /* 分类1 */
+    classification_2   VARCHAR(64),            /* 分类2 */
+    product_series     VARCHAR(64),            /* 产品系列 */
+    stop_status        VARCHAR(32),            /* STOP状态 */
+    product_weight     FLOAT,                  /* 重量/g */
+    product_length     FLOAT,                  /* 长度/cm */
+    product_width      FLOAT,                  /* 宽度/cm */
+    product_height     FLOAT,                  /* 高度/cm */
+    is_combined        VARCHAR(32),            /* 是否是组合商品 */
+    be_aggregated      VARCHAR(32),            /* 是否参与统计 */
+    is_import          VARCHAR(32),            /* 是否是进口商品 */
+    supplier_name      VARCHAR(128),           /* 供应商名称 */
+    purchase_name      VARCHAR(128),           /* 采购名称 */
+    jit_inventory      INT,                    /* 实时可用库存 */
+    moq                INT,                    /* 最小订货单元 */
+    PRIMARY KEY (id),
+    KEY products_specification_code (specification_code),
+    KEY products_is_combined_product_series (is_combined, product_series),
+    KEY products_is_combined_stop_status_be_aggregated_supplier_name (is_combined, stop_status, be_aggregated, supplier_name)
+) ENGINE=InnoDB;
+'''
+        db_connector.create_table(stmt)
+        stmt = '''
+CREATE TABLE IF NOT EXISTS fotolei_pssa.product_summary (
+    id          INT      NOT NULL AUTO_INCREMENT,
+    total       INT      NOT NULL,
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP(),
+    PRIMARY KEY (id)
+) ENGINE=InnoDB;
+'''
+        db_connector.create_table(stmt)
+        if platform.system() == "Linux":
+            util_silent_remove("{}/fotolei-pssa/tmp-files/products_load_file_repetition_lookup_table".format(
+                os.path.expanduser("~")))
+        else:
+            util_silent_remove("{}/fotolei-pssa/tmp-files/products_load_file_repetition_lookup_table.db".format(
+                os.path.expanduser("~")))
+
+        clean_lookup_table_k_sku_v_boolean()
+        clean_lookup_table_k_sku_v_brand_c1_c2_is_combined()
+        clean_lookup_table_k_c1_v_c1_c2()
+        clean_lookup_table_k_brand_v_brand_c2()
+        clean_lookup_table_k_brand_k_c1_k_c2_k_product_series_v_supplier_name()
+
+        response_object = {"status": "success"}
+        return jsonify(response_object)
+    else:
+        response_object = {"status": "invalid input data"}
+        return jsonify(response_object)
+
+
+# 删除单条商品条目的接口
+@product_blueprint.route("/one/clean", methods=["POST"])
+@util_cost_count
+def clean_one_product():
+    payload = request.get_json()
+    admin_usr = payload.get("admin_usr", "").strip()
+    admin_pwd = payload.get("admin_pwd", "").strip()
+    specification_code = payload.get("specification_code", "").strip()
+    if admin_usr == "fotolei" and admin_pwd == "asdf5678":
+        stmt = "DELETE FROM fotolei_pssa.products WHERE specification_code = '{}';".format(specification_code)
+        db_connector.delete(stmt)
+        response_object = {"status": "success"}
+        return jsonify(response_object)
+    else:
+        response_object = {"status": "invalid input data"}
+        return jsonify(response_object)
+
+
+# 预下载"新增SKU数据表"的接口
+@product_blueprint.route("/addedskus/prepare", methods=["POST"])
+@util_cost_count
+def prepare_added_skus():
+    payload = request.get_json()
+    added_skus = payload.get("added_skus", [])
+
+    ts = int(time.time())
+    csv_file_sha256 = util_generate_digest("新增SKU_{}.csv".format(ts))
+    csv_file = "{}/fotolei-pssa/send_queue/{}".format(os.path.expanduser("~"), csv_file_sha256)
+    output_file = "新增SKU_{}.csv".format(ts)
+    with open(csv_file, "w", encoding='utf-8-sig') as fd:
+        csv_writer = csv.writer(fd, delimiter=",")
+        csv_writer.writerow(["新增SKU"])
+        for sku in added_skus:
+            csv_writer.writerow([sku])
+
+    response_object = {"status": "success"}
+    response_object["output_file"] = output_file
+    response_object["server_send_queue_file"] = csv_file_sha256
+
     return jsonify(response_object)
 
 

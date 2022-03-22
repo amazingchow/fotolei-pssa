@@ -1,30 +1,30 @@
 # -*- coding: utf-8 -*-
-from flask import Blueprint
+from .association import association_blueprint
+from .case1 import case1_blueprint
+from .case2 import case2_blueprint
+from .case3 import case3_blueprint
+from .case4 import case4_blueprint
+from .case5 import case5_blueprint
+from .case6 import case6_blueprint
+from .common import common_blueprint
+from .inventory import inventory_blueprint
+from .jit_inventory import jit_inventory_blueprint
+from .option import option_blueprint
+from .product import product_blueprint
+from .selection import selection_blueprint
 
-blueprint = Blueprint("fotolei_pssa_blueprint", __name__)
-
-from . import added_skus_prepare
-from . import bc1c2_associations
-from . import case1
-from . import case2
-from . import case3
-from . import case4
-from . import case5
-from . import case6
-from . import file_download
-from . import inventories_all_clean
-from . import inventories_page
-from . import inventories_total
-from . import inventories_upload
-from . import jit_inventory_upload
-from . import keepalive
-from . import oplogs_show
-from . import options
-from . import products_all_clean
-from . import products_one_clean
-from . import products_one_pick
-from . import products_one_update
-from . import products_page
-from . import products_total
-from . import products_upload
-from . import selections
+__all__ = [
+    association_blueprint,
+    case1_blueprint,
+    case2_blueprint,
+    case3_blueprint,
+    case4_blueprint,
+    case5_blueprint,
+    case6_blueprint,
+    common_blueprint,
+    inventory_blueprint,
+    jit_inventory_blueprint,
+    option_blueprint,
+    product_blueprint,
+    selection_blueprint
+]
