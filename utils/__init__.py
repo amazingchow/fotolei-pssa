@@ -35,16 +35,25 @@ from .lookup_table import (
     get_lookup_table_k_brand_k_c1_k_c2_k_product_series_v_supplier_name_keys_product_series,
     clean_lookup_table_k_brand_k_c1_k_c2_k_product_series_v_supplier_name,
 )
-from .reg_patterns import REG_INT
-from .reg_patterns import REG_INT_AND_FLOAT
-from .reg_patterns import REG_POSITIVE_INT
-from .util_funcs import util_calc_month_num
-from .util_funcs import util_cost_count
-from .util_funcs import util_generate_digest
-from .util_funcs import util_generate_file_digest
-from .util_funcs import util_generate_n_digit_nums_and_letters
-from .util_funcs import util_remove_duplicates_for_list
-from .util_funcs import util_silent_remove
+from .reg_patterns import (
+    REG_INT,
+    REG_INT_AND_FLOAT,
+    REG_POSITIVE_INT
+)
+from .role_type import (
+    SUPER_ADMIN,
+    ADMIN,
+    ORDINARY_USER
+)
+from .util_funcs import (
+    util_cost_count,
+    util_generate_file_digest,
+    util_generate_digest,
+    util_remove_duplicates_for_list,
+    util_calc_month_num,
+    util_silent_remove,
+    util_generate_n_digit_nums_and_letters
+)
 
 __all__ = [
     init_lookup_table_k_user_v_boolean,
@@ -86,13 +95,17 @@ __all__ = [
     REG_INT_AND_FLOAT,
     REG_POSITIVE_INT,
 
-    util_calc_month_num,
+    SUPER_ADMIN,
+    ADMIN,
+    ORDINARY_USER,
+
     util_cost_count,
-    util_generate_digest,
     util_generate_file_digest,
-    util_generate_n_digit_nums_and_letters,
+    util_generate_digest,
     util_remove_duplicates_for_list,
+    util_calc_month_num,
     util_silent_remove,
+    util_generate_n_digit_nums_and_letters
 ]
 
 init_lookup_table_k_user_v_boolean()
