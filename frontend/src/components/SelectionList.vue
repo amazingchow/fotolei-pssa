@@ -224,7 +224,7 @@ export default {
   },
   methods: {
     async listAllBrandSelections () {
-      await axios.get(this.serverBaseURL + '/api/v1/brands')
+      await axios.get(this.serverBaseURL + '/api/v1/selections/brands')
         .then((res) => {
           const bss = Object.freeze(res.data.brand_selections)
           this.region1.brandSelections = bss
@@ -238,7 +238,7 @@ export default {
         })
     },
     async listAllClassification1Selections () {
-      await axios.get(this.serverBaseURL + '/api/v1/classification1')
+      await axios.get(this.serverBaseURL + '/api/v1/selections/classification1')
         .then((res) => {
           const c1ss = Object.freeze(res.data.classification_1_selections)
           this.region2.classification1Selections = c1ss

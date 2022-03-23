@@ -8,14 +8,21 @@ import csv
 import shelve
 import time
 
+from flask import Blueprint
 from flask import jsonify
 from flask import request
 
-from . import blueprint
 from db import db_connector
 from utils import util_calc_month_num
 from utils import util_cost_count
 from utils import util_generate_digest
+
+
+case4_blueprint = Blueprint(
+    name="fotolei_pssa_case4_blueprint",
+    import_name=__name__,
+    url_prefix="/api/v1/case4",
+)
 
 
 '''
@@ -32,7 +39,7 @@ from utils import util_generate_digest
 
 
 # 预览"滞销品报表"的接口
-@blueprint.route("/api/v1/case4/preview", methods=["POST"])
+@case4_blueprint.route("/preview", methods=["POST"])
 @util_cost_count
 def export_report_file_case4():
     payload = request.get_json()
@@ -186,7 +193,7 @@ def export_report_file_case4():
 
 
 # 预下载"滞销品报表"的接口
-@blueprint.route("/api/v1/case4/prepare", methods=["POST"])
+@case4_blueprint.route("/prepare", methods=["POST"])
 @util_cost_count
 def prepare_report_file_case4():
     payload = request.get_json()

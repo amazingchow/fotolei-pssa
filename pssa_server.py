@@ -12,7 +12,19 @@ from flask import request
 from flask.logging import default_handler as flask_logging_default_handler
 from flask_cors import CORS
 
-from blueprint_factory import blueprint
+from blueprint_factory import association_blueprint
+from blueprint_factory import case1_blueprint
+from blueprint_factory import case2_blueprint
+from blueprint_factory import case3_blueprint
+from blueprint_factory import case4_blueprint
+from blueprint_factory import case5_blueprint
+from blueprint_factory import case6_blueprint
+from blueprint_factory import common_blueprint
+from blueprint_factory import inventory_blueprint
+from blueprint_factory import jit_inventory_blueprint
+from blueprint_factory import option_blueprint
+from blueprint_factory import product_blueprint
+from blueprint_factory import selection_blueprint
 
 
 class RequestFormatter(logging.Formatter):
@@ -35,7 +47,19 @@ _RequestFormatter = RequestFormatter(
 )
 flask_logging_default_handler.setFormatter(_RequestFormatter)
 CORS(pssa_server, resources={r"/api/v1/*": {"origins": "*"}})
-pssa_server.register_blueprint(blueprint)
+pssa_server.register_blueprint(association_blueprint)
+pssa_server.register_blueprint(case1_blueprint)
+pssa_server.register_blueprint(case2_blueprint)
+pssa_server.register_blueprint(case3_blueprint)
+pssa_server.register_blueprint(case4_blueprint)
+pssa_server.register_blueprint(case5_blueprint)
+pssa_server.register_blueprint(case6_blueprint)
+pssa_server.register_blueprint(common_blueprint)
+pssa_server.register_blueprint(inventory_blueprint)
+pssa_server.register_blueprint(jit_inventory_blueprint)
+pssa_server.register_blueprint(option_blueprint)
+pssa_server.register_blueprint(product_blueprint)
+pssa_server.register_blueprint(selection_blueprint)
 
 
 if __name__ == "__main__":

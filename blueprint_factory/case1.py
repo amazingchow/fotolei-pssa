@@ -10,10 +10,10 @@ import time
 
 from collections import defaultdict
 
+from flask import Blueprint
 from flask import jsonify
 from flask import request
 
-from . import blueprint
 from db import db_connector
 from utils import get_lookup_table_k_brand_v_brand_c2
 from utils import get_lookup_table_k_brand_v_brand_c2_keys
@@ -24,8 +24,15 @@ from utils import util_cost_count
 from utils import util_generate_digest
 
 
+case1_blueprint = Blueprint(
+    name="fotolei_pssa_case1_blueprint",
+    import_name=__name__,
+    url_prefix="/api/v1/case1",
+)
+
+
 # 获取自定义UI
-@blueprint.route("/api/v1/case1/ui/fetch", methods=["GET"])
+@case1_blueprint.route("/ui/fetch", methods=["GET"])
 @util_cost_count
 def fetch_ui():
     customize_report_forms_ui = shelve.open("{}/fotolei-pssa/tmp-files/customize_report_forms_ui".format(
@@ -40,7 +47,7 @@ def fetch_ui():
 
 
 # 保存自定义UI
-@blueprint.route("/api/v1/case1/ui/save", methods=["POST"])
+@case1_blueprint.route("/ui/save", methods=["POST"])
 @util_cost_count
 def save_ui():
     payload = request.get_json()
@@ -110,7 +117,7 @@ poilotfoto
 
 
 # 预览"销售报表（按分类汇总）"的接口
-@blueprint.route("/api/v1/case1/preview", methods=["POST"])
+@case1_blueprint.route("/preview", methods=["POST"])
 @util_cost_count
 def preview_report_file_case1():
     payload = request.get_json()
@@ -465,7 +472,7 @@ FROM fotolei_pssa.inventories WHERE extra_brand = '{}' AND extra_classification_
 
 
 # 预下载"销售报表（按分类汇总）"的接口
-@blueprint.route("/api/v1/case1/prepare", methods=["POST"])
+@case1_blueprint.route("/prepare", methods=["POST"])
 @util_cost_count
 def prepare_report_file_case1():
     payload = request.get_json()

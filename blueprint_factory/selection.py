@@ -4,15 +4,22 @@ import sys
 sys.path.append(os.path.abspath("../db"))
 sys.path.append(os.path.abspath("../utils"))
 
+from flask import Blueprint
 from flask import jsonify
 
-from . import blueprint
 from db import db_connector
 from utils import util_cost_count
 
 
+selection_blueprint = Blueprint(
+    name="fotolei_pssa_selection_blueprint",
+    import_name=__name__,
+    url_prefix="/api/v1/selections",
+)
+
+
 # 导出所有可供选择的品牌列表的接口
-@blueprint.route("/api/v1/brands", methods=["GET"])
+@selection_blueprint.route("/brands", methods=["GET"])
 @util_cost_count
 def list_all_brand_selections():
     response_object = {"status": "success"}
@@ -33,7 +40,7 @@ def list_all_brand_selections():
 
 
 # 导出所有可供选择的分类1的接口
-@blueprint.route("/api/v1/classification1", methods=["GET"])
+@selection_blueprint.route("/classification1", methods=["GET"])
 @util_cost_count
 def list_all_classification_1_selections():
     response_object = {"status": "success"}
@@ -54,7 +61,7 @@ def list_all_classification_1_selections():
 
 
 # 导出所有可供选择的供应商列表的接口
-@blueprint.route("/api/v1/suppliers", methods=["GET"])
+@selection_blueprint.route("/suppliers", methods=["GET"])
 @util_cost_count
 def list_all_supplier_selections():
     response_object = {"status": "success"}

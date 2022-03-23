@@ -3,10 +3,10 @@ import os
 import sys
 sys.path.append(os.path.abspath("../utils"))
 
+from flask import Blueprint
 from flask import jsonify
 from flask import request
 
-from . import blueprint
 from utils import get_lookup_table_k_brand_k_c1_k_c2_k_product_series_v_supplier_name
 from utils import get_lookup_table_k_brand_k_c1_k_c2_k_product_series_v_supplier_name_keys_c1
 from utils import get_lookup_table_k_brand_k_c1_k_c2_k_product_series_v_supplier_name_keys_c2
@@ -16,8 +16,15 @@ from utils import get_lookup_table_k_c1_v_c1_c2
 from utils import util_cost_count
 
 
+association_blueprint = Blueprint(
+    name="fotolei_pssa_association_blueprint",
+    import_name=__name__,
+    url_prefix="/api/v1/associations",
+)
+
+
 # 返回关联查询的接口
-@blueprint.route("/api/v1/associations/bc1c2", methods=["POST"])
+@association_blueprint.route("/bc1c2", methods=["POST"])
 @util_cost_count
 def fetch_associations_bc1c2():
     payload = request.get_json()
@@ -53,7 +60,7 @@ def fetch_associations_bc1c2():
 
 
 # 返回关联查询的接口
-@blueprint.route("/api/v1/associations/c1c2", methods=["POST"])
+@association_blueprint.route("/c1c2", methods=["POST"])
 @util_cost_count
 def fetch_associations_c1c2():
     payload = request.get_json()
@@ -66,7 +73,7 @@ def fetch_associations_c1c2():
 
 
 # 返回关联查询的接口
-@blueprint.route("/api/v1/associations/bc2", methods=["POST"])
+@association_blueprint.route("/bc2", methods=["POST"])
 @util_cost_count
 def fetch_associations_bc2():
     payload = request.get_json()

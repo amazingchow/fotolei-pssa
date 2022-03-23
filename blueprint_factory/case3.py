@@ -7,13 +7,20 @@ sys.path.append(os.path.abspath("../utils"))
 import csv
 import time
 
+from flask import Blueprint
 from flask import jsonify
 from flask import request
 
-from . import blueprint
 from db import db_connector
 from utils import util_cost_count
 from utils import util_generate_digest
+
+
+case3_blueprint = Blueprint(
+    name="fotolei_pssa_case3_blueprint",
+    import_name=__name__,
+    url_prefix="/api/v1/case3",
+)
 
 
 '''
@@ -30,7 +37,7 @@ from utils import util_generate_digest
 
 
 # 预览"销售报表（按单个SKU汇总）"的接口
-@blueprint.route("/api/v1/case3/preview", methods=["POST"])
+@case3_blueprint.route("/preview", methods=["POST"])
 @util_cost_count
 def preview_report_file_case3():
     payload = request.get_json()
@@ -154,7 +161,7 @@ def preview_report_file_case3():
 
 
 # 预下载"销售报表（按单个SKU汇总）"的接口
-@blueprint.route("/api/v1/case3/prepare", methods=["POST"])
+@case3_blueprint.route("/prepare", methods=["POST"])
 @util_cost_count
 def prepare_report_file_case3():
     payload = request.get_json()
