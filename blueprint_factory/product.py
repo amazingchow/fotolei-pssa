@@ -136,7 +136,7 @@ FROM fotolei_pssa.products ORDER BY specification_code LIMIT {}, {};".format(
     products = db_connector.query(stmt)
 
     response_object = {"status": "success"}
-    if len(products) == 0:
+    if (type(products) is not list) or (type(products) is list and len(products) == 0):
         response_object["status"] = "not found"
         response_object["products"] = []
     else:

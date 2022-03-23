@@ -142,7 +142,7 @@ FROM fotolei_pssa.inventories ORDER BY create_time DESC LIMIT {}, {};".format(
     inventories = db_connector.query(stmt)
 
     response_object = {"status": "success"}
-    if len(inventories) == 0:
+    if (type(inventories) is not list) or (type(inventories) is list and len(inventories) == 0):
         response_object = {"status": "not found"}
         response_object["inventories"] = []
     else:

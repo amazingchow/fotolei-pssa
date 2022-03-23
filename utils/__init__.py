@@ -38,6 +38,7 @@ from .util_funcs import util_calc_month_num
 from .util_funcs import util_cost_count
 from .util_funcs import util_generate_digest
 from .util_funcs import util_generate_file_digest
+from .util_funcs import util_generate_n_digit_nums_and_letters
 from .util_funcs import util_remove_duplicates_for_list
 from .util_funcs import util_silent_remove
 
@@ -81,6 +82,7 @@ __all__ = [
     util_cost_count,
     util_generate_digest,
     util_generate_file_digest,
+    util_generate_n_digit_nums_and_letters,
     util_remove_duplicates_for_list,
     util_silent_remove,
 ]

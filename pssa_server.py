@@ -25,6 +25,7 @@ from blueprint_factory import jit_inventory_blueprint
 from blueprint_factory import option_blueprint
 from blueprint_factory import product_blueprint
 from blueprint_factory import selection_blueprint
+from blueprint_factory import user_blueprint
 
 
 class RequestFormatter(logging.Formatter):
@@ -60,6 +61,7 @@ pssa_server.register_blueprint(jit_inventory_blueprint)
 pssa_server.register_blueprint(option_blueprint)
 pssa_server.register_blueprint(product_blueprint)
 pssa_server.register_blueprint(selection_blueprint)
+pssa_server.register_blueprint(user_blueprint)
 
 
 if __name__ == "__main__":
