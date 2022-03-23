@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 from .lookup_table import (
+    init_lookup_table_k_user_v_boolean,
+    get_lookup_table_k_user_v_boolean,
+    put_lookup_table_k_user_v_boolean,
+
     init_lookup_table_k_sku_v_boolean,
     get_lookup_table_k_sku_v_boolean,
     put_lookup_table_k_sku_v_boolean,
@@ -43,6 +47,10 @@ from .util_funcs import util_remove_duplicates_for_list
 from .util_funcs import util_silent_remove
 
 __all__ = [
+    init_lookup_table_k_user_v_boolean,
+    get_lookup_table_k_user_v_boolean,
+    put_lookup_table_k_user_v_boolean,
+
     init_lookup_table_k_sku_v_boolean,
     get_lookup_table_k_sku_v_boolean,
     put_lookup_table_k_sku_v_boolean,
@@ -87,6 +95,7 @@ __all__ = [
     util_silent_remove,
 ]
 
+init_lookup_table_k_user_v_boolean()
 init_lookup_table_k_sku_v_boolean()
 init_lookup_table_k_ct_sku_v_boolean()
 init_lookup_table_k_sku_v_brand_c1_c2_is_combined()

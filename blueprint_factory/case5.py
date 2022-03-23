@@ -13,6 +13,7 @@ from flask import current_app
 from flask import Blueprint
 from flask import jsonify
 from flask import request
+from flask import session
 
 from db import db_connector
 from utils import util_calc_month_num
@@ -40,6 +41,11 @@ case5_blueprint = Blueprint(
 @case5_blueprint.route("/preview", methods=["POST"])
 @util_cost_count
 def preview_report_file_case5():
+    is_logged_in = session.get("is_logged_in", False)
+    if not is_logged_in:
+        response_object = {"status": "redirect to login page"}
+        return jsonify(response_object)
+
     screening_way = request.args.get("way", "1")
     payload = request.get_json()
     supplier_name = payload.get("supplier_name", "").lower()
@@ -247,6 +253,11 @@ jit_inventory, product_weight, product_length, product_width, product_height, mo
 @case5_blueprint.route("/prepare", methods=["POST"])
 @util_cost_count
 def prepare_report_file_case5():
+    is_logged_in = session.get("is_logged_in", False)
+    if not is_logged_in:
+        response_object = {"status": "redirect to login page"}
+        return jsonify(response_object)
+
     payload = request.get_json()
     time_quantum_x = int(payload.get("time_quantum_x", "6"))
     time_quantum_y = int(payload.get("time_quantum_y", "12"))

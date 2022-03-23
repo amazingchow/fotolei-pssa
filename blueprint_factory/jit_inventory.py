@@ -11,6 +11,7 @@ from flask import current_app
 from flask import Blueprint
 from flask import jsonify
 from flask import request
+from flask import session
 
 from db import db_connector
 from utils import get_lookup_table_k_sku_v_boolean
@@ -29,6 +30,11 @@ jit_inventory_blueprint = Blueprint(
 @jit_inventory_blueprint.route("/upload", methods=["POST"])
 @util_cost_count
 def upload_jit_inventory_data():
+    is_logged_in = session.get("is_logged_in", False)
+    if not is_logged_in:
+        response_object = {"status": "redirect to login page"}
+        return jsonify(response_object)
+
     csv_files = request.files.getlist("file")
     csv_file = "{}/fotolei-pssa/jit-inventory/{}_{}".format(
         os.path.expanduser("~"), int(time.time()), csv_files[0].filename

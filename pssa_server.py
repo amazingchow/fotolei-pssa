@@ -11,6 +11,7 @@ from flask import has_request_context
 from flask import request
 from flask.logging import default_handler as flask_logging_default_handler
 from flask_cors import CORS
+from flask_session import Session
 
 from blueprint_factory import association_blueprint
 from blueprint_factory import case1_blueprint
@@ -41,13 +42,22 @@ class RequestFormatter(logging.Formatter):
 
 pssa_server = Flask(__name__)
 pssa_server.config.from_object(__name__)
+pssa_server.config["SECRET_KEY"] = "otwdd8but5"
+pssa_server.config["PERMANENT_SESSION_LIFETIME"] = 86400
+pssa_server.config["SESSION_PERMANENT"] = True
+pssa_server.config["SESSION_USE_SIGNER"] = False
+pssa_server.config["SESSION_KEY_PREFIX"] = "fotolei_pssa_server_session:"
+pssa_server.config["SESSION_TYPE"] = "filesystem"
+pssa_server.config["SESSION_FILE_MODE"] = 438  # 438的8进制表示就是666
+pssa_server.config["SESSION_FILE_DIR"] = "{}/fotolei-pssa/session".format(os.path.expanduser("~"))
+Session(pssa_server)
+CORS(pssa_server, resources={r"/api/v1/*": {"origins": "*"}}, supports_credentials=True)
 pssa_server.logger.setLevel(logging.INFO)
 _RequestFormatter = RequestFormatter(
     "[%(asctime)s][%(levelname)s] %(remote_addr)s requested %(url)s - \n"
     "%(message)s"
 )
 flask_logging_default_handler.setFormatter(_RequestFormatter)
-CORS(pssa_server, resources={r"/api/v1/*": {"origins": "*"}})
 pssa_server.register_blueprint(association_blueprint)
 pssa_server.register_blueprint(case1_blueprint)
 pssa_server.register_blueprint(case2_blueprint)

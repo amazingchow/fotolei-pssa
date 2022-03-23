@@ -15,6 +15,7 @@ from flask import current_app
 from flask import Blueprint
 from flask import jsonify
 from flask import request
+from flask import session
 
 from db import db_connector
 from utils import clean_lookup_table_k_ct_sku_v_boolean
@@ -41,6 +42,11 @@ inventory_blueprint = Blueprint(
 @inventory_blueprint.route("/upload", methods=["POST"])
 @util_cost_count
 def upload_inventories():
+    is_logged_in = session.get("is_logged_in", False)
+    if not is_logged_in:
+        response_object = {"status": "redirect to login page"}
+        return jsonify(response_object)
+
     csv_files = request.files.getlist("file")
     import_date = request.form.get("import_date", "")
     csv_file_sha256 = util_generate_digest("{}_{}".format(int(time.time()), csv_files[0].filename))
@@ -130,8 +136,13 @@ def upload_inventories():
 @inventory_blueprint.route("/", methods=["GET"])
 @util_cost_count
 def list_inventories():
-    page_offset = request.args.get("page.offset")
-    page_limit = request.args.get("page.limit")
+    is_logged_in = session.get("is_logged_in", False)
+    if not is_logged_in:
+        response_object = {"status": "redirect to login page"}
+        return jsonify(response_object)
+
+    page_offset = request.args.get("page.offset", 0)
+    page_limit = request.args.get("page.limit", 20)
 
     # TODO: 优化SQL
     stmt = "SELECT specification_code, \
@@ -154,6 +165,11 @@ FROM fotolei_pssa.inventories ORDER BY create_time DESC LIMIT {}, {};".format(
 @inventory_blueprint.route("/total", methods=["GET"])
 @util_cost_count
 def get_inventories_total():
+    is_logged_in = session.get("is_logged_in", False)
+    if not is_logged_in:
+        response_object = {"status": "redirect to login page"}
+        return jsonify(response_object)
+
     stmt = "SELECT SUM(total) FROM fotolei_pssa.inventory_summary;"
     ret = db_connector.query(stmt)
     response_object = {"status": "success"}
@@ -168,6 +184,11 @@ def get_inventories_total():
 @inventory_blueprint.route("/all/clean", methods=["POST"])
 @util_cost_count
 def clean_all_inventories():
+    is_logged_in = session.get("is_logged_in", False)
+    if not is_logged_in:
+        response_object = {"status": "redirect to login page"}
+        return jsonify(response_object)
+
     payload = request.get_json()
     admin_usr = payload.get("admin_usr", "").strip()
     admin_pwd = payload.get("admin_pwd", "").strip()

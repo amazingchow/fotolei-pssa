@@ -10,6 +10,7 @@ import time
 from flask import Blueprint
 from flask import jsonify
 from flask import request
+from flask import session
 
 from db import db_connector
 from utils import util_cost_count
@@ -40,6 +41,11 @@ case2_blueprint = Blueprint(
 @case2_blueprint.route("/preview", methods=["POST"])
 @util_cost_count
 def preview_report_file_case2():
+    is_logged_in = session.get("is_logged_in", False)
+    if not is_logged_in:
+        response_object = {"status": "redirect to login page"}
+        return jsonify(response_object)
+
     payload = request.get_json()
     # 起始日期和截止日期用于过滤掉时间条件不符合的记录项
     st_date = payload.get("st_date", "").strip()
@@ -131,6 +137,11 @@ WHERE COALESCE(CHAR_LENGTH(product_series), 0) != 0 AND is_combined = '否';"
 @case2_blueprint.route("/prepare", methods=["POST"])
 @util_cost_count
 def prepare_report_file_case2():
+    is_logged_in = session.get("is_logged_in", False)
+    if not is_logged_in:
+        response_object = {"status": "redirect to login page"}
+        return jsonify(response_object)
+
     payload = request.get_json()
     preview_table = payload.get("preview_table", [])
 

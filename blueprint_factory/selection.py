@@ -6,6 +6,7 @@ sys.path.append(os.path.abspath("../utils"))
 
 from flask import Blueprint
 from flask import jsonify
+from flask import session
 
 from db import db_connector
 from utils import util_cost_count
@@ -22,6 +23,11 @@ selection_blueprint = Blueprint(
 @selection_blueprint.route("/brands", methods=["GET"])
 @util_cost_count
 def list_all_brand_selections():
+    is_logged_in = session.get("is_logged_in", False)
+    if not is_logged_in:
+        response_object = {"status": "redirect to login page"}
+        return jsonify(response_object)
+
     response_object = {"status": "success"}
 
     # TODO: 优化SQL
@@ -43,6 +49,11 @@ def list_all_brand_selections():
 @selection_blueprint.route("/classification1", methods=["GET"])
 @util_cost_count
 def list_all_classification_1_selections():
+    is_logged_in = session.get("is_logged_in", False)
+    if not is_logged_in:
+        response_object = {"status": "redirect to login page"}
+        return jsonify(response_object)
+
     response_object = {"status": "success"}
 
     # TODO: 优化SQL
@@ -64,6 +75,11 @@ def list_all_classification_1_selections():
 @selection_blueprint.route("/suppliers", methods=["GET"])
 @util_cost_count
 def list_all_supplier_selections():
+    is_logged_in = session.get("is_logged_in", False)
+    if not is_logged_in:
+        response_object = {"status": "redirect to login page"}
+        return jsonify(response_object)
+
     response_object = {"status": "success"}
 
     # TODO: 优化SQL

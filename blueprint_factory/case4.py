@@ -11,6 +11,7 @@ import time
 from flask import Blueprint
 from flask import jsonify
 from flask import request
+from flask import session
 
 from db import db_connector
 from utils import util_calc_month_num
@@ -42,6 +43,11 @@ case4_blueprint = Blueprint(
 @case4_blueprint.route("/preview", methods=["POST"])
 @util_cost_count
 def export_report_file_case4():
+    is_logged_in = session.get("is_logged_in", False)
+    if not is_logged_in:
+        response_object = {"status": "redirect to login page"}
+        return jsonify(response_object)
+
     payload = request.get_json()
     # 1. 起始日期和截止日期用于过滤掉时间条件不符合的记录项
     # 2. 先用其他非空条件筛选出规格编码，再用规格编码筛选出想要的数据
@@ -196,6 +202,11 @@ def export_report_file_case4():
 @case4_blueprint.route("/prepare", methods=["POST"])
 @util_cost_count
 def prepare_report_file_case4():
+    is_logged_in = session.get("is_logged_in", False)
+    if not is_logged_in:
+        response_object = {"status": "redirect to login page"}
+        return jsonify(response_object)
+
     payload = request.get_json()
     preview_table = payload.get("preview_table", [])
 

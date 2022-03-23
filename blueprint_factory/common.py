@@ -7,6 +7,7 @@ sys.path.append(os.path.abspath("../utils"))
 from flask import Blueprint
 from flask import jsonify
 from flask import send_from_directory
+from flask import session
 
 from db import db_connector
 from utils import util_cost_count
@@ -30,6 +31,11 @@ def keepalive():
 @common_blueprint.route("/download/<path:filename>", methods=["GET"])
 @util_cost_count
 def download(filename):
+    is_logged_in = session.get("is_logged_in", False)
+    if not is_logged_in:
+        response_object = {"status": "redirect to login page"}
+        return jsonify(response_object)
+
     return send_from_directory(directory="{}/fotolei-pssa/send_queue".format(os.path.expanduser("~")), path=filename)
 
 
@@ -37,6 +43,11 @@ def download(filename):
 @common_blueprint.route("/oplogs", methods=["GET"])
 @util_cost_count
 def get_oplogs():
+    is_logged_in = session.get("is_logged_in", False)
+    if not is_logged_in:
+        response_object = {"status": "redirect to login page"}
+        return jsonify(response_object)
+
     stmt = "SELECT oplog, DATE_FORMAT(create_time, '%Y-%m-%d %H-%i-%s') FROM fotolei_pssa.operation_logs ORDER BY create_time DESC LIMIT 20;"
     rets = db_connector.query(stmt)
     response_object = {"status": "success"}
