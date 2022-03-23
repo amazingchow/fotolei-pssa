@@ -16,6 +16,7 @@ _rotate_file_handler.setFormatter(_rotate_file_handler_formatter)
 _profile_logger = logging.getLogger("FotoleiPssA_Profile")
 _profile_logger.setLevel(logging.INFO)
 _profile_logger.addHandler(_rotate_file_handler)
+import random
 import time
 
 from functools import wraps
@@ -75,3 +76,18 @@ def util_silent_remove(filename: str):
     except OSError as e:
         if e.errno != errno.ENOENT:
             raise
+
+
+ALL_DIGIT_NUMS_AND_LETTERS = [str(i) for i in range(0, 10)] + \
+    [str(chr(i)) for i in range(ord('a'), ord('z') + 1)] + \
+    [str(chr(i)) for i in range(ord('A'), ord('Z') + 1)]
+ALL_DIGIT_NUMS_AND_LETTERS_TOTAL = len(ALL_DIGIT_NUMS_AND_LETTERS)
+
+
+# 通用工具函数 - 生成N位字符串, 字符串由数字和大小写字母组成
+def util_generate_n_digit_nums_and_letters(n: int):
+    for i in range(len(ALL_DIGIT_NUMS_AND_LETTERS) - 1, 0, -1):
+        j = random.randrange(i + 1)
+        ALL_DIGIT_NUMS_AND_LETTERS[i], ALL_DIGIT_NUMS_AND_LETTERS[j] = ALL_DIGIT_NUMS_AND_LETTERS[j], ALL_DIGIT_NUMS_AND_LETTERS[i]
+    nums_and_letters = [ALL_DIGIT_NUMS_AND_LETTERS[random.randrange(ALL_DIGIT_NUMS_AND_LETTERS_TOTAL)] for _ in range(n)]
+    return "".join(nums_and_letters)

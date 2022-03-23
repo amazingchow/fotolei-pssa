@@ -10,6 +10,7 @@ import time
 from flask import Blueprint
 from flask import jsonify
 from flask import request
+from flask import session
 
 from db import db_connector
 from utils import get_lookup_table_k_sku_v_boolean
@@ -29,6 +30,11 @@ case6_blueprint = Blueprint(
 @case6_blueprint.route("/upload", methods=["POST"])
 @util_cost_count
 def upload_csv_file_for_case6():
+    is_logged_in = session.get("is_logged_in", False)
+    if not is_logged_in:
+        response_object = {"status": "redirect to login page"}
+        return jsonify(response_object)
+
     csv_files = request.files.getlist("file")
     csv_file_sha256 = util_generate_digest("{}_{}".format(int(time.time()), csv_files[0].filename))
     csv_file = "{}/fotolei-pssa/recv_queue/{}".format(
@@ -74,6 +80,11 @@ def upload_csv_file_for_case6():
 @case6_blueprint.route("/preview", methods=["POST"])
 @util_cost_count
 def preview_report_file_case6():
+    is_logged_in = session.get("is_logged_in", False)
+    if not is_logged_in:
+        response_object = {"status": "redirect to login page"}
+        return jsonify(response_object)
+
     payload = request.get_json()
     demand_table = payload.get("demand_table", [])
 
@@ -125,6 +136,11 @@ FROM fotolei_pssa.products WHERE specification_code = '{}';".format(item["specif
 @case6_blueprint.route("/prepare", methods=["POST"])
 @util_cost_count
 def prepare_report_file_case6():
+    is_logged_in = session.get("is_logged_in", False)
+    if not is_logged_in:
+        response_object = {"status": "redirect to login page"}
+        return jsonify(response_object)
+
     payload = request.get_json()
     preview_table = payload.get("preview_table", [])
     preview_summary_table = payload.get("preview_summary_table", {})

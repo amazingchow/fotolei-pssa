@@ -12,6 +12,7 @@ from .jit_inventory import jit_inventory_blueprint
 from .option import option_blueprint
 from .product import product_blueprint
 from .selection import selection_blueprint
+from .user import user_blueprint
 
 __all__ = [
     association_blueprint,
@@ -26,5 +27,6 @@ __all__ = [
     jit_inventory_blueprint,
     option_blueprint,
     product_blueprint,
-    selection_blueprint
+    selection_blueprint,
+    user_blueprint
 ]

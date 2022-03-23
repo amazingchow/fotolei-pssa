@@ -11,6 +11,8 @@ from db import db_connector
 from .util_funcs import util_generate_digest
 
 
+_LOOKUP_TABLE_USER_LOCK = threading.Lock()
+_lookup_table_k_user_v_boolean = defaultdict(bool)
 _LOOKUP_TABLE_SKU_LOCK = threading.Lock()
 _lookup_table_k_sku_v_boolean = defaultdict(bool)
 _LOOKUP_TABLE_K_CT_SKU_V_BOOLEAN_LOCK = threading.Lock()
@@ -23,6 +25,27 @@ _LOOKUP_TABLE_K_BRAND_V_BRAND_C2_LOCK = threading.Lock()
 _lookup_table_k_brand_v_brand_c2 = defaultdict(set)
 _LOOKUP_TABLE_K_BRAND_K_C1_K_C2_K_PRODUCT_SERIES_V_SUPPLIER_NAME_LOCK = threading.Lock()
 _lookup_table_k_brand_k_c1_k_c2_k_product_series_v_supplier_name = {}
+
+
+def init_lookup_table_k_user_v_boolean():
+    global _lookup_table_k_user_v_boolean
+    with _LOOKUP_TABLE_USER_LOCK:
+        stmt = "SELECT username FROM fotolei_pssa.users;"
+        rets = db_connector.query(stmt)
+        if type(rets) is list and len(rets) > 0:
+            for ret in rets:
+                _lookup_table_k_user_v_boolean[ret[0]] = True
+
+
+def get_lookup_table_k_user_v_boolean(user):
+    with _LOOKUP_TABLE_USER_LOCK:
+        return _lookup_table_k_user_v_boolean.get(user, False)
+
+
+def put_lookup_table_k_user_v_boolean(user, flag):
+    global _lookup_table_k_user_v_boolean
+    with _LOOKUP_TABLE_USER_LOCK:
+        _lookup_table_k_user_v_boolean[user] = flag
 
 
 def init_lookup_table_k_sku_v_boolean():

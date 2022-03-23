@@ -14,6 +14,7 @@ from flask import current_app
 from flask import Blueprint
 from flask import jsonify
 from flask import request
+from flask import session
 
 from db import db_connector
 from utils import get_lookup_table_k_sku_v_boolean
@@ -48,6 +49,11 @@ product_blueprint = Blueprint(
 @product_blueprint.route("/upload", methods=["POST"])
 @util_cost_count
 def upload_products():
+    is_logged_in = session.get("is_logged_in", False)
+    if not is_logged_in:
+        response_object = {"status": "redirect to login page"}
+        return jsonify(response_object)
+
     csv_files = request.files.getlist("file")
     csv_file_sha256 = util_generate_digest("{}_{}".format(int(time.time()), csv_files[0].filename))
     csv_file = "{}/fotolei-pssa/products/{}".format(
@@ -124,8 +130,13 @@ def upload_products():
 @product_blueprint.route("/", methods=["GET"])
 @util_cost_count
 def list_products():
-    page_offset = request.args.get("page.offset")
-    page_limit = request.args.get("page.limit")
+    is_logged_in = session.get("is_logged_in", False)
+    if not is_logged_in:
+        response_object = {"status": "redirect to login page"}
+        return jsonify(response_object)
+
+    page_offset = request.args.get("page.offset", 0)
+    page_limit = request.args.get("page.limit", 20)
 
     # TODO: 优化SQL
     stmt = "SELECT product_code, specification_code, product_name, specification_name, \
@@ -136,7 +147,7 @@ FROM fotolei_pssa.products ORDER BY specification_code LIMIT {}, {};".format(
     products = db_connector.query(stmt)
 
     response_object = {"status": "success"}
-    if len(products) == 0:
+    if (type(products) is not list) or (type(products) is list and len(products) == 0):
         response_object["status"] = "not found"
         response_object["products"] = []
     else:
@@ -148,6 +159,11 @@ FROM fotolei_pssa.products ORDER BY specification_code LIMIT {}, {};".format(
 @product_blueprint.route("/total", methods=["GET"])
 @util_cost_count
 def get_products_total():
+    is_logged_in = session.get("is_logged_in", False)
+    if not is_logged_in:
+        response_object = {"status": "redirect to login page"}
+        return jsonify(response_object)
+
     stmt = "SELECT SUM(total) FROM fotolei_pssa.product_summary;"
     ret = db_connector.query(stmt)
     response_object = {"status": "success"}
@@ -162,6 +178,11 @@ def get_products_total():
 @product_blueprint.route("/one/update", methods=["POST"])
 @util_cost_count
 def update_one_product():
+    is_logged_in = session.get("is_logged_in", False)
+    if not is_logged_in:
+        response_object = {"status": "redirect to login page"}
+        return jsonify(response_object)
+
     payload = request.get_json()
     id = payload["id"]
 
@@ -240,6 +261,11 @@ def update_one_product():
 @product_blueprint.route("/one/pick", methods=["GET"])
 @util_cost_count
 def pick_one_product():
+    is_logged_in = session.get("is_logged_in", False)
+    if not is_logged_in:
+        response_object = {"status": "redirect to login page"}
+        return jsonify(response_object)
+
     specification_code = request.args.get("specification_code")
     if not get_lookup_table_k_sku_v_boolean(specification_code):
         response_object = {"status": "not found"}
@@ -281,6 +307,11 @@ def pick_one_product():
 @product_blueprint.route("/all/clean", methods=["POST"])
 @util_cost_count
 def clean_all_products():
+    is_logged_in = session.get("is_logged_in", False)
+    if not is_logged_in:
+        response_object = {"status": "redirect to login page"}
+        return jsonify(response_object)
+
     payload = request.get_json()
     admin_usr = payload.get("admin_usr", "").strip()
     admin_pwd = payload.get("admin_pwd", "").strip()
@@ -352,6 +383,11 @@ CREATE TABLE IF NOT EXISTS fotolei_pssa.product_summary (
 @product_blueprint.route("/one/clean", methods=["POST"])
 @util_cost_count
 def clean_one_product():
+    is_logged_in = session.get("is_logged_in", False)
+    if not is_logged_in:
+        response_object = {"status": "redirect to login page"}
+        return jsonify(response_object)
+
     payload = request.get_json()
     admin_usr = payload.get("admin_usr", "").strip()
     admin_pwd = payload.get("admin_pwd", "").strip()
@@ -370,6 +406,11 @@ def clean_one_product():
 @product_blueprint.route("/addedskus/prepare", methods=["POST"])
 @util_cost_count
 def prepare_added_skus():
+    is_logged_in = session.get("is_logged_in", False)
+    if not is_logged_in:
+        response_object = {"status": "redirect to login page"}
+        return jsonify(response_object)
+
     payload = request.get_json()
     added_skus = payload.get("added_skus", [])
 
