@@ -1,6 +1,7 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 
+import Login from '@/components/Login'
 import Inventory from '@/components/Inventory'
 import OpLog from '@/components/OpLog'
 import Product from '@/components/Product'
@@ -9,6 +10,11 @@ import SelectionList from '@/components/SelectionList'
 Vue.use(VueRouter)
 
 const routes = [
+  {
+    path: '/login',
+    name: 'Login',
+    component: Login
+  },
   {
     path: '/',
     name: 'Inventory',

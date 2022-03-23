@@ -68,7 +68,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '内部服务错误!'
+          this.message = '内部服务错误！'
           this.showMessage = true
         })
     }

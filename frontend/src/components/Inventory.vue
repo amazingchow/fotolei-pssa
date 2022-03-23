@@ -1241,7 +1241,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '导入失败！'
+          this.message = '内部服务错误！'
           this.showMessage = true
           this.importCSVFileClose()
         })
@@ -1299,7 +1299,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '删除失败!'
+          this.message = '内部服务错误！'
           this.showMessage = true
           this.cleanAllInventoriesClose()
         })
@@ -1334,7 +1334,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '获取自定义UI失败！'
+          this.message = '内部服务错误！'
           this.showMessage = true
         })
     },
@@ -1347,7 +1347,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '保存自定义UI失败！'
+          this.message = '内部服务错误！'
           this.showMessage = true
         })
     },
@@ -1395,7 +1395,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '预览失败！'
+          this.message = '内部服务错误！'
           this.showMessage = true
           this.previewReportFileCase1Close()
         })
@@ -1461,7 +1461,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '预览失败！'
+          this.message = '内部服务错误！'
           this.showMessage = true
           this.previewReportFileCase2Close()
         })
@@ -1523,7 +1523,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '预览失败！'
+          this.message = '内部服务错误！'
           this.showMessage = true
           this.previewReportFileCase3Close()
         })
@@ -1607,7 +1607,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '预览失败！'
+          this.message = '内部服务错误！'
           this.showMessage = true
           this.previewReportFileCase4Close()
         })
@@ -1674,7 +1674,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '预览失败！'
+          this.message = '内部服务错误！'
           this.showMessage = true
           this.previewReportFileCase5WayClose()
         })
@@ -1779,7 +1779,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '导入失败！'
+          this.message = '内部服务错误！'
           this.showMessage = true
           this.importCSVFileForCase6Close()
         })
@@ -1818,7 +1818,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '预览失败！'
+          this.message = '内部服务错误！'
           this.showMessage = true
           this.previewReportFileCase6Close()
         })
@@ -1864,7 +1864,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '下载失败！'
+          this.message = '内部服务错误！'
           this.showMessage = true
           this.prepareExportReportFileClose()
         })
@@ -1886,7 +1886,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '下载失败！'
+          this.message = '内部服务错误！'
           this.showMessage = true
         })
     },
@@ -1899,7 +1899,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '下载失败！'
+          this.message = '内部服务错误！'
           this.showMessage = true
         })
     },
@@ -1920,7 +1920,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '下载失败！'
+          this.message = '内部服务错误！'
           this.showMessage = true
         })
     },

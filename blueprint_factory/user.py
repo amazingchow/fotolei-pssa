@@ -10,7 +10,9 @@ from flask import Blueprint
 from flask import current_app
 from flask import jsonify
 from flask import request
+from flask import Response
 from flask import session
+from flask_api import status as StatusCode
 
 from db import db_connector
 from utils import get_lookup_table_k_user_v_boolean
@@ -119,38 +121,49 @@ def list_users():
 def login():
     is_logged_in = session.get("is_logged_in", False)
     if is_logged_in:
-        response_object = {"status": "success"}
-        return jsonify(response_object)
+        return Response(
+            "logged in",
+            status=StatusCode.HTTP_200_OK,
+        )
 
     payload = request.get_json()
     usr = payload.get("username", "")
     pwd = payload.get("password", "")
     if len(usr) < 4 or len(usr) > 32 or len(pwd) < 8:
-        response_object = {"status": "invalid username or password"}
-        return jsonify(response_object)
+        return Response(
+            "invalid input username or input password",
+            status=StatusCode.HTTP_400_BAD_REQUEST,
+        )
     if not get_lookup_table_k_user_v_boolean(usr):
-        response_object = {"status": "username has not been registered"}
-        return jsonify(response_object)
+        return Response(
+            "username has not been registered",
+            status=StatusCode.HTTP_404_NOT_FOUND,
+        )
 
     stmt = "SELECT password_sha256, salt, role_type FROM fotolei_pssa.users WHERE username = '{}';".format(usr)
     users = db_connector.query(stmt)
     if (type(users) is not list) or (type(users) is list and len(users) == 0):
-        response_object["status"] = "invalid user"
-        return jsonify(response_object)
+        return Response(
+            "username has not been registered",
+            status=StatusCode.HTTP_404_NOT_FOUND,
+        )
     user = users[0]
 
     pwd_sha256 = hashlib.sha256("{}_{}".format(pwd, user[1]).encode('utf-8')).hexdigest()
     if pwd_sha256 != user[0]:
-        response_object["status"] = "invalid user"
-        return jsonify(response_object)
+        return Response(
+            "invalid password",
+            status=StatusCode.HTTP_401_UNAUTHORIZED,
+        )
 
     session["is_logged_in"] = True
     session["role"] = user[2]
     current_app.logger.info("用户 <usr: {}> 已登录".format(usr))
 
-    response_object = {"status": "success"}
-
-    return jsonify(response_object)
+    return Response(
+        "logged in",
+        status=StatusCode.HTTP_200_OK,
+    )
 
 
 # 用户登出的接口
