@@ -31,7 +31,7 @@ def restrict_access(access_level: int):
         @wraps(func)
         def wrapper(*args, **kwargs):
             role = session.get("role", ROLE_TYPE_SUPER_ADMIN)
-            if role < access_level:
+            if role > access_level:
                 return make_response(
                     jsonify({"message": "you do not have permission to access the resource"}),
                     StatusCode.HTTP_403_FORBIDDEN
