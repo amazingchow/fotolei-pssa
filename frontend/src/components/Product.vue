@@ -416,6 +416,7 @@
 <script>
 import axios from 'axios'
 import Alert from './Alert.vue'
+import router from '../router'
 
 export default {
   data () {
@@ -468,7 +469,7 @@ export default {
   },
   methods: {
     async listProducts () {
-      await axios.get(this.serverBaseURL + `/api/v1/products?page.offset=${this.pageOffset}&page.limit=20`)
+      await axios.get(this.serverBaseURL + `/api/v1/products/?page.offset=${this.pageOffset}&page.limit=20`)
         .then((res) => {
           const products = Object.freeze(res.data.products)
           this.products = products
@@ -480,10 +481,14 @@ export default {
           }
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          this.message = '内部服务错误！'
-          this.showMessage = true
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            this.message = '内部服务错误！'
+            this.showMessage = true
+          }
         })
     },
     async getProductsTotal () {

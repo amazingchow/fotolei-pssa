@@ -55,6 +55,7 @@
 <script>
 import axios from 'axios'
 import Alert from './Alert.vue'
+import router from '../router'
 
 export default {
   data () {
@@ -78,7 +79,7 @@ export default {
       }
       await axios.post(this.serverBaseURL + '/api/v1/users/login', payload)
         .then((res) => {
-          console.log(res)
+          router.push('/')
         })
         .catch((_) => {
           // eslint-disable-next-line

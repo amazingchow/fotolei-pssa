@@ -996,6 +996,7 @@
 import axios from 'axios'
 import Alert from './Alert.vue'
 import { Suggest } from 'v-suggest'
+import router from '../router'
 
 export default {
   data () {
@@ -1132,7 +1133,7 @@ export default {
         })
     },
     listInventories () {
-      axios.get(this.serverBaseURL + `/api/v1/inventories?page.offset=${this.pageOffset}&page.limit=20`)
+      axios.get(this.serverBaseURL + `/api/v1/inventories/?page.offset=${this.pageOffset}&page.limit=20`)
         .then((res) => {
           this.inventories = res.data.inventories
           this.inventoriesNum = res.data.inventories.length
@@ -1143,10 +1144,14 @@ export default {
           }
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          this.message = '内部服务错误！'
-          this.showMessage = true
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            this.message = '内部服务错误！'
+            this.showMessage = true
+          }
         })
     },
     getInventoriesTotal () {
@@ -1210,7 +1215,7 @@ export default {
           'Content-Type': 'multipart/form-data'
         }
       }
-      axios.post(this.serverBaseURL + '/api/v1/inventories/upload', formData, config, date)
+      axios.post(this.serverBaseURL + '/api/v1/inventories/upload', formData, config)
         .then((res) => {
           if (res.data.status === 'success') {
             this.listInventories()
@@ -1258,7 +1263,7 @@ export default {
           let formData = new FormData()
           formData.append('file', this.uploadCSVFile, this.uploadCSVFile.name)
           formData.append('import_date', this.customDateSelection)
-          this.importCSVFile(formData, this.customDateSelection)
+          this.importCSVFile(formData)
         }
       } else {
         this.message = '日期格式有误！'

@@ -32,7 +32,7 @@ user_blueprint = Blueprint(
 
 
 # 注册用户的接口, 用户权限分为管理员和普通用户
-# curl -s -v -b cookies.txt -d '{"username": "summychou", "password":"1234qwer"}' -H "Content-Type: application/json" -X POST http://localhost:15555/api/v1/users/register | jq
+# curl -s -v -b cookies.txt -d '{"username": "summychou", "password": "1234qwer"}' -H "Content-Type: application/json" -X POST http://localhost:15555/api/v1/users/register | jq
 @user_blueprint.route("/register", methods=["POST"])
 @has_logged_in
 @restrict_access(access_level=ROLE_TYPE_SUPER_ADMIN)
@@ -42,11 +42,16 @@ def register():
     usr = payload.get("username", "")
     pwd = payload.get("password", "")
     if len(usr) < 4 or len(usr) > 32 or len(pwd) < 8:
-        response_object = {"status": "invalid username or password"}
-        return jsonify(response_object)
+        return make_response(
+            jsonify({"message": "invalid input username or input password"}),
+            StatusCode.HTTP_400_BAD_REQUEST
+        )
     if get_lookup_table_k_user_v_boolean(usr):
-        response_object = {"status": "username has been registered"}
-        return jsonify(response_object)
+        return make_response(
+            jsonify({"message": "username has been registered"}),
+            StatusCode.HTTP_409_CONFLICT
+        )
+
     role = payload.get("role", 2)
     salt = util_generate_n_digit_nums_and_letters(10)
     pwd_sha256 = hashlib.sha256("{}_{}".format(pwd, salt).encode('utf-8')).hexdigest()
@@ -57,8 +62,10 @@ def register():
     put_lookup_table_k_user_v_boolean(usr, True)
     current_app.logger.info("注册用户 <{}>".format(usr))
 
-    response_object = {"status": "success"}
-    return jsonify(response_object)
+    return make_response(
+        jsonify({"message": "register {}".format(usr)}),
+        StatusCode.HTTP_200_OK
+    )
 
 
 # 注销用户的接口
@@ -70,11 +77,15 @@ def register():
 def unregister():
     usr = request.args.get("username")
     if len(usr) < 4 or len(usr) > 32:
-        response_object = {"status": "invalid username"}
-        return jsonify(response_object)
+        return make_response(
+            jsonify({"message": "invalid input username"}),
+            StatusCode.HTTP_400_BAD_REQUEST
+        )
     if not get_lookup_table_k_user_v_boolean(usr):
-        response_object = {"status": "username has not been registered"}
-        return jsonify(response_object)
+        return make_response(
+            jsonify({"message": "username has not been registered"}),
+            StatusCode.HTTP_404_NOT_FOUND
+        )
 
     stmt = "DELETE FROM fotolei_pssa.users WHERE username = '{}';".format(usr)
     db_connector.delete(stmt)
@@ -82,8 +93,10 @@ def unregister():
     put_lookup_table_k_user_v_boolean(usr, False)
     current_app.logger.info("注销用户 <{}>".format(usr))
 
-    response_object = {"status": "success"}
-    return jsonify(response_object)
+    return make_response(
+        jsonify({"message": "unregister {}".format(usr)}),
+        StatusCode.HTTP_200_OK
+    )
 
 
 # 获取所有注册用户的接口, 带有翻页功能
@@ -112,7 +125,7 @@ def list_users():
 
 
 # 用户登录的接口
-# curl -s -v -c cookies.txt -d '{"username": "fotolei", "password":"asdf5678"}' -H "Content-Type: application/json" -X POST http://localhost:15555/api/v1/users/login | jq
+# curl -s -v -c cookies.txt -d '{"username": "fotolei", "password": "asdf5678"}' -H "Content-Type: application/json" -X POST http://localhost:15555/api/v1/users/login | jq
 @user_blueprint.route("/login", methods=["POST"])
 @util_cost_count
 def login():
@@ -135,7 +148,7 @@ def login():
     if not get_lookup_table_k_user_v_boolean(usr):
         return make_response(
             jsonify({"message": "username has not been registered"}),
-            StatusCode.HTTP_404_NOT_FOUND
+            StatusCode.HTTP_401_UNAUTHORIZED
         )
 
     stmt = "SELECT password_sha256, salt, role_type FROM fotolei_pssa.users WHERE username = '{}';".format(usr)
@@ -143,7 +156,7 @@ def login():
     if (type(users) is not list) or (type(users) is list and len(users) == 0):
         return make_response(
             jsonify({"message": "username has not been registered"}),
-            StatusCode.HTTP_404_NOT_FOUND
+            StatusCode.HTTP_401_UNAUTHORIZED
         )
     user = users[0]
 

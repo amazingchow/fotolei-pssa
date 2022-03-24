@@ -183,6 +183,7 @@
 <script>
 import axios from 'axios'
 import Alert from './Alert.vue'
+import router from '../router'
 
 export default {
   data () {
@@ -231,10 +232,14 @@ export default {
           this.region3.brandSelections = bss
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          this.message = '内部服务错误！'
-          this.showMessage = true
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            this.message = '内部服务错误！'
+            this.showMessage = true
+          }
         })
     },
     async listAllClassification1Selections () {
