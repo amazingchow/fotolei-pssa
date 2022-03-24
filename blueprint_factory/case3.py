@@ -10,9 +10,11 @@ import time
 from flask import Blueprint
 from flask import jsonify
 from flask import request
-from flask import session
 
+from .decorator_factory import has_logged_in
+from .decorator_factory import restrict_access
 from db import db_connector
+from utils import ROLE_TYPE_ORDINARY_USER
 from utils import util_cost_count
 from utils import util_generate_digest
 
@@ -39,13 +41,10 @@ case3_blueprint = Blueprint(
 
 # 预览"销售报表（按单个SKU汇总）"的接口
 @case3_blueprint.route("/preview", methods=["POST"])
+@has_logged_in
+@restrict_access(access_level=ROLE_TYPE_ORDINARY_USER)
 @util_cost_count
 def preview_report_file_case3():
-    is_logged_in = session.get("is_logged_in", False)
-    if not is_logged_in:
-        response_object = {"status": "redirect to login page"}
-        return jsonify(response_object)
-
     payload = request.get_json()
     # 1. 起始日期和截止日期用于过滤掉时间条件不符合的记录项
     # 2.1. 如果specification_code（规格编码）不为空，直接用规格编码筛选出想要的数据
@@ -168,13 +167,10 @@ def preview_report_file_case3():
 
 # 预下载"销售报表（按单个SKU汇总）"的接口
 @case3_blueprint.route("/prepare", methods=["POST"])
+@has_logged_in
+@restrict_access(access_level=ROLE_TYPE_ORDINARY_USER)
 @util_cost_count
 def prepare_report_file_case3():
-    is_logged_in = session.get("is_logged_in", False)
-    if not is_logged_in:
-        response_object = {"status": "redirect to login page"}
-        return jsonify(response_object)
-
     payload = request.get_json()
     preview_table = payload.get("preview_table", [])
 

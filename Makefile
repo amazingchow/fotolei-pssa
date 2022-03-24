@@ -11,6 +11,10 @@ check:
 	@pycodestyle utils/*.py --ignore=E501,W504,E502,E131,E402
 	@pycodestyle scripts/*.py --ignore=E501,W504,E502,E131,E402
 
+.PHONY: sql_check
+sql_check:
+	@sqlfluff lint db/migrations/*.sql
+
 .PHONY: init_env
 init_env:
 	@./scripts/init_env.sh

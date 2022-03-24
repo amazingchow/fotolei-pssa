@@ -41,9 +41,9 @@ from .reg_patterns import (
     REG_POSITIVE_INT
 )
 from .role_type import (
-    SUPER_ADMIN,
-    ADMIN,
-    ORDINARY_USER
+    ROLE_TYPE_SUPER_ADMIN,
+    ROLE_TYPE_ADMIN,
+    ROLE_TYPE_ORDINARY_USER
 )
 from .util_funcs import (
     util_cost_count,
@@ -95,9 +95,9 @@ __all__ = [
     REG_INT_AND_FLOAT,
     REG_POSITIVE_INT,
 
-    SUPER_ADMIN,
-    ADMIN,
-    ORDINARY_USER,
+    ROLE_TYPE_SUPER_ADMIN,
+    ROLE_TYPE_ADMIN,
+    ROLE_TYPE_ORDINARY_USER,
 
     util_cost_count,
     util_generate_file_digest,

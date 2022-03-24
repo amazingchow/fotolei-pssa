@@ -13,9 +13,11 @@ from flask import current_app
 from flask import Blueprint
 from flask import jsonify
 from flask import request
-from flask import session
 
+from .decorator_factory import has_logged_in
+from .decorator_factory import restrict_access
 from db import db_connector
+from utils import ROLE_TYPE_ORDINARY_USER
 from utils import util_calc_month_num
 from utils import util_cost_count
 from utils import util_generate_digest
@@ -39,13 +41,10 @@ case5_blueprint = Blueprint(
 
 # 预览"采购辅助分析报表"的接口
 @case5_blueprint.route("/preview", methods=["POST"])
+@has_logged_in
+@restrict_access(access_level=ROLE_TYPE_ORDINARY_USER)
 @util_cost_count
 def preview_report_file_case5():
-    is_logged_in = session.get("is_logged_in", False)
-    if not is_logged_in:
-        response_object = {"status": "redirect to login page"}
-        return jsonify(response_object)
-
     screening_way = request.args.get("way", "1")
     payload = request.get_json()
     supplier_name = payload.get("supplier_name", "").lower()
@@ -251,13 +250,10 @@ jit_inventory, product_weight, product_length, product_width, product_height, mo
 
 # 预下载"采购辅助分析报表"的接口
 @case5_blueprint.route("/prepare", methods=["POST"])
+@has_logged_in
+@restrict_access(access_level=ROLE_TYPE_ORDINARY_USER)
 @util_cost_count
 def prepare_report_file_case5():
-    is_logged_in = session.get("is_logged_in", False)
-    if not is_logged_in:
-        response_object = {"status": "redirect to login page"}
-        return jsonify(response_object)
-
     payload = request.get_json()
     time_quantum_x = int(payload.get("time_quantum_x", "6"))
     time_quantum_y = int(payload.get("time_quantum_y", "12"))

@@ -6,9 +6,11 @@ sys.path.append(os.path.abspath("../utils"))
 
 from flask import Blueprint
 from flask import jsonify
-from flask import session
 
+from .decorator_factory import has_logged_in
+from .decorator_factory import restrict_access
 from db import db_connector
+from utils import ROLE_TYPE_ORDINARY_USER
 from utils import util_cost_count
 
 
@@ -21,13 +23,10 @@ option_blueprint = Blueprint(
 
 # 导出所有可供选择的选项列表的接口
 @option_blueprint.route("/", methods=["GET"])
+@has_logged_in
+@restrict_access(access_level=ROLE_TYPE_ORDINARY_USER)
 @util_cost_count
 def list_all_options():
-    is_logged_in = session.get("is_logged_in", False)
-    if not is_logged_in:
-        response_object = {"status": "redirect to login page"}
-        return jsonify(response_object)
-
     response_object = {"status": "success"}
 
     # TODO: 优化SQL
