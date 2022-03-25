@@ -47,7 +47,8 @@ from .role_type import (
 )
 from .util_funcs import (
     util_cost_count,
-    util_generate_file_digest,
+    util_generate_bytes_in_hdd_digest,
+    util_generate_bytes_in_mem_digest,
     util_generate_digest,
     util_remove_duplicates_for_list,
     util_calc_month_num,
@@ -100,7 +101,8 @@ __all__ = [
     ROLE_TYPE_ORDINARY_USER,
 
     util_cost_count,
-    util_generate_file_digest,
+    util_generate_bytes_in_hdd_digest,
+    util_generate_bytes_in_mem_digest,
     util_generate_digest,
     util_remove_duplicates_for_list,
     util_calc_month_num,

@@ -13,7 +13,9 @@ import time
 from flask import current_app
 from flask import Blueprint
 from flask import jsonify
+from flask import make_response
 from flask import request
+from flask_api import status as StatusCode
 
 from .decorator_factory import has_logged_in
 from .decorator_factory import restrict_access
@@ -37,7 +39,7 @@ from utils import ROLE_TYPE_ORDINARY_USER
 from utils import ROLE_TYPE_SUPER_ADMIN
 from utils import util_cost_count
 from utils import util_generate_digest
-from utils import util_generate_file_digest
+from utils import util_generate_bytes_in_hdd_digest
 from utils import util_silent_remove
 
 
@@ -55,6 +57,12 @@ product_blueprint = Blueprint(
 @util_cost_count
 def upload_products():
     csv_files = request.files.getlist("file")
+    if len(csv_files) != 1:
+        return make_response(
+            jsonify({"message": "invalid upload"}),
+            StatusCode.HTTP_400_BAD_REQUEST
+        )
+
     csv_file_sha256 = util_generate_digest("{}_{}".format(int(time.time()), csv_files[0].filename))
     csv_file = "{}/fotolei-pssa/products/{}".format(
         os.path.expanduser("~"), csv_file_sha256
@@ -63,26 +71,31 @@ def upload_products():
 
     # 校验表格格式，格式有变更，当前不让导入，需要人工干预解决
     if not do_data_schema_validation_for_input_products(csv_file):
-        response_object = {"status": "invalid input data schema"}
-        return jsonify(response_object)
+        return make_response(
+            jsonify({"message": "invalid data schema"}),
+            StatusCode.HTTP_400_BAD_REQUEST
+        )
 
     # 用于检查是否是重复导入的数据报表？
     load_file_repetition_lookup_table = shelve.open("{}/fotolei-pssa/tmp-files/products_load_file_repetition_lookup_table".format(
         os.path.expanduser("~")), flag='c', writeback=False)
-    file_digest = util_generate_file_digest(csv_file)
-    if load_file_repetition_lookup_table.get(file_digest, False):
+    digest = util_generate_bytes_in_hdd_digest(csv_file)
+    if load_file_repetition_lookup_table.get(digest, False):
         load_file_repetition_lookup_table.close()
-        response_object = {"status": "repetition"}
-        return jsonify(response_object)
+        return make_response(
+            jsonify({"message": "repeated upload"}),
+            StatusCode.HTTP_409_CONFLICT
+        )
 
     # 校验数据格式，对不规范的数据做自动校正，出现无法校正的情况直接报错退出
     is_valid, err_msg = do_intelligent_calibration_for_input_products(csv_file)
     if not is_valid:
-        response_object = {"status": "invalid input data"}
-        response_object["err_msg"] = err_msg
-        return jsonify(response_object)
+        return make_response(
+            jsonify({"message": "invalid data: {}".format(err_msg)}),
+            StatusCode.HTTP_400_BAD_REQUEST
+        )
 
-    response_object = {"status": "success"}
+    response_object = {"message": ""}
     # 用于检查是否有新增的SKU？是否是重复导入的SKU？
     add, exist = do_data_check_for_input_products(csv_file)
     response_object["items_total"] = add + exist
@@ -121,9 +134,12 @@ def upload_products():
         init_lookup_table_k_brand_v_brand_c2()
         init_lookup_table_k_brand_k_c1_k_c2_k_product_series_v_supplier_name()
 
-        load_file_repetition_lookup_table[file_digest] = True
+        load_file_repetition_lookup_table[digest] = True
     load_file_repetition_lookup_table.close()
-    return jsonify(response_object)
+    return make_response(
+        jsonify(response_object),
+        StatusCode.HTTP_200_OK
+    )
 
 
 # 获取所有商品条目的接口, 带有翻页功能
@@ -143,13 +159,18 @@ FROM fotolei_pssa.products ORDER BY specification_code LIMIT {}, {};".format(
         page_offset, page_limit)
     products = db_connector.query(stmt)
 
-    response_object = {"status": "success"}
+    response_object = {"message": "not found"}
     if (type(products) is not list) or (type(products) is list and len(products) == 0):
-        response_object["status"] = "not found"
-        response_object["products"] = []
-    else:
-        response_object["products"] = products
-    return jsonify(response_object)
+        response_object = {"message": "not found", "products": []}
+        return make_response(
+            jsonify(response_object),
+            StatusCode.HTTP_404_NOT_FOUND
+        )
+    response_object = {"message": "", "products": products}
+    return make_response(
+        jsonify(response_object),
+        StatusCode.HTTP_200_OK
+    )
 
 
 # 获取总商品条目量的接口
@@ -160,12 +181,13 @@ FROM fotolei_pssa.products ORDER BY specification_code LIMIT {}, {};".format(
 def get_products_total():
     stmt = "SELECT SUM(total) FROM fotolei_pssa.product_summary;"
     ret = db_connector.query(stmt)
-    response_object = {"status": "success"}
+    response_object = {"message": "", "products_total": 0}
     if type(ret) is list and len(ret) > 0 and ret[0][0] is not None:
         response_object["products_total"] = ret[0][0]
-    else:
-        response_object["products_total"] = 0
-    return jsonify(response_object)
+    return make_response(
+        jsonify(response_object),
+        StatusCode.HTTP_200_OK
+    )
 
 
 # 更新一条商品条目的接口
@@ -244,8 +266,10 @@ def update_one_product():
     stmt += " WHERE id = '{}';".format(id)
     db_connector.update(stmt)
 
-    response_object = {"status": "success"}
-    return jsonify(response_object)
+    return make_response(
+        jsonify({"message": ""}),
+        StatusCode.HTTP_200_OK
+    )
 
 
 # 获取一条商品条目的接口
@@ -256,39 +280,48 @@ def update_one_product():
 def pick_one_product():
     specification_code = request.args.get("specification_code")
     if not get_lookup_table_k_sku_v_boolean(specification_code):
-        response_object = {"status": "not found"}
-        return response_object
+        return make_response(
+            jsonify({"message": "not found"}),
+            StatusCode.HTTP_404_NOT_FOUND
+        )
 
     stmt = "SELECT * FROM fotolei_pssa.products WHERE specification_code = '{}';".format(specification_code)
     products = db_connector.query(stmt)
 
-    response_object = {"status": "success"}
     if len(products) == 0:
-        response_object["status"] = "not found"
-    else:
-        response_object["product"] = {
-            "id": products[0][0],
-            "product_code": products[0][1],
-            "product_name": products[0][2],
-            "specification_name": products[0][4],
-            "brand": products[0][5],
-            "classification_1": products[0][6],
-            "classification_2": products[0][7],
-            "product_series": products[0][8],
-            "stop_status": products[0][9],
-            "product_weight": "{}".format(products[0][10]),
-            "product_length": "{}".format(products[0][11]),
-            "product_width": "{}".format(products[0][12]),
-            "product_height": "{}".format(products[0][13]),
-            "is_combined": products[0][14],
-            "be_aggregated": products[0][15],
-            "is_import": products[0][16],
-            "supplier_name": products[0][17],
-            "purchase_name": products[0][18],
-            "jit_inventory": "{}".format(products[0][19]),
-            "moq": "{}".format(products[0][20]),
-        }
-    return jsonify(response_object)
+        response_object = {"message": "not found", "product": {}}
+        return make_response(
+            jsonify(response_object),
+            StatusCode.HTTP_404_NOT_FOUND
+        )
+
+    response_object = {"message": ""}
+    response_object["product"] = {
+        "id": products[0][0],
+        "product_code": products[0][1],
+        "product_name": products[0][2],
+        "specification_name": products[0][4],
+        "brand": products[0][5],
+        "classification_1": products[0][6],
+        "classification_2": products[0][7],
+        "product_series": products[0][8],
+        "stop_status": products[0][9],
+        "product_weight": "{}".format(products[0][10]),
+        "product_length": "{}".format(products[0][11]),
+        "product_width": "{}".format(products[0][12]),
+        "product_height": "{}".format(products[0][13]),
+        "is_combined": products[0][14],
+        "be_aggregated": products[0][15],
+        "is_import": products[0][16],
+        "supplier_name": products[0][17],
+        "purchase_name": products[0][18],
+        "jit_inventory": "{}".format(products[0][19]),
+        "moq": "{}".format(products[0][20]),
+    }
+    return make_response(
+        jsonify(response_object),
+        StatusCode.HTTP_200_OK
+    )
 
 
 # 删除所有商品条目的接口
@@ -357,11 +390,15 @@ CREATE TABLE IF NOT EXISTS fotolei_pssa.product_summary (
         clean_lookup_table_k_brand_v_brand_c2()
         clean_lookup_table_k_brand_k_c1_k_c2_k_product_series_v_supplier_name()
 
-        response_object = {"status": "success"}
-        return jsonify(response_object)
+        return make_response(
+            jsonify({"message": ""}),
+            StatusCode.HTTP_200_OK
+        )
     else:
-        response_object = {"status": "invalid input data"}
-        return jsonify(response_object)
+        return make_response(
+            jsonify({"message": ""}),
+            StatusCode.HTTP_403_FORBIDDEN
+        )
 
 
 # 删除单条商品条目的接口
@@ -377,11 +414,15 @@ def clean_one_product():
     if admin_usr == "fotolei" and admin_pwd == "asdf5678":
         stmt = "DELETE FROM fotolei_pssa.products WHERE specification_code = '{}';".format(specification_code)
         db_connector.delete(stmt)
-        response_object = {"status": "success"}
-        return jsonify(response_object)
+        return make_response(
+            jsonify({"message": ""}),
+            StatusCode.HTTP_200_OK
+        )
     else:
-        response_object = {"status": "invalid input data"}
-        return jsonify(response_object)
+        return make_response(
+            jsonify({"message": ""}),
+            StatusCode.HTTP_403_FORBIDDEN
+        )
 
 
 # 预下载"新增SKU数据表"的接口
@@ -403,11 +444,14 @@ def prepare_added_skus():
         for sku in added_skus:
             csv_writer.writerow([sku])
 
-    response_object = {"status": "success"}
+    response_object = {"message": ""}
     response_object["output_file"] = output_file
     response_object["server_send_queue_file"] = csv_file_sha256
 
-    return jsonify(response_object)
+    return make_response(
+        jsonify(response_object),
+        StatusCode.HTTP_200_OK
+    )
 
 
 def do_data_schema_validation_for_input_products(csv_file: str):

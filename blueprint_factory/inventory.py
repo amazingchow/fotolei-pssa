@@ -30,7 +30,7 @@ from utils import REG_INT_AND_FLOAT
 from utils import ROLE_TYPE_ORDINARY_USER
 from utils import ROLE_TYPE_SUPER_ADMIN
 from utils import util_cost_count
-from utils import util_generate_file_digest, util_generate_digest
+from utils import util_generate_bytes_in_hdd_digest, util_generate_digest
 from utils import util_silent_remove
 
 
@@ -60,7 +60,7 @@ def upload_inventories():
     else:
         load_file_repetition_lookup_table = shelve.open("{}/fotolei-pssa/tmp-files/inventories_load_file_repetition_lookup_table".format(
             os.path.expanduser("~")), flag='c', writeback=False)
-        file_digest = util_generate_file_digest(csv_file)
+        file_digest = util_generate_bytes_in_hdd_digest(csv_file)
         if not load_file_repetition_lookup_table.get(file_digest, False):
             not_inserted_sku_list = []
             with open(csv_file, "r", encoding='utf-8-sig') as fd:
