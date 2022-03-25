@@ -3,6 +3,7 @@ import os
 
 import errno
 import hashlib
+import io
 import logging
 import logging.handlers
 _rotate_file_handler = logging.handlers.WatchedFileHandler(
@@ -33,11 +34,20 @@ def util_cost_count(func):
     return wrapper
 
 
-# 通用工具函数 - 为文件生成摘要
-def util_generate_file_digest(f: str):
+# 通用工具函数 - 为存储在磁盘上的文件内容生成摘要
+def util_generate_bytes_in_hdd_digest(filename: str):
     sha256_hash = hashlib.sha256()
-    with open(f, "rb") as fin:
-        for byte_block in iter(lambda: fin.read(4096), b""):
+    with open(filename, "rb") as f:
+        for byte_block in iter(lambda: f.read(4096), b""):
+            sha256_hash.update(byte_block)
+    return sha256_hash.hexdigest()
+
+
+# 通用工具函数 - 为存储在内存中的内容生成摘要
+def util_generate_bytes_in_mem_digest(bytes_io: io.BytesIO):
+    sha256_hash = hashlib.sha256()
+    with bytes_io as stream:
+        for byte_block in iter(lambda: stream.read(4096), b""):
             sha256_hash.update(byte_block)
     return sha256_hash.hexdigest()
 
