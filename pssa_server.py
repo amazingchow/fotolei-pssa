@@ -42,6 +42,7 @@ class RequestFormatter(logging.Formatter):
 
 pssa_server = Flask(__name__)
 pssa_server.config.from_object(__name__)
+pssa_server.config["SEND_FILE_MAX_AGE_DEFAULT"] = 600
 pssa_server.config["SECRET_KEY"] = "otwdd8but5"
 pssa_server.config["PERMANENT_SESSION_LIFETIME"] = 86400
 pssa_server.config["SESSION_PERMANENT"] = True
@@ -51,7 +52,12 @@ pssa_server.config["SESSION_TYPE"] = "filesystem"
 pssa_server.config["SESSION_FILE_MODE"] = 438  # 438的8进制表示就是666
 pssa_server.config["SESSION_FILE_DIR"] = "{}/fotolei-pssa/session".format(os.path.expanduser("~"))
 Session(pssa_server)
-CORS(pssa_server, resources={r"/api/v1/*": {"origins": "*"}}, supports_credentials=True)
+CORS(
+    pssa_server,
+    resources={r"/api/v1/*": {"origins": "*"}},
+    expose_headers=["Set-Logged", "Set-Role"],
+    supports_credentials=True
+)
 pssa_server.logger.setLevel(logging.INFO)
 _RequestFormatter = RequestFormatter(
     "[%(asctime)s][%(levelname)s] %(remote_addr)s requested %(url)s - \n"

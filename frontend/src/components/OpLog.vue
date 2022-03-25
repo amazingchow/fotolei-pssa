@@ -8,6 +8,7 @@
             <b-nav-item :active="false" href="/">库存明细库</b-nav-item>
             <b-nav-item :active="false" href="/slist">辅助查询</b-nav-item>
             <b-nav-item :active="true" href="/oplog">操作日志</b-nav-item>
+            <b-nav-item :active="false" href="/user">用户管理</b-nav-item>
           </b-navbar-nav>
         </b-navbar>
       </div>
@@ -18,7 +19,7 @@
       </div>
       <div class="col-sm-6">
         <b-card bg-variant="light">
-          <b-table-simple striped hover small id="inventory-table">
+          <b-table-simple striped hover small id="oplogs-table">
             <b-thead>
               <b-tr>
                 <b-th scope="col">操作时间</b-th>
@@ -41,7 +42,7 @@
 </template>
 
 <style>
-#inventory-table {
+#oplogs-table {
   border: 2px solid black !important;
   font-size: small;
   table-layout: fixed !important;
@@ -56,11 +57,12 @@ export default {
   data () {
     return {
       serverBaseURL: process.env.SERVER_BASE_URL,
+
       oplogs: []
     }
   },
   methods: {
-    async getOpLogs () {
+    async listOpLogs () {
       await axios.get(this.serverBaseURL + '/api/v1/common/oplogs')
         .then((res) => {
           const oplogs = Object.freeze(res.data.oplogs)
@@ -81,7 +83,7 @@ export default {
   created () {
     console.log(process.env.NODE_ENV)
     console.log(process.env.SERVER_BASE_URL)
-    this.getOpLogs()
+    this.listOpLogs()
   }
 }
 </script>

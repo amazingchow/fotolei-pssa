@@ -178,6 +178,19 @@ def login():
     )
 
 
+# 验证用户是否登录并且是否是超级管理员
+# curl -s -v -b cookies.txt http://localhost:15555/api/v1/users/issuperadmin | jq
+@user_blueprint.route("/issuperadmin", methods=["GET"])
+@has_logged_in
+@restrict_access(access_level=ROLE_TYPE_SUPER_ADMIN)
+@util_cost_count
+def is_super_admin():
+    return make_response(
+        jsonify({"message": "is super admin"}),
+        StatusCode.HTTP_200_OK
+    )
+
+
 # 用户登出的接口
 # curl -s -v -b cookies.txt -X DELETE http://localhost:15555/api/v1/users/logout | jq
 @user_blueprint.route("/logout", methods=["DELETE"])

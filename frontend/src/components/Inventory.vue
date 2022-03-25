@@ -8,6 +8,7 @@
             <b-nav-item :active="true" href="/">库存明细库</b-nav-item>
             <b-nav-item :active="false" href="/slist">辅助查询</b-nav-item>
             <b-nav-item :active="false" href="/oplog">操作日志</b-nav-item>
+            <b-nav-item :active="false" href="/user" v-if="showUserManagementModule">用户管理</b-nav-item>
           </b-navbar-nav>
         </b-navbar>
       </div>
@@ -1095,8 +1096,10 @@ export default {
       uploadCSVFile: null,
       uploadCSVFileForCase6: null,
       demandTable: [],
+
       message: '',
-      showMessage: false
+      showMessage: false,
+      showUserManagementModule: false
     }
   },
   components: {
@@ -2017,6 +2020,16 @@ export default {
     this.getInventoriesTotal()
     this.setDefaultDate()
     this.fetchUI()
+
+    if (this.$cookies.isKey('role')) {
+      if (this.$cookies.get('role') === 'role=0') {
+        this.showUserManagementModule = true
+      } else {
+        this.showUserManagementModule = false
+      }
+    } else {
+      this.showUserManagementModule = false
+    }
   }
 }
 </script>

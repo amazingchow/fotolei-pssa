@@ -8,6 +8,7 @@
             <b-nav-item :active="false" href="/">库存明细库</b-nav-item>
             <b-nav-item :active="false" href="/slist">辅助查询</b-nav-item>
             <b-nav-item :active="false" href="/oplog">操作日志</b-nav-item>
+            <b-nav-item :active="false" href="/user">用户管理</b-nav-item>
           </b-navbar-nav>
         </b-navbar>
       </div>
