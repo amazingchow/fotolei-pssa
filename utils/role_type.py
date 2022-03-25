@@ -1,0 +1,6 @@
+# -*- coding: utf-8 -*-
+
+# 用户角色
+ROLE_TYPE_SUPER_ADMIN = 0
+ROLE_TYPE_ADMIN = 1
+ROLE_TYPE_ORDINARY_USER = 2

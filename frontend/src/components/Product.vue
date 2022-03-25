@@ -8,6 +8,7 @@
             <b-nav-item :active="false" href="/">库存明细库</b-nav-item>
             <b-nav-item :active="false" href="/slist">辅助查询</b-nav-item>
             <b-nav-item :active="false" href="/oplog">操作日志</b-nav-item>
+            <b-nav-item :active="false" href="/user">用户管理</b-nav-item>
           </b-navbar-nav>
         </b-navbar>
       </div>
@@ -416,6 +417,7 @@
 <script>
 import axios from 'axios'
 import Alert from './Alert.vue'
+import router from '../router'
 
 export default {
   data () {
@@ -468,7 +470,7 @@ export default {
   },
   methods: {
     async listProducts () {
-      await axios.get(this.serverBaseURL + `/api/v1/products?page.offset=${this.pageOffset}&page.limit=20`)
+      await axios.get(this.serverBaseURL + `/api/v1/products/?page.offset=${this.pageOffset}&page.limit=20`)
         .then((res) => {
           const products = Object.freeze(res.data.products)
           this.products = products
@@ -480,10 +482,14 @@ export default {
           }
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          this.message = '内部服务错误!'
-          this.showMessage = true
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            this.message = '内部服务错误！'
+            this.showMessage = true
+          }
         })
     },
     async getProductsTotal () {
@@ -500,7 +506,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '内部服务错误!'
+          this.message = '内部服务错误！'
           this.showMessage = true
         })
     },
@@ -538,7 +544,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '导入失败!'
+          this.message = '内部服务错误！'
           this.showMessage = true
           this.importProductCSVFileClose()
         })
@@ -577,7 +583,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '导入失败!'
+          this.message = '内部服务错误！'
           this.showMessage = true
           this.importJITInventoryCSVFileClose()
         })
@@ -610,7 +616,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '导入失败!'
+          this.message = '内部服务错误！'
           this.showMessage = true
           this.cleanAllProductsClose()
         })
@@ -636,7 +642,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '导入失败!'
+          this.message = '内部服务错误！'
           this.showMessage = true
           this.cleanOneProductClose()
         })
@@ -679,7 +685,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '导入失败!'
+          this.message = '内部服务错误！'
           this.showMessage = true
           this.loadOldProductDataClose()
         })
@@ -723,7 +729,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '更新失败!'
+          this.message = '内部服务错误！'
           this.showMessage = true
           this.updateNewProductDataClose()
         })
@@ -742,7 +748,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '下载失败!'
+          this.message = '内部服务错误！'
           this.showMessage = true
           this.preDownloadAddedSKUsClose()
         })
@@ -764,7 +770,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '下载失败!'
+          this.message = '内部服务错误！'
           this.showMessage = true
         })
     },

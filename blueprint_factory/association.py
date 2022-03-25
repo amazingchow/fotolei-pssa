@@ -6,14 +6,16 @@ sys.path.append(os.path.abspath("../utils"))
 from flask import Blueprint
 from flask import jsonify
 from flask import request
-from flask import session
 
+from .decorator_factory import has_logged_in
+from .decorator_factory import restrict_access
 from utils import get_lookup_table_k_brand_k_c1_k_c2_k_product_series_v_supplier_name
 from utils import get_lookup_table_k_brand_k_c1_k_c2_k_product_series_v_supplier_name_keys_c1
 from utils import get_lookup_table_k_brand_k_c1_k_c2_k_product_series_v_supplier_name_keys_c2
 from utils import get_lookup_table_k_brand_k_c1_k_c2_k_product_series_v_supplier_name_keys_product_series
 from utils import get_lookup_table_k_brand_v_brand_c2
 from utils import get_lookup_table_k_c1_v_c1_c2
+from utils import ROLE_TYPE_ORDINARY_USER
 from utils import util_cost_count
 
 
@@ -26,13 +28,10 @@ association_blueprint = Blueprint(
 
 # 返回关联查询的接口
 @association_blueprint.route("/bc1c2", methods=["POST"])
+@has_logged_in
+@restrict_access(access_level=ROLE_TYPE_ORDINARY_USER)
 @util_cost_count
 def fetch_associations_bc1c2():
-    is_logged_in = session.get("is_logged_in", False)
-    if not is_logged_in:
-        response_object = {"status": "redirect to login page"}
-        return jsonify(response_object)
-
     payload = request.get_json()
     brand = payload["brand"].strip()
     classification_1 = payload.get("classification_1", "").strip()
@@ -67,13 +66,10 @@ def fetch_associations_bc1c2():
 
 # 返回关联查询的接口
 @association_blueprint.route("/c1c2", methods=["POST"])
+@has_logged_in
+@restrict_access(access_level=ROLE_TYPE_ORDINARY_USER)
 @util_cost_count
 def fetch_associations_c1c2():
-    is_logged_in = session.get("is_logged_in", False)
-    if not is_logged_in:
-        response_object = {"status": "redirect to login page"}
-        return jsonify(response_object)
-
     payload = request.get_json()
     classification_1 = payload["classification_1"].strip()
 
@@ -85,13 +81,10 @@ def fetch_associations_c1c2():
 
 # 返回关联查询的接口
 @association_blueprint.route("/bc2", methods=["POST"])
+@has_logged_in
+@restrict_access(access_level=ROLE_TYPE_ORDINARY_USER)
 @util_cost_count
 def fetch_associations_bc2():
-    is_logged_in = session.get("is_logged_in", False)
-    if not is_logged_in:
-        response_object = {"status": "redirect to login page"}
-        return jsonify(response_object)
-
     payload = request.get_json()
     brand = payload["brand"].strip()
 

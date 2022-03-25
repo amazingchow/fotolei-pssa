@@ -8,6 +8,7 @@
             <b-nav-item :active="false" href="/">库存明细库</b-nav-item>
             <b-nav-item :active="true" href="/slist">辅助查询</b-nav-item>
             <b-nav-item :active="false" href="/oplog">操作日志</b-nav-item>
+            <b-nav-item :active="false" href="/user">用户管理</b-nav-item>
           </b-navbar-nav>
         </b-navbar>
       </div>
@@ -183,6 +184,7 @@
 <script>
 import axios from 'axios'
 import Alert from './Alert.vue'
+import router from '../router'
 
 export default {
   data () {
@@ -231,10 +233,14 @@ export default {
           this.region3.brandSelections = bss
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          this.message = '内部服务错误！'
-          this.showMessage = true
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            this.message = '内部服务错误！'
+            this.showMessage = true
+          }
         })
     },
     async listAllClassification1Selections () {

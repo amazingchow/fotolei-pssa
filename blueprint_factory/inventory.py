@@ -15,8 +15,9 @@ from flask import current_app
 from flask import Blueprint
 from flask import jsonify
 from flask import request
-from flask import session
 
+from .decorator_factory import has_logged_in
+from .decorator_factory import restrict_access
 from db import db_connector
 from utils import clean_lookup_table_k_ct_sku_v_boolean
 from utils import init_lookup_table_k_ct_sku_v_boolean
@@ -26,6 +27,8 @@ from utils import get_lookup_table_k_sku_v_brand_c1_c2_is_combined
 from utils import put_lookup_table_k_ct_sku_v_boolean
 from utils import REG_INT
 from utils import REG_INT_AND_FLOAT
+from utils import ROLE_TYPE_ORDINARY_USER
+from utils import ROLE_TYPE_SUPER_ADMIN
 from utils import util_cost_count
 from utils import util_generate_file_digest, util_generate_digest
 from utils import util_silent_remove
@@ -40,13 +43,10 @@ inventory_blueprint = Blueprint(
 
 # 载入"库存数据报表"的接口
 @inventory_blueprint.route("/upload", methods=["POST"])
+@has_logged_in
+@restrict_access(access_level=ROLE_TYPE_SUPER_ADMIN)
 @util_cost_count
 def upload_inventories():
-    is_logged_in = session.get("is_logged_in", False)
-    if not is_logged_in:
-        response_object = {"status": "redirect to login page"}
-        return jsonify(response_object)
-
     csv_files = request.files.getlist("file")
     import_date = request.form.get("import_date", "")
     csv_file_sha256 = util_generate_digest("{}_{}".format(int(time.time()), csv_files[0].filename))
@@ -134,13 +134,10 @@ def upload_inventories():
 
 # 获取所有库存条目的接口, 带有翻页功能
 @inventory_blueprint.route("/", methods=["GET"])
+@has_logged_in
+@restrict_access(access_level=ROLE_TYPE_ORDINARY_USER)
 @util_cost_count
 def list_inventories():
-    is_logged_in = session.get("is_logged_in", False)
-    if not is_logged_in:
-        response_object = {"status": "redirect to login page"}
-        return jsonify(response_object)
-
     page_offset = request.args.get("page.offset", 0)
     page_limit = request.args.get("page.limit", 20)
 
@@ -163,13 +160,10 @@ FROM fotolei_pssa.inventories ORDER BY create_time DESC LIMIT {}, {};".format(
 
 # 获取总库存条目量的接口
 @inventory_blueprint.route("/total", methods=["GET"])
+@has_logged_in
+@restrict_access(access_level=ROLE_TYPE_ORDINARY_USER)
 @util_cost_count
 def get_inventories_total():
-    is_logged_in = session.get("is_logged_in", False)
-    if not is_logged_in:
-        response_object = {"status": "redirect to login page"}
-        return jsonify(response_object)
-
     stmt = "SELECT SUM(total) FROM fotolei_pssa.inventory_summary;"
     ret = db_connector.query(stmt)
     response_object = {"status": "success"}
@@ -182,13 +176,10 @@ def get_inventories_total():
 
 # 删除所有库存条目的接口
 @inventory_blueprint.route("/all/clean", methods=["POST"])
+@has_logged_in
+@restrict_access(access_level=ROLE_TYPE_SUPER_ADMIN)
 @util_cost_count
 def clean_all_inventories():
-    is_logged_in = session.get("is_logged_in", False)
-    if not is_logged_in:
-        response_object = {"status": "redirect to login page"}
-        return jsonify(response_object)
-
     payload = request.get_json()
     admin_usr = payload.get("admin_usr", "").strip()
     admin_pwd = payload.get("admin_pwd", "").strip()

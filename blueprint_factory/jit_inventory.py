@@ -11,11 +11,13 @@ from flask import current_app
 from flask import Blueprint
 from flask import jsonify
 from flask import request
-from flask import session
 
+from .decorator_factory import has_logged_in
+from .decorator_factory import restrict_access
 from db import db_connector
 from utils import get_lookup_table_k_sku_v_boolean
 from utils import REG_INT
+from utils import ROLE_TYPE_SUPER_ADMIN
 from utils import util_cost_count
 
 
@@ -28,13 +30,10 @@ jit_inventory_blueprint = Blueprint(
 
 # 载入"实时可用库存报表"的接口
 @jit_inventory_blueprint.route("/upload", methods=["POST"])
+@has_logged_in
+@restrict_access(access_level=ROLE_TYPE_SUPER_ADMIN)
 @util_cost_count
 def upload_jit_inventory_data():
-    is_logged_in = session.get("is_logged_in", False)
-    if not is_logged_in:
-        response_object = {"status": "redirect to login page"}
-        return jsonify(response_object)
-
     csv_files = request.files.getlist("file")
     csv_file = "{}/fotolei-pssa/jit-inventory/{}_{}".format(
         os.path.expanduser("~"), int(time.time()), csv_files[0].filename

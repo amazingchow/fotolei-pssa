@@ -1,3 +1,5 @@
+DROP TABLE IF EXISTS fotolei_pssa.products;
+
 CREATE TABLE IF NOT EXISTS fotolei_pssa.products (
     id                 INT           NOT NULL AUTO_INCREMENT,
     product_code       VARCHAR(64),            /* 商品编码 */

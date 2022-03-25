@@ -1,1 +1,1 @@
-DROP DATABASE IF EXISTS fotolei_pssa.users;
+DROP TABLE IF EXISTS fotolei_pssa.users;

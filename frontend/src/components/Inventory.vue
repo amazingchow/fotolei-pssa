@@ -8,6 +8,7 @@
             <b-nav-item :active="true" href="/">库存明细库</b-nav-item>
             <b-nav-item :active="false" href="/slist">辅助查询</b-nav-item>
             <b-nav-item :active="false" href="/oplog">操作日志</b-nav-item>
+            <b-nav-item :active="false" href="/user" v-if="showUserManagementModule">用户管理</b-nav-item>
           </b-navbar-nav>
         </b-navbar>
       </div>
@@ -996,6 +997,7 @@
 import axios from 'axios'
 import Alert from './Alert.vue'
 import { Suggest } from 'v-suggest'
+import router from '../router'
 
 export default {
   data () {
@@ -1094,8 +1096,10 @@ export default {
       uploadCSVFile: null,
       uploadCSVFileForCase6: null,
       demandTable: [],
+
       message: '',
-      showMessage: false
+      showMessage: false,
+      showUserManagementModule: false
     }
   },
   components: {
@@ -1132,7 +1136,7 @@ export default {
         })
     },
     listInventories () {
-      axios.get(this.serverBaseURL + `/api/v1/inventories?page.offset=${this.pageOffset}&page.limit=20`)
+      axios.get(this.serverBaseURL + `/api/v1/inventories/?page.offset=${this.pageOffset}&page.limit=20`)
         .then((res) => {
           this.inventories = res.data.inventories
           this.inventoriesNum = res.data.inventories.length
@@ -1143,10 +1147,14 @@ export default {
           }
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          this.message = '内部服务错误！'
-          this.showMessage = true
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            this.message = '内部服务错误！'
+            this.showMessage = true
+          }
         })
     },
     getInventoriesTotal () {
@@ -1210,7 +1218,7 @@ export default {
           'Content-Type': 'multipart/form-data'
         }
       }
-      axios.post(this.serverBaseURL + '/api/v1/inventories/upload', formData, config, date)
+      axios.post(this.serverBaseURL + '/api/v1/inventories/upload', formData, config)
         .then((res) => {
           if (res.data.status === 'success') {
             this.listInventories()
@@ -1241,7 +1249,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '导入失败！'
+          this.message = '内部服务错误！'
           this.showMessage = true
           this.importCSVFileClose()
         })
@@ -1258,7 +1266,7 @@ export default {
           let formData = new FormData()
           formData.append('file', this.uploadCSVFile, this.uploadCSVFile.name)
           formData.append('import_date', this.customDateSelection)
-          this.importCSVFile(formData, this.customDateSelection)
+          this.importCSVFile(formData)
         }
       } else {
         this.message = '日期格式有误！'
@@ -1299,7 +1307,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '删除失败!'
+          this.message = '内部服务错误！'
           this.showMessage = true
           this.cleanAllInventoriesClose()
         })
@@ -1334,7 +1342,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '获取自定义UI失败！'
+          this.message = '内部服务错误！'
           this.showMessage = true
         })
     },
@@ -1347,7 +1355,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '保存自定义UI失败！'
+          this.message = '内部服务错误！'
           this.showMessage = true
         })
     },
@@ -1395,7 +1403,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '预览失败！'
+          this.message = '内部服务错误！'
           this.showMessage = true
           this.previewReportFileCase1Close()
         })
@@ -1461,7 +1469,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '预览失败！'
+          this.message = '内部服务错误！'
           this.showMessage = true
           this.previewReportFileCase2Close()
         })
@@ -1523,7 +1531,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '预览失败！'
+          this.message = '内部服务错误！'
           this.showMessage = true
           this.previewReportFileCase3Close()
         })
@@ -1607,7 +1615,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '预览失败！'
+          this.message = '内部服务错误！'
           this.showMessage = true
           this.previewReportFileCase4Close()
         })
@@ -1674,7 +1682,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '预览失败！'
+          this.message = '内部服务错误！'
           this.showMessage = true
           this.previewReportFileCase5WayClose()
         })
@@ -1779,7 +1787,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '导入失败！'
+          this.message = '内部服务错误！'
           this.showMessage = true
           this.importCSVFileForCase6Close()
         })
@@ -1818,7 +1826,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '预览失败！'
+          this.message = '内部服务错误！'
           this.showMessage = true
           this.previewReportFileCase6Close()
         })
@@ -1864,7 +1872,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '下载失败！'
+          this.message = '内部服务错误！'
           this.showMessage = true
           this.prepareExportReportFileClose()
         })
@@ -1886,7 +1894,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '下载失败！'
+          this.message = '内部服务错误！'
           this.showMessage = true
         })
     },
@@ -1899,7 +1907,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '下载失败！'
+          this.message = '内部服务错误！'
           this.showMessage = true
         })
     },
@@ -1920,7 +1928,7 @@ export default {
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '下载失败！'
+          this.message = '内部服务错误！'
           this.showMessage = true
         })
     },
@@ -2012,6 +2020,16 @@ export default {
     this.getInventoriesTotal()
     this.setDefaultDate()
     this.fetchUI()
+
+    if (this.$cookies.isKey('role')) {
+      if (this.$cookies.get('role') === 'role=0') {
+        this.showUserManagementModule = true
+      } else {
+        this.showUserManagementModule = false
+      }
+    } else {
+      this.showUserManagementModule = false
+    }
   }
 }
 </script>
