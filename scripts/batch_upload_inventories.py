@@ -29,9 +29,15 @@ if __name__ == "__main__":
     csvfiles = glob.glob("{}/*.csv".format(args.dir))
     csvfiles.sort()
 
-    api_url = "http://{}:15555/api/v1/inventories/upload".format(args.server_ip)
     with requests.Session() as session:
+        api_url = "http://{}:15555/api/v1/users/login".format(args.server_ip)
+        session.post(api_url, json={"username": "fotolei", "password": "asdf5678"})
+
+        api_url = "http://{}:15555/api/v1/inventories/upload".format(args.server_ip)
         for csvfile in csvfiles:
             year_and_month = os.path.basename(csvfile)[0:7]
             year_and_month = year_and_month.replace(".", "-")
             do_batch_upload_inventories(session, api_url, year_and_month, csvfile)
+
+        api_url = "http://{}:15555/api/v1/users/logout".format(args.server_ip)
+        session.delete(api_url)
