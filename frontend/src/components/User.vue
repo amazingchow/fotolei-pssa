@@ -1,24 +1,8 @@
 <template>
   <div class="container-fluid" v-if="showUserManagementModule">
-    <div class="row">
-      <div class="col-sm-12">
-        <b-navbar type="dark" variant="dark">
-          <b-navbar-nav>
-            <b-nav-item :active="false" href="/product">商品明细库</b-nav-item>
-            <b-nav-item :active="false" href="/">库存明细库</b-nav-item>
-            <b-nav-item :active="false" href="/slist">辅助查询</b-nav-item>
-            <b-nav-item :active="false" href="/oplog">操作日志</b-nav-item>
-            <b-nav-item :active="true" href="/user">用户管理</b-nav-item>
-          </b-navbar-nav>
-        </b-navbar>
-      </div>
-    </div>
+    <navbar></navbar>
     <br/>
-    <div class="row">
-      <div class="col-sm-12">
-        <alert :message=message v-if="showMessage"></alert>
-      </div>
-    </div>
+    <alert :message=message v-if="showMessage"></alert>
     <div class="row">
       <div class="col-sm-3">
       </div>
@@ -162,6 +146,7 @@
 <script>
 import axios from 'axios'
 import Alert from './Alert.vue'
+import Navbar from './Navbar.vue'
 import router from '../router'
 
 export default {
@@ -181,7 +166,8 @@ export default {
     }
   },
   components: {
-    alert: Alert
+    alert: Alert,
+    navbar: Navbar
   },
   methods: {
     async listUsers () {

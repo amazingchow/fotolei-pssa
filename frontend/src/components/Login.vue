@@ -1,10 +1,6 @@
 <template>
   <div class="container-fluid">
-    <div class="row">
-      <div class="col-sm-12">
-        <alert :message=message v-if="showMessage"></alert>
-      </div>
-    </div>
+    <alert :message=message v-if="showMessage"></alert>
     <div class="row">
       <div class="col-sm-4">
       </div>

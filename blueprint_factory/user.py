@@ -169,7 +169,7 @@ def login():
 
     session["is_logged_in"] = True
     session["role"] = user[2]
-    current_app.logger.info("用户 <usr: {}> 已登录".format(usr))
+    current_app.logger.info("用户 <usr: {}, sid: {}> 已登录".format(usr, session.sid))
 
     return make_response(
         jsonify({"message": "logged in"}),

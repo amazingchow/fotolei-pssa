@@ -159,12 +159,11 @@ FROM fotolei_pssa.products ORDER BY specification_code LIMIT {}, {};".format(
         page_offset, page_limit)
     products = db_connector.query(stmt)
 
-    response_object = {"message": "not found"}
     if (type(products) is not list) or (type(products) is list and len(products) == 0):
         response_object = {"message": "not found", "products": []}
         return make_response(
             jsonify(response_object),
-            StatusCode.HTTP_404_NOT_FOUND
+            StatusCode.HTTP_200_OK
         )
     response_object = {"message": "", "products": products}
     return make_response(
