@@ -15,9 +15,34 @@
     </div>
     <br/>
     <div class="row">
+      <div class="col-sm-12">
+        <alert :message=message v-if="showMessage"></alert>
+      </div>
+    </div>
+    <div class="row">
       <div class="col-sm-3">
       </div>
       <div class="col-sm-6">
+        <b-list-group>
+          <b-list-group-item>
+            <b-badge variant="secondary">超级管理员</b-badge>
+            <br/>
+            <b-badge variant="light">* 注册/注销用户（无法注销超级管理员fotolei）</b-badge>
+            <br/>
+            <b-badge variant="light">* 导入/查看/修改/删除/导出数据（包括产品数据和进销存数据）</b-badge>
+          </b-list-group-item>
+          <b-list-group-item>
+            <b-badge variant="secondary">普通管理员</b-badge>
+            <br/>
+            <b-badge variant="light">* 查看/导出数据（包括产品数据和进销存数据）</b-badge>
+          </b-list-group-item>
+          <b-list-group-item>
+            <b-badge variant="secondary">普通用户</b-badge>
+            <br/>
+            <b-badge variant="light">* 查看/导出数据（包括产品数据和进销存数据，但涉及敏感金额的地方，不予展示）</b-badge>
+          </b-list-group-item>
+        </b-list-group>
+        <br>
         <b-card bg-variant="light">
           <b-table-simple striped hover small id="users-table">
             <b-thead>
@@ -58,7 +83,7 @@
                 label-align-sm="right"
                 label-cols-sm="3"
               >
-                <b-form-input v-model="edDateSelection" placeholder="长度不能少于8位" class="create-user-input"></b-form-input>
+                <b-form-input v-model="passwordOfCreatedUser" placeholder="长度不能少于8位" class="create-user-input"></b-form-input>
               </b-form-group>
               <b-form-group
                 label="用户权限"
@@ -67,12 +92,11 @@
                 label-cols-sm="3"
               >
                 <b-form-radio-group
-                  v-model="roleTypeOfCreatedUser"
                   stacked
                 >
-                  <b-form-radio value=0>超级管理员</b-form-radio>
-                  <b-form-radio value=1>普通管理员</b-form-radio>
-                  <b-form-radio value=2>普通用户</b-form-radio>
+                  <b-form-radio v-model="roleTypeOfCreatedUser" value=0>超级管理员</b-form-radio>
+                  <b-form-radio v-model="roleTypeOfCreatedUser" value=1>普通管理员</b-form-radio>
+                  <b-form-radio v-model="roleTypeOfCreatedUser" value=2>普通用户</b-form-radio>
                 </b-form-radio-group>
               </b-form-group>
               <div id="create-user-btn-area" class="w-100 d-block">
@@ -82,7 +106,7 @@
             </b-card>
           </b-form>
         </b-modal>
-        <b-modal ref="deleteUserModal" id="delete-user-modal" title="创建用户" hide-footer>
+        <b-modal ref="deleteUserModal" id="delete-user-modal" title="删除用户" hide-footer>
           <b-form>
             <b-card bg-variant="light">
               <b-form-group
@@ -137,6 +161,7 @@
 
 <script>
 import axios from 'axios'
+import Alert from './Alert.vue'
 import router from '../router'
 
 export default {
@@ -155,12 +180,89 @@ export default {
       showUserManagementModule: false
     }
   },
+  components: {
+    alert: Alert
+  },
   methods: {
     async listUsers () {
       await axios.get(this.serverBaseURL + '/api/v1/users/?page.offset=0&page.limit=20')
         .then((res) => {
           const users = Object.freeze(res.data.users)
           this.users = users
+        })
+        .catch((error) => {
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else if (error.response.status === 403) {
+            router.push('/404')
+          } else {
+            router.push('/500')
+            // eslint-disable-next-line
+            console.log(error)
+            this.message = '内部服务错误！'
+            this.showMessage = true
+          }
+        })
+    },
+    onCreateUser (evt) {
+      evt.preventDefault()
+      this.$refs.createUserModal.hide()
+      const payload = {
+        username: this.usernameOfCreatedUser,
+        password: this.passwordOfCreatedUser,
+        role: this.roleTypeOfCreatedUser
+      }
+      this.createUser(payload)
+      this.usernameOfCreatedUser = ''
+      this.passwordOfCreatedUser = ''
+      this.roleTypeOfCreatedUser = 2
+    },
+    onCancelCreateUser (evt) {
+      evt.preventDefault()
+      this.$refs.createUserModal.hide()
+      this.usernameOfCreatedUser = ''
+      this.passwordOfCreatedUser = ''
+      this.roleTypeOfCreatedUser = 2
+    },
+    async createUser (payload) {
+      await axios.post(this.serverBaseURL + '/api/v1/users/register', payload)
+        .then((_) => {
+          this.listUsers()
+        })
+        .catch((error) => {
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else if (error.response.status === 403) {
+            router.push('/404')
+          } else {
+            router.push('/500')
+            // eslint-disable-next-line
+            console.log(error)
+            this.message = '内部服务错误！'
+            this.showMessage = true
+          }
+        })
+    },
+    onDeleteUser (evt) {
+      evt.preventDefault()
+      this.$refs.deleteUserModal.hide()
+      if (this.usernameOfDeletedUser === 'fotolei') {
+        this.message = '禁止注销超级管理员fotolei！'
+        this.showMessage = true
+      } else {
+        this.deleteUser(this.usernameOfDeletedUser)
+      }
+      this.usernameOfDeletedUser = ''
+    },
+    onCancelDeleteUser (evt) {
+      evt.preventDefault()
+      this.$refs.deleteUserModal.hide()
+      this.usernameOfDeletedUser = ''
+    },
+    async deleteUser (username) {
+      await axios.delete(this.serverBaseURL + '/api/v1/users/unregister?username=' + username)
+        .then((_) => {
+          this.listUsers()
         })
         .catch((error) => {
           if (error.response.status === 401) {

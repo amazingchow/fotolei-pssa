@@ -16,7 +16,7 @@
             label-align-sm="right"
             label-cols-sm="3"
             >
-            <b-form-input v-model="loginForm.username" class="login-input"></b-form-input>
+            <b-form-input v-model="loginForm.username"></b-form-input>
           </b-form-group>
           <b-form-group
             label="密码"
@@ -24,7 +24,7 @@
             label-align-sm="right"
             label-cols-sm="3"
             >
-            <b-form-input v-model="loginForm.password" class="login-input" type="password"></b-form-input>
+            <b-form-input v-model="loginForm.password" type="password"></b-form-input>
           </b-form-group>
           <br/>
           <div id="login-btn" class="w-100 d-block">
@@ -41,14 +41,11 @@
 <style>
 #login-form {
   margin-top: 200px;
+  max-width: 300px;
 }
 
 #login-btn {
-  text-align: center;
-}
-
-.login-input {
-  max-width: 300px;
+  text-align: right;
 }
 </style>
 
@@ -61,10 +58,12 @@ export default {
   data () {
     return {
       serverBaseURL: process.env.SERVER_BASE_URL,
+
       loginForm: {
         username: '',
         password: ''
       },
+
       showMessage: false
     }
   },
