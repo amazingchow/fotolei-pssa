@@ -75,6 +75,7 @@ export default {
       await axios.post(this.serverBaseURL + '/api/v1/users/login', payload)
         .then((res) => {
           this.$cookies.set('logged', res.headers['set-logged'])
+          this.$cookies.set('username', res.headers['set-user'])
           this.$cookies.set('role', res.headers['set-role'])
           router.push('/')
         })

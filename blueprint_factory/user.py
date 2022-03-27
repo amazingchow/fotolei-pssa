@@ -134,7 +134,11 @@ def login():
         return make_response(
             jsonify({"message": "logged in"}),
             StatusCode.HTTP_200_OK,
-            {"Set-Role": "role={}".format(session["role"]), "Set-Logged": "logged=in"}
+            {
+                "Set-Logged": "logged=in",
+                "Set-User": "user={}".format(usr),
+                "Set-Role": "role={}".format(session["role"])
+            }
         )
 
     payload = request.get_json()
@@ -174,7 +178,12 @@ def login():
     return make_response(
         jsonify({"message": "logged in"}),
         StatusCode.HTTP_200_OK,
-        {"Set-Role": "role={}".format(session["role"]), "Set-Logged": "logged=in"}
+        {
+
+            "Set-Logged": "logged=in",
+            "Set-User": "user={}".format(usr),
+            "Set-Role": "role={}".format(session["role"])
+        }
     )
 
 
