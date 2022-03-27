@@ -4,34 +4,8 @@ import os
 import errno
 import hashlib
 import io
-import logging
-import logging.handlers
-_rotate_file_handler = logging.handlers.WatchedFileHandler(
-    filename="{}/fotolei-pssa/logs/fotolei-pssa-profile.log".format(os.path.expanduser("~")),
-    mode="a"
-)
-_rotate_file_handler_formatter = logging.Formatter(
-    "[%(asctime)-15s][%(levelname)-5s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
-)
-_rotate_file_handler.setFormatter(_rotate_file_handler_formatter)
-_profile_logger = logging.getLogger("FotoleiPssA_Profile")
-_profile_logger.setLevel(logging.INFO)
-_profile_logger.addHandler(_rotate_file_handler)
 import random
 import time
-
-from functools import wraps
-
-
-# 通用工具函数 - 过程执行耗时统计器
-def util_cost_count(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        start = time.time()
-        t = func(*args, **kwargs)
-        _profile_logger.info("%s tooks time: %f secs", func.__name__, time.time() - start)
-        return t
-    return wrapper
 
 
 # 通用工具函数 - 为存储在磁盘上的文件内容生成摘要

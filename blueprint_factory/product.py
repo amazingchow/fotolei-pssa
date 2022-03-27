@@ -19,6 +19,7 @@ from flask_api import status as StatusCode
 
 from .decorator_factory import has_logged_in
 from .decorator_factory import restrict_access
+from .decorator_factory import cost_count
 from db import db_connector
 from utils import get_lookup_table_k_sku_v_boolean
 from utils import init_lookup_table_k_brand_k_c1_k_c2_k_product_series_v_supplier_name
@@ -37,7 +38,6 @@ from utils import REG_INT_AND_FLOAT
 from utils import REG_POSITIVE_INT
 from utils import ROLE_TYPE_ORDINARY_USER
 from utils import ROLE_TYPE_SUPER_ADMIN
-from utils import util_cost_count
 from utils import util_generate_digest
 from utils import util_generate_bytes_in_hdd_digest
 from utils import util_silent_remove
@@ -54,7 +54,7 @@ product_blueprint = Blueprint(
 @product_blueprint.route("/upload", methods=["POST"])
 @has_logged_in
 @restrict_access(access_level=ROLE_TYPE_SUPER_ADMIN)
-@util_cost_count
+@cost_count
 def upload_products():
     csv_files = request.files.getlist("file")
     if len(csv_files) != 1:
@@ -146,7 +146,7 @@ def upload_products():
 @product_blueprint.route("/", methods=["GET"])
 @has_logged_in
 @restrict_access(access_level=ROLE_TYPE_ORDINARY_USER)
-@util_cost_count
+@cost_count
 def list_products():
     page_offset = request.args.get("page.offset", 0)
     page_limit = request.args.get("page.limit", 20)
@@ -176,7 +176,7 @@ FROM fotolei_pssa.products ORDER BY specification_code LIMIT {}, {};".format(
 @product_blueprint.route("/total", methods=["GET"])
 @has_logged_in
 @restrict_access(access_level=ROLE_TYPE_ORDINARY_USER)
-@util_cost_count
+@cost_count
 def get_products_total():
     stmt = "SELECT SUM(total) FROM fotolei_pssa.product_summary;"
     ret = db_connector.query(stmt)
@@ -193,7 +193,7 @@ def get_products_total():
 @product_blueprint.route("/one/update", methods=["POST"])
 @has_logged_in
 @restrict_access(access_level=ROLE_TYPE_SUPER_ADMIN)
-@util_cost_count
+@cost_count
 def update_one_product():
     payload = request.get_json()
     id = payload["id"]
@@ -275,7 +275,7 @@ def update_one_product():
 @product_blueprint.route("/one/pick", methods=["GET"])
 @has_logged_in
 @restrict_access(access_level=ROLE_TYPE_SUPER_ADMIN)
-@util_cost_count
+@cost_count
 def pick_one_product():
     specification_code = request.args.get("specification_code")
     if not get_lookup_table_k_sku_v_boolean(specification_code):
@@ -327,7 +327,7 @@ def pick_one_product():
 @product_blueprint.route("/all/clean", methods=["POST"])
 @has_logged_in
 @restrict_access(access_level=ROLE_TYPE_SUPER_ADMIN)
-@util_cost_count
+@cost_count
 def clean_all_products():
     payload = request.get_json()
     admin_usr = payload.get("admin_usr", "").strip()
@@ -404,7 +404,7 @@ CREATE TABLE IF NOT EXISTS fotolei_pssa.product_summary (
 @product_blueprint.route("/one/clean", methods=["POST"])
 @has_logged_in
 @restrict_access(access_level=ROLE_TYPE_SUPER_ADMIN)
-@util_cost_count
+@cost_count
 def clean_one_product():
     payload = request.get_json()
     admin_usr = payload.get("admin_usr", "").strip()
@@ -428,7 +428,7 @@ def clean_one_product():
 @product_blueprint.route("/addedskus/prepare", methods=["POST"])
 @has_logged_in
 @restrict_access(access_level=ROLE_TYPE_SUPER_ADMIN)
-@util_cost_count
+@cost_count
 def prepare_added_skus():
     payload = request.get_json()
     added_skus = payload.get("added_skus", [])

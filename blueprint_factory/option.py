@@ -9,9 +9,9 @@ from flask import jsonify
 
 from .decorator_factory import has_logged_in
 from .decorator_factory import restrict_access
+from .decorator_factory import cost_count
 from db import db_connector
 from utils import ROLE_TYPE_ORDINARY_USER
-from utils import util_cost_count
 
 
 option_blueprint = Blueprint(
@@ -25,7 +25,7 @@ option_blueprint = Blueprint(
 @option_blueprint.route("/", methods=["GET"])
 @has_logged_in
 @restrict_access(access_level=ROLE_TYPE_ORDINARY_USER)
-@util_cost_count
+@cost_count
 def list_all_options():
     response_object = {"status": "success"}
 

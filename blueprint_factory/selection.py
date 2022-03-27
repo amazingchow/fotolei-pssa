@@ -9,9 +9,9 @@ from flask import jsonify
 
 from .decorator_factory import has_logged_in
 from .decorator_factory import restrict_access
+from .decorator_factory import cost_count
 from db import db_connector
 from utils import ROLE_TYPE_ORDINARY_USER
-from utils import util_cost_count
 
 
 selection_blueprint = Blueprint(
@@ -25,7 +25,7 @@ selection_blueprint = Blueprint(
 @selection_blueprint.route("/brands", methods=["GET"])
 @has_logged_in
 @restrict_access(access_level=ROLE_TYPE_ORDINARY_USER)
-@util_cost_count
+@cost_count
 def list_all_brand_selections():
     response_object = {"status": "success"}
 
@@ -48,7 +48,7 @@ def list_all_brand_selections():
 @selection_blueprint.route("/classification1", methods=["GET"])
 @has_logged_in
 @restrict_access(access_level=ROLE_TYPE_ORDINARY_USER)
-@util_cost_count
+@cost_count
 def list_all_classification_1_selections():
     response_object = {"status": "success"}
 
@@ -71,7 +71,7 @@ def list_all_classification_1_selections():
 @selection_blueprint.route("/suppliers", methods=["GET"])
 @has_logged_in
 @restrict_access(access_level=ROLE_TYPE_ORDINARY_USER)
-@util_cost_count
+@cost_count
 def list_all_supplier_selections():
     response_object = {"status": "success"}
 

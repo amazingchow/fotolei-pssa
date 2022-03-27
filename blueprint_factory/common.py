@@ -10,9 +10,9 @@ from flask import send_from_directory
 
 from .decorator_factory import has_logged_in
 from .decorator_factory import restrict_access
+from .decorator_factory import cost_count
 from db import db_connector
 from utils import ROLE_TYPE_ORDINARY_USER
-from utils import util_cost_count
 
 
 common_blueprint = Blueprint(
@@ -24,7 +24,7 @@ common_blueprint = Blueprint(
 
 # 探活接口
 @common_blueprint.route("/keepalive", methods=["GET"])
-@util_cost_count
+@cost_count
 def keepalive():
     return jsonify("alive")
 
@@ -33,7 +33,7 @@ def keepalive():
 @common_blueprint.route("/download/<path:filename>", methods=["GET"])
 @has_logged_in
 @restrict_access(access_level=ROLE_TYPE_ORDINARY_USER)
-@util_cost_count
+@cost_count
 def download(filename):
     return send_from_directory(directory="{}/fotolei-pssa/send_queue".format(os.path.expanduser("~")), path=filename)
 
@@ -42,7 +42,7 @@ def download(filename):
 @common_blueprint.route("/oplogs", methods=["GET"])
 @has_logged_in
 @restrict_access(access_level=ROLE_TYPE_ORDINARY_USER)
-@util_cost_count
+@cost_count
 def get_oplogs():
     stmt = "SELECT oplog, DATE_FORMAT(create_time, '%Y-%m-%d %H-%i-%s') FROM fotolei_pssa.operation_logs ORDER BY create_time DESC LIMIT 20;"
     rets = db_connector.query(stmt)

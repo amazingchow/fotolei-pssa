@@ -18,6 +18,7 @@ from flask import request
 
 from .decorator_factory import has_logged_in
 from .decorator_factory import restrict_access
+from .decorator_factory import cost_count
 from db import db_connector
 from utils import clean_lookup_table_k_ct_sku_v_boolean
 from utils import init_lookup_table_k_ct_sku_v_boolean
@@ -29,7 +30,6 @@ from utils import REG_INT
 from utils import REG_INT_AND_FLOAT
 from utils import ROLE_TYPE_ORDINARY_USER
 from utils import ROLE_TYPE_SUPER_ADMIN
-from utils import util_cost_count
 from utils import util_generate_bytes_in_hdd_digest, util_generate_digest
 from utils import util_silent_remove
 
@@ -45,7 +45,7 @@ inventory_blueprint = Blueprint(
 @inventory_blueprint.route("/upload", methods=["POST"])
 @has_logged_in
 @restrict_access(access_level=ROLE_TYPE_SUPER_ADMIN)
-@util_cost_count
+@cost_count
 def upload_inventories():
     csv_files = request.files.getlist("file")
     import_date = request.form.get("import_date", "")
@@ -136,7 +136,7 @@ def upload_inventories():
 @inventory_blueprint.route("/", methods=["GET"])
 @has_logged_in
 @restrict_access(access_level=ROLE_TYPE_ORDINARY_USER)
-@util_cost_count
+@cost_count
 def list_inventories():
     page_offset = request.args.get("page.offset", 0)
     page_limit = request.args.get("page.limit", 20)
@@ -162,7 +162,7 @@ FROM fotolei_pssa.inventories ORDER BY create_time DESC LIMIT {}, {};".format(
 @inventory_blueprint.route("/total", methods=["GET"])
 @has_logged_in
 @restrict_access(access_level=ROLE_TYPE_ORDINARY_USER)
-@util_cost_count
+@cost_count
 def get_inventories_total():
     stmt = "SELECT SUM(total) FROM fotolei_pssa.inventory_summary;"
     ret = db_connector.query(stmt)
@@ -178,7 +178,7 @@ def get_inventories_total():
 @inventory_blueprint.route("/all/clean", methods=["POST"])
 @has_logged_in
 @restrict_access(access_level=ROLE_TYPE_SUPER_ADMIN)
-@util_cost_count
+@cost_count
 def clean_all_inventories():
     payload = request.get_json()
     admin_usr = payload.get("admin_usr", "").strip()

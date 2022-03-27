@@ -14,10 +14,10 @@ from flask import request
 
 from .decorator_factory import has_logged_in
 from .decorator_factory import restrict_access
+from .decorator_factory import cost_count
 from db import db_connector
 from utils import ROLE_TYPE_ORDINARY_USER
 from utils import util_calc_month_num
-from utils import util_cost_count
 from utils import util_generate_digest
 
 
@@ -45,8 +45,8 @@ case4_blueprint = Blueprint(
 @case4_blueprint.route("/preview", methods=["POST"])
 @has_logged_in
 @restrict_access(access_level=ROLE_TYPE_ORDINARY_USER)
-@util_cost_count
-def export_report_file_case4():
+@cost_count
+def preview_report_file_case4():
     payload = request.get_json()
     # 1. 起始日期和截止日期用于过滤掉时间条件不符合的记录项
     # 2. 先用其他非空条件筛选出规格编码，再用规格编码筛选出想要的数据
@@ -201,7 +201,7 @@ def export_report_file_case4():
 @case4_blueprint.route("/prepare", methods=["POST"])
 @has_logged_in
 @restrict_access(access_level=ROLE_TYPE_ORDINARY_USER)
-@util_cost_count
+@cost_count
 def prepare_report_file_case4():
     payload = request.get_json()
     preview_table = payload.get("preview_table", [])

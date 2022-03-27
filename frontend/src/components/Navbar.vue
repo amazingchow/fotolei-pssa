@@ -42,7 +42,8 @@ export default {
   methods: {
     async onLogout () {
       await axios.delete(this.serverBaseURL + '/api/v1/users/logout')
-        .then((_) => {
+        .then((res) => {
+          this.$cookies.set('logged', res.headers['set-logged'].split('=')[1])
           router.push('/login')
         })
         .catch((_) => {
@@ -51,7 +52,7 @@ export default {
   },
   created () {
     if (this.$cookies.isKey('role')) {
-      if (this.$cookies.get('role') === 'role=0') {
+      if (this.$cookies.get('role') === '0') {
         this.showUserManagementModule = true
       } else {
         this.showUserManagementModule = false
@@ -61,7 +62,7 @@ export default {
     }
 
     if (this.$cookies.isKey('username')) {
-      this.username = this.$cookies.get('username').split('=')[1]
+      this.username = this.$cookies.get('username')
     }
   }
 }

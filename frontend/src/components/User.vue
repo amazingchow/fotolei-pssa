@@ -270,7 +270,7 @@ export default {
     console.log(process.env.SERVER_BASE_URL)
 
     if (this.$cookies.isKey('role')) {
-      if (this.$cookies.get('role') === 'role=0') {
+      if (this.$cookies.get('role') === '0') {
         this.showUserManagementModule = true
         this.listUsers()
       } else {
