@@ -15,12 +15,18 @@ from flask import Blueprint
 from flask import jsonify
 from flask import make_response
 from flask import request
+from flask import session
 from flask_api import status as StatusCode
 
 from .decorator_factory import has_logged_in
 from .decorator_factory import restrict_access
 from .decorator_factory import cost_count
+from .decorator_factory import record_action
 from db import db_connector
+from utils import ACTION_TYPE_DELETE_ALL
+from utils import ACTION_TYPE_DELETE_ONE
+from utils import ACTION_TYPE_IMPORT
+from utils import ACTION_TYPE_UPDATE_ONE
 from utils import get_lookup_table_k_sku_v_boolean
 from utils import init_lookup_table_k_brand_k_c1_k_c2_k_product_series_v_supplier_name
 from utils import init_lookup_table_k_brand_v_brand_c2
@@ -50,10 +56,11 @@ product_blueprint = Blueprint(
 )
 
 
-# 载入"商品明细数据报表"的接口
+# 载入"商品明细数据表"的接口
 @product_blueprint.route("/upload", methods=["POST"])
 @has_logged_in
 @restrict_access(access_level=ROLE_TYPE_SUPER_ADMIN)
+@record_action(action=ACTION_TYPE_IMPORT)
 @cost_count
 def upload_products():
     csv_files = request.files.getlist("file")
@@ -125,8 +132,6 @@ def upload_products():
                 pass
             stmt = "INSERT INTO fotolei_pssa.product_summary (total) VALUES (%s);"
             db_connector.insert(stmt, (csv_reader.line_num - 1,))
-        stmt = "INSERT INTO fotolei_pssa.operation_logs (oplog) VALUES (%s);"
-        db_connector.insert(stmt, ("导入{}".format(csv_files[0].filename),))
 
         init_lookup_table_k_sku_v_boolean()
         init_lookup_table_k_sku_v_brand_c1_c2_is_combined()
@@ -136,6 +141,7 @@ def upload_products():
 
         load_file_repetition_lookup_table[digest] = True
     load_file_repetition_lookup_table.close()
+    session["op_object"] = csv_files[0].filename
     return make_response(
         jsonify(response_object),
         StatusCode.HTTP_200_OK
@@ -193,6 +199,7 @@ def get_products_total():
 @product_blueprint.route("/one/update", methods=["POST"])
 @has_logged_in
 @restrict_access(access_level=ROLE_TYPE_SUPER_ADMIN)
+@record_action(action=ACTION_TYPE_UPDATE_ONE)
 @cost_count
 def update_one_product():
     payload = request.get_json()
@@ -265,6 +272,7 @@ def update_one_product():
     stmt += " WHERE id = '{}';".format(id)
     db_connector.update(stmt)
 
+    session["op_object"] = "商品记录<SKU: {}>".format(specification_code)
     return make_response(
         jsonify({"message": ""}),
         StatusCode.HTTP_200_OK
@@ -327,6 +335,7 @@ def pick_one_product():
 @product_blueprint.route("/all/clean", methods=["POST"])
 @has_logged_in
 @restrict_access(access_level=ROLE_TYPE_SUPER_ADMIN)
+@record_action(action=ACTION_TYPE_DELETE_ALL)
 @cost_count
 def clean_all_products():
     payload = request.get_json()
@@ -389,6 +398,7 @@ CREATE TABLE IF NOT EXISTS fotolei_pssa.product_summary (
         clean_lookup_table_k_brand_v_brand_c2()
         clean_lookup_table_k_brand_k_c1_k_c2_k_product_series_v_supplier_name()
 
+        session["op_object"] = "商品记录"
         return make_response(
             jsonify({"message": ""}),
             StatusCode.HTTP_200_OK
@@ -404,6 +414,7 @@ CREATE TABLE IF NOT EXISTS fotolei_pssa.product_summary (
 @product_blueprint.route("/one/clean", methods=["POST"])
 @has_logged_in
 @restrict_access(access_level=ROLE_TYPE_SUPER_ADMIN)
+@record_action(action=ACTION_TYPE_DELETE_ONE)
 @cost_count
 def clean_one_product():
     payload = request.get_json()
@@ -413,6 +424,8 @@ def clean_one_product():
     if admin_usr == "fotolei" and admin_pwd == "asdf5678":
         stmt = "DELETE FROM fotolei_pssa.products WHERE specification_code = '{}';".format(specification_code)
         db_connector.delete(stmt)
+
+        session["op_object"] = "商品记录<SKU: {}>".format(specification_code)
         return make_response(
             jsonify({"message": ""}),
             StatusCode.HTTP_200_OK

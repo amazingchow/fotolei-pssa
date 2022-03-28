@@ -4,7 +4,7 @@
     <div class="row">
       <div class="col-sm-4">
       </div>
-      <div class="col-sm-4">
+      <div class="col-sm-4" id="login-form-area">
         <b-form id="login-form">
           <b-form-group
             label="账号"
@@ -35,6 +35,11 @@
 </template>
 
 <style>
+#login-form-area {
+  display: flex;
+  justify-content: center;
+}
+
 #login-form {
   margin-top: 200px;
   max-width: 300px;

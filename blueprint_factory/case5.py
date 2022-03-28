@@ -13,11 +13,14 @@ from flask import current_app
 from flask import Blueprint
 from flask import jsonify
 from flask import request
+from flask import session
 
 from .decorator_factory import has_logged_in
 from .decorator_factory import restrict_access
 from .decorator_factory import cost_count
+from .decorator_factory import record_action
 from db import db_connector
+from utils import ACTION_TYPE_EXPORT
 from utils import ROLE_TYPE_ORDINARY_USER
 from utils import util_calc_month_num
 from utils import util_generate_digest
@@ -252,6 +255,7 @@ jit_inventory, product_weight, product_length, product_width, product_height, mo
 @case5_blueprint.route("/prepare", methods=["POST"])
 @has_logged_in
 @restrict_access(access_level=ROLE_TYPE_ORDINARY_USER)
+@record_action(action=ACTION_TYPE_EXPORT)
 @cost_count
 def prepare_report_file_case5():
     payload = request.get_json()
@@ -290,6 +294,8 @@ def prepare_report_file_case5():
     response_object = {"status": "success"}
     response_object["output_file"] = output_file
     response_object["server_send_queue_file"] = csv_file_sha256
+
+    session["op_object"] = output_file
     return jsonify(response_object)
 
 

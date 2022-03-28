@@ -13,11 +13,15 @@ from collections import defaultdict
 from flask import Blueprint
 from flask import jsonify
 from flask import request
+from flask import session
 
 from .decorator_factory import has_logged_in
 from .decorator_factory import restrict_access
 from .decorator_factory import cost_count
+from .decorator_factory import record_action
 from db import db_connector
+from utils import ACTION_TYPE_EXPORT
+from utils import ACTION_TYPE_UPDATE_ONE
 from utils import get_lookup_table_k_brand_v_brand_c2
 from utils import get_lookup_table_k_brand_v_brand_c2_keys
 from utils import get_lookup_table_k_c1_v_c1_c2
@@ -56,6 +60,7 @@ def fetch_ui():
 @case1_blueprint.route("/ui/save", methods=["POST"])
 @has_logged_in
 @restrict_access(access_level=ROLE_TYPE_SUPER_ADMIN)
+@record_action(action=ACTION_TYPE_UPDATE_ONE)
 @cost_count
 def save_ui():
     payload = request.get_json()
@@ -76,6 +81,7 @@ def save_ui():
     customize_report_forms_ui["brand_classification2_tags"] = brand_classification2_tags
     customize_report_forms_ui.close()
 
+    session["op_object"] = "销售报表（按分类汇总）输出格式"
     response_object = {"status": "success"}
     return jsonify(response_object)
 
@@ -485,6 +491,7 @@ FROM fotolei_pssa.inventories WHERE extra_brand = '{}' AND extra_classification_
 @case1_blueprint.route("/prepare", methods=["POST"])
 @has_logged_in
 @restrict_access(access_level=ROLE_TYPE_ORDINARY_USER)
+@record_action(action=ACTION_TYPE_EXPORT)
 @cost_count
 def prepare_report_file_case1():
     payload = request.get_json()
@@ -502,4 +509,6 @@ def prepare_report_file_case1():
     response_object = {"status": "success"}
     response_object["output_file"] = output_file
     response_object["server_send_queue_file"] = csv_file_sha256
+
+    session["op_object"] = output_file
     return jsonify(response_object)

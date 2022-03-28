@@ -166,6 +166,7 @@ def login():
             StatusCode.HTTP_401_UNAUTHORIZED
         )
 
+    session["username"] = usr
     session["is_logged_in"] = True
     session["role"] = user[2]
     current_app.logger.info("用户 <usr: {}, sid: {}> 已登录".format(usr, session.sid))
