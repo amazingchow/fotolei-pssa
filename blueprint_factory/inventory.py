@@ -14,12 +14,18 @@ import time
 from flask import current_app
 from flask import Blueprint
 from flask import jsonify
+from flask import make_response
 from flask import request
+from flask import session
+from flask_api import status as StatusCode
 
 from .decorator_factory import has_logged_in
 from .decorator_factory import restrict_access
 from .decorator_factory import cost_count
+from .decorator_factory import record_action
 from db import db_connector
+from utils import ACTION_TYPE_IMPORT
+from utils import ACTION_TYPE_DELETE_ALL
 from utils import clean_lookup_table_k_ct_sku_v_boolean
 from utils import init_lookup_table_k_ct_sku_v_boolean
 from utils import get_lookup_table_k_ct_sku_v_boolean
@@ -41,13 +47,20 @@ inventory_blueprint = Blueprint(
 )
 
 
-# 载入"库存数据报表"的接口
+# 载入"库存数据表"的接口
 @inventory_blueprint.route("/upload", methods=["POST"])
 @has_logged_in
 @restrict_access(access_level=ROLE_TYPE_SUPER_ADMIN)
+@record_action(action=ACTION_TYPE_IMPORT)
 @cost_count
 def upload_inventories():
     csv_files = request.files.getlist("file")
+    if len(csv_files) != 1:
+        return make_response(
+            jsonify({"message": "invalid upload"}),
+            StatusCode.HTTP_400_BAD_REQUEST
+        )
+
     import_date = request.form.get("import_date", "")
     csv_file_sha256 = util_generate_digest("{}_{}".format(int(time.time()), csv_files[0].filename))
     csv_file = "{}/fotolei-pssa/inventories/{}".format(
@@ -56,80 +69,92 @@ def upload_inventories():
     csv_files[0].save(csv_file)
 
     if not do_data_schema_validation_for_input_inventories(csv_file):
-        response_object = {"status": "invalid input data schema"}
-    else:
-        load_file_repetition_lookup_table = shelve.open("{}/fotolei-pssa/tmp-files/inventories_load_file_repetition_lookup_table".format(
-            os.path.expanduser("~")), flag='c', writeback=False)
-        file_digest = util_generate_bytes_in_hdd_digest(csv_file)
-        if not load_file_repetition_lookup_table.get(file_digest, False):
-            not_inserted_sku_list = []
-            with open(csv_file, "r", encoding='utf-8-sig') as fd:
-                csv_reader = csv.reader(fd, delimiter=",")
-                next(csv_reader, None)  # skip the header line
-                for row in csv_reader:
-                    if not get_lookup_table_k_sku_v_boolean(row[2]):
-                        not_inserted_sku_list.append(row[2])
-            if len(not_inserted_sku_list) > 0:
-                current_app.logger.info("There are {} SKUs not inserted".format(len(not_inserted_sku_list)))
-                response_object = {"status": "new SKUs"}
-                response_object["added_skus"] = not_inserted_sku_list
-            else:
-                is_valid, err_msg = do_data_check_for_input_inventories(csv_file)
-                if not is_valid:
-                    response_object = {"status": "invalid input data"}
-                    response_object["err_msg"] = err_msg
-                    return jsonify(response_object)
+        return make_response(
+            jsonify({"message": "invalid data schema"}),
+            StatusCode.HTTP_400_BAD_REQUEST
+        )
 
-                do_intelligent_calibration_for_input_inventories(csv_file)
-
-                if len(import_date) == 0:
-                    today = pendulum.today()
-                    last_month = today.subtract(months=1)
-                    import_date = last_month.strftime('%Y-%m')
-                add_date_brand_c1_c2_for_input_inventories(csv_file, import_date.strip())
-
-                repeat = do_remove_repeat_inventories_updates(csv_file)
-
-                record_first_and_last_import_date_for_input_inventories(csv_file)
-
-                db_connector.load_data_infile(
-                    """LOAD DATA LOCAL INFILE "{}" """.format(csv_file) +
-                    "INTO TABLE fotolei_pssa.inventories " +
-                    "FIELDS TERMINATED BY ',' " +
-                    """ENCLOSED BY '"' """ +
-                    "LINES TERMINATED BY '\n' " +
-                    "IGNORE 1 LINES " +
-                    "(create_time, product_code, product_name, specification_code, specification_name, " +
-                    "st_inventory_qty, st_inventory_total, purchase_qty, purchase_total, " +
-                    "purchase_then_return_qty, purchase_then_return_total, sale_qty, sale_total, " +
-                    "sale_then_return_qty, sale_then_return_total, others_qty, others_total, " +
-                    "ed_inventory_qty, ed_inventory_total, " +
-                    "extra_brand, extra_classification_1, extra_classification_2, extra_is_combined, anchor);"
-                )
-
-                with open(csv_file, "r", encoding='utf-8-sig') as fd:
-                    csv_reader = csv.reader(fd, delimiter=",")
-                    for _ in csv_reader:
-                        pass
-                    stmt = "INSERT INTO fotolei_pssa.inventory_summary (total) VALUES (%s);"
-                    db_connector.insert(stmt, (csv_reader.line_num - 1,))
-
-                stmt = "INSERT INTO fotolei_pssa.operation_logs (oplog) VALUES (%s);"
-                db_connector.insert(stmt, ("导入{}".format(csv_files[0].filename),))
-
-                init_lookup_table_k_ct_sku_v_boolean()
-
-                load_file_repetition_lookup_table[file_digest] = True
-
-                response_object = {"status": "success"}
-                if repeat > 0:
-                    response_object["msg"] = "已自动删除{}条尝试重复导入的库存明细数据，目前不支持库存明细数据的覆盖写操作！".format(repeat)
-                else:
-                    response_object["msg"] = ""
-        else:
-            response_object = {"status": "repetition"}
+    load_file_repetition_lookup_table = shelve.open("{}/fotolei-pssa/tmp-files/inventories_load_file_repetition_lookup_table".format(
+        os.path.expanduser("~")), flag='c', writeback=False)
+    digest = util_generate_bytes_in_hdd_digest(csv_file)
+    if load_file_repetition_lookup_table.get(digest, False):
         load_file_repetition_lookup_table.close()
-    return jsonify(response_object)
+        return make_response(
+            jsonify({"message": "repeated upload"}),
+            StatusCode.HTTP_409_CONFLICT
+        )
+
+    not_inserted_sku_list = []
+    with open(csv_file, "r", encoding='utf-8-sig') as fd:
+        csv_reader = csv.reader(fd, delimiter=",")
+        next(csv_reader, None)  # skip the header line
+        for row in csv_reader:
+            if not get_lookup_table_k_sku_v_boolean(row[2]):
+                not_inserted_sku_list.append(row[2])
+    if len(not_inserted_sku_list) > 0:
+        current_app.logger.info("There are {} SKUs not inserted".format(len(not_inserted_sku_list)))
+        response_object = {"message": "new SKUs", "added_skus": not_inserted_sku_list}
+        return make_response(
+            jsonify(response_object),
+            StatusCode.HTTP_400_BAD_REQUEST
+        )
+
+    is_valid, err_msg = do_data_check_for_input_inventories(csv_file)
+    if not is_valid:
+        response_object = {"message": "invalid data: {}".format(err_msg)}
+        return make_response(
+            jsonify(response_object),
+            StatusCode.HTTP_400_BAD_REQUEST
+        )
+
+    do_intelligent_calibration_for_input_inventories(csv_file)
+
+    if len(import_date) == 0:
+        today = pendulum.today()
+        last_month = today.subtract(months=1)
+        import_date = last_month.strftime('%Y-%m')
+    add_date_brand_c1_c2_for_input_inventories(csv_file, import_date.strip())
+
+    repeat = do_remove_repeat_inventories_updates(csv_file)
+
+    record_first_and_last_import_date_for_input_inventories(csv_file)
+
+    db_connector.load_data_infile(
+        """LOAD DATA LOCAL INFILE "{}" """.format(csv_file) +
+        "INTO TABLE fotolei_pssa.inventories " +
+        "FIELDS TERMINATED BY ',' " +
+        """ENCLOSED BY '"' """ +
+        "LINES TERMINATED BY '\n' " +
+        "IGNORE 1 LINES " +
+        "(create_time, product_code, product_name, specification_code, specification_name, " +
+        "st_inventory_qty, st_inventory_total, purchase_qty, purchase_total, " +
+        "purchase_then_return_qty, purchase_then_return_total, sale_qty, sale_total, " +
+        "sale_then_return_qty, sale_then_return_total, others_qty, others_total, " +
+        "ed_inventory_qty, ed_inventory_total, " +
+        "extra_brand, extra_classification_1, extra_classification_2, extra_is_combined, anchor);"
+    )
+
+    with open(csv_file, "r", encoding='utf-8-sig') as fd:
+        csv_reader = csv.reader(fd, delimiter=",")
+        for _ in csv_reader:
+            pass
+        stmt = "INSERT INTO fotolei_pssa.inventory_summary (total) VALUES (%s);"
+        db_connector.insert(stmt, (csv_reader.line_num - 1,))
+
+    init_lookup_table_k_ct_sku_v_boolean()
+
+    load_file_repetition_lookup_table[digest] = True
+
+    response_object = {"message": ""}
+    if repeat > 0:
+        response_object["message"] = "已自动删除{}条尝试重复导入的库存明细数据，目前不支持库存明细数据的覆盖写操作！".format(repeat)
+
+    load_file_repetition_lookup_table.close()
+    session["op_object"] = csv_files[0].filename
+    return make_response(
+        jsonify(response_object),
+        StatusCode.HTTP_200_OK
+    )
 
 
 # 获取所有库存条目的接口, 带有翻页功能
@@ -149,9 +174,9 @@ FROM fotolei_pssa.inventories ORDER BY create_time DESC LIMIT {}, {};".format(
         page_offset, page_limit)
     inventories = db_connector.query(stmt)
 
-    response_object = {"status": "success"}
+    response_object = {"message": "success"}
     if (type(inventories) is not list) or (type(inventories) is list and len(inventories) == 0):
-        response_object = {"status": "not found"}
+        response_object = {"message": "not found"}
         response_object["inventories"] = []
     else:
         response_object["inventories"] = inventories
@@ -166,7 +191,7 @@ FROM fotolei_pssa.inventories ORDER BY create_time DESC LIMIT {}, {};".format(
 def get_inventories_total():
     stmt = "SELECT SUM(total) FROM fotolei_pssa.inventory_summary;"
     ret = db_connector.query(stmt)
-    response_object = {"status": "success"}
+    response_object = {"message": "success"}
     if type(ret) is list and len(ret) > 0 and ret[0][0] is not None:
         response_object["inventories_total"] = ret[0][0]
     else:
@@ -178,6 +203,7 @@ def get_inventories_total():
 @inventory_blueprint.route("/all/clean", methods=["POST"])
 @has_logged_in
 @restrict_access(access_level=ROLE_TYPE_SUPER_ADMIN)
+@record_action(action=ACTION_TYPE_DELETE_ALL)
 @cost_count
 def clean_all_inventories():
     payload = request.get_json()
@@ -249,10 +275,12 @@ CREATE TABLE IF NOT EXISTS fotolei_pssa.inventory_summary (
             util_silent_remove("{}/fotolei-pssa/tmp-files/inventories_import_date_record_table.db".format(
                 os.path.expanduser("~")))
         clean_lookup_table_k_ct_sku_v_boolean()
-        response_object = {"status": "success"}
+
+        session["op_object"] = "进销存记录"
+        response_object = {"message": "success"}
         return jsonify(response_object)
     else:
-        response_object = {"status": "invalid input data"}
+        response_object = {"message": "invalid input data"}
         return jsonify(response_object)
 
 

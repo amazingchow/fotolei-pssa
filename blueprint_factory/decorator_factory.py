@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import sys
+sys.path.append(os.path.abspath("../db"))
 sys.path.append(os.path.abspath("../utils"))
 
 import logging
@@ -26,6 +27,12 @@ from flask import Response
 from flask import session
 from flask_api import status as StatusCode
 
+from db import db_connector
+from utils import ACTION_TYPE_DELETE_ALL
+from utils import ACTION_TYPE_DELETE_ONE
+from utils import ACTION_TYPE_EXPORT
+from utils import ACTION_TYPE_IMPORT
+from utils import ACTION_TYPE_UPDATE_ONE
 from utils import ROLE_TYPE_SUPER_ADMIN
 
 
@@ -67,13 +74,27 @@ def cost_count(func):
     return wrapper
 
 
-def record_action(action: str):
+def record_action(action: int):
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
             t = func(*args, **kwargs)
-            if Response(t).status_code == StatusCode.HTTP_200_OK:
-                pass
+            resp = Response(t)
+            if resp.status_code == StatusCode.HTTP_200_OK:
+                action_zh = ""
+                if action == ACTION_TYPE_IMPORT:
+                    action_zh = "导入"
+                elif action == ACTION_TYPE_EXPORT:
+                    action_zh = "导出"
+                elif action == ACTION_TYPE_UPDATE_ONE:
+                    action_zh = "更新单条"
+                elif action == ACTION_TYPE_DELETE_ALL:
+                    action_zh = "删除所有"
+                elif action == ACTION_TYPE_DELETE_ONE:
+                    action_zh = "删除单条"
+                stmt = "INSERT INTO fotolei_pssa.operation_logs (oplog) VALUES (%s);"
+                db_connector.insert(stmt, ("{}{}{}".format(
+                    session.get("username", "anonymous"), action_zh, session.get("op_object", "")),))
             return t
         return wrapper
     return decorator

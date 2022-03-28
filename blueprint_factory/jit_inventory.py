@@ -10,12 +10,17 @@ import time
 from flask import current_app
 from flask import Blueprint
 from flask import jsonify
+from flask import make_response
 from flask import request
+from flask import session
+from flask_api import status as StatusCode
 
 from .decorator_factory import has_logged_in
 from .decorator_factory import restrict_access
 from .decorator_factory import cost_count
+from .decorator_factory import record_action
 from db import db_connector
+from utils import ACTION_TYPE_IMPORT
 from utils import get_lookup_table_k_sku_v_boolean
 from utils import REG_INT
 from utils import ROLE_TYPE_SUPER_ADMIN
@@ -32,23 +37,34 @@ jit_inventory_blueprint = Blueprint(
 @jit_inventory_blueprint.route("/upload", methods=["POST"])
 @has_logged_in
 @restrict_access(access_level=ROLE_TYPE_SUPER_ADMIN)
+@record_action(action=ACTION_TYPE_IMPORT)
 @cost_count
 def upload_jit_inventory_data():
     csv_files = request.files.getlist("file")
+    if len(csv_files) != 1:
+        return make_response(
+            jsonify({"message": "invalid upload"}),
+            StatusCode.HTTP_400_BAD_REQUEST
+        )
+
     csv_file = "{}/fotolei-pssa/jit-inventory/{}_{}".format(
         os.path.expanduser("~"), int(time.time()), csv_files[0].filename
     )
     csv_files[0].save(csv_file)
 
     if not do_data_schema_validation_for_input_jit_inventories(csv_file):
-        response_object = {"status": "invalid input data schema"}
-        return jsonify(response_object)
+        return make_response(
+            jsonify({"message": "invalid data schema"}),
+            StatusCode.HTTP_400_BAD_REQUEST
+        )
 
     is_valid, err_msg = do_data_check_for_input_jit_inventories(csv_file)
     if not is_valid:
-        response_object = {"status": "invalid input data"}
-        response_object["err_msg"] = err_msg
-        return jsonify(response_object)
+        response_object = {"message": "invalid data: {}".format(err_msg)}
+        return make_response(
+            jsonify(response_object),
+            StatusCode.HTTP_400_BAD_REQUEST
+        )
 
     sku_inventory_tuple_list = []
     not_inserted_sku_list = []
@@ -61,19 +77,23 @@ def upload_jit_inventory_data():
             else:
                 sku_inventory_tuple_list.append((row[1], row[0]))
     if len(not_inserted_sku_list) > 0:
-        response_object = {"status": "failed"}
         current_app.logger.info("There are {} SKUs not inserted".format(len(not_inserted_sku_list)))
         # 新增sku，需要向用户展示
-        response_object["added_skus"] = not_inserted_sku_list
-        return jsonify(response_object)
+        response_object = {"message": "new SKUs", "added_skus": not_inserted_sku_list}
+        return make_response(
+            jsonify(response_object),
+            StatusCode.HTTP_400_BAD_REQUEST
+        )
 
     stmt = "UPDATE fotolei_pssa.products SET jit_inventory = %s WHERE specification_code = %s;"
     db_connector.batch_update(stmt, sku_inventory_tuple_list)
-    stmt = "INSERT INTO fotolei_pssa.operation_logs (oplog) VALUES (%s);"
-    db_connector.insert(stmt, ("导入{}".format(csv_files[0].filename),))
 
-    response_object = {"status": "success"}
-    return jsonify(response_object)
+    session["op_object"] = csv_files[0].filename
+    response_object = {"message": ""}
+    return make_response(
+        jsonify(response_object),
+        StatusCode.HTTP_200_OK
+    )
 
 
 def do_data_schema_validation_for_input_jit_inventories(csv_file: str):
