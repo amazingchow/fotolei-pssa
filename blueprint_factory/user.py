@@ -112,7 +112,7 @@ def list_users():
     stmt = "SELECT username, role_type FROM fotolei_pssa.users LIMIT {}, {};".format(page_offset, page_limit)
     users = db_connector.query(stmt)
 
-    response_object = {"message": "success"}
+    response_object = {"message": ""}
     if (type(users) is not list) or (type(users) is list and len(users) == 0):
         response_object["message"] = "not found"
         response_object["users"] = []

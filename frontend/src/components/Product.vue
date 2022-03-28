@@ -512,29 +512,23 @@ export default {
       }
       axios.post(this.serverBaseURL + '/api/v1/products/upload', formData, config)
         .then((res) => {
-          if (res.data.status === 'success') {
-            this.message = '导入成功！预计导入' + res.data.items_total.toString() + '条，实际导入' + res.data.items_add.toString() + '条，去重' + res.data.items_exist.toString() + '条。'
-            this.showMessage = true
-            if (res.data.items_add > 0) {
-              this.listProducts()
-              this.getProductsTotal()
-            }
-          } else if (res.data.status === 'invalid input data schema') {
-            this.message = '导入失败！数据表格格式有变更，请人工复核！'
-            this.showMessage = true
-          } else if (res.data.status === 'repetition') {
-            this.message = '导入失败！数据表格重复导入！'
-            this.showMessage = true
-          } else if (res.data.status === 'invalid input data') {
-            this.message = '导入失败！' + res.data.err_msg
-            this.showMessage = true
+          this.message = '导入成功！预计导入' + res.data.items_total.toString() + '条，实际导入' + res.data.items_add.toString() + '条，去重' + res.data.items_exist.toString() + '条。'
+          this.showMessage = true
+          if (res.data.items_add > 0) {
+            this.listProducts()
+            this.getProductsTotal()
           }
           this.importProductCSVFileClose()
         })
         .catch((error) => {
           // eslint-disable-next-line
-          console.log(error)
-          this.message = '内部服务错误！'
+          if (error.response.status === 400) {
+            this.message = '导入失败！' + error.data.message
+          } else if (error.response.status === 409) {
+            this.message = '导入失败！数据表格重复导入！'
+          } else {
+            this.message = '内部服务错误！'
+          }
           this.showMessage = true
           this.importProductCSVFileClose()
         })
@@ -551,29 +545,25 @@ export default {
       }
       axios.post(this.serverBaseURL + '/api/v1/jitinventory/upload', formData, config)
         .then((res) => {
-          if (res.data.status === 'success') {
-            this.message = '导入成功!'
-            this.showMessage = true
-            this.listProducts()
-          } else if (res.data.status === 'invalid input data schema') {
-            this.message = '导入失败！数据表格格式有变更，请人工复核！'
-            this.showMessage = true
-          } else if (res.data.status === 'invalid input data') {
-            this.message = '导入失败！' + res.data.err_msg
-            this.showMessage = true
-          } else if (res.data.status === 'failed') {
-            this.message = '导入失败，有新增SKU，请人工复核！'
-            this.showMessage = true
-            const addedSkus = Object.freeze(res.data.added_skus)
-            this.addedSkus = addedSkus
-            this.shouldOpenSidebar = true
-          }
+          this.message = '导入成功!'
+          this.showMessage = true
+          this.listProducts()
           this.importJITInventoryCSVFileClose()
         })
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '内部服务错误！'
+          if (error.response.status === 400) {
+            this.message = '导入失败！' + error.data.message
+          } else if (error.response.status === 406) {
+            this.message = '导入失败，有新增SKU，请人工复核！'
+            this.addedSkus = error.data.added_skus
+            this.shouldOpenSidebar = true
+          } else if (error.response.status === 409) {
+            this.message = '导入失败！数据表格重复导入！'
+          } else {
+            this.message = '内部服务错误！'
+          }
           this.showMessage = true
           this.importJITInventoryCSVFileClose()
         })
@@ -594,19 +584,18 @@ export default {
     async cleanAllProducts (payload) {
       await axios.post(this.serverBaseURL + '/api/v1/products/all/clean', payload)
         .then((res) => {
-          if (res.data.status === 'success') {
-            this.message = '删除成功！'
-            this.showMessage = true
-          } else if (res.data.status === 'invalid input data') {
-            this.message = '删除失败，管理员账号或密码错误！'
-            this.showMessage = true
-          }
+          this.message = '删除成功！'
+          this.showMessage = true
           this.cleanAllProductsClose()
         })
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '内部服务错误！'
+          if (error.response.status === 403) {
+            this.message = '删除失败，管理员账号或密码错误！'
+          } else {
+            this.message = '内部服务错误！'
+          }
           this.showMessage = true
           this.cleanAllProductsClose()
         })
@@ -620,19 +609,18 @@ export default {
     async cleanOneProduct (payload) {
       await axios.post(this.serverBaseURL + '/api/v1/products/one/clean', payload)
         .then((res) => {
-          if (res.data.status === 'success') {
-            this.message = '删除成功！'
-            this.showMessage = true
-          } else if (res.data.status === 'invalid input data') {
-            this.message = '删除失败，管理员账号或密码错误！'
-            this.showMessage = true
-          }
+          this.message = '删除成功！'
+          this.showMessage = true
           this.cleanOneProductClose()
         })
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '内部服务错误！'
+          if (error.response.status === 403) {
+            this.message = '删除失败，管理员账号或密码错误！'
+          } else {
+            this.message = '内部服务错误！'
+          }
           this.showMessage = true
           this.cleanOneProductClose()
         })
@@ -643,39 +631,38 @@ export default {
     async loadOldProductData (specificationCode) {
       await axios.get(this.serverBaseURL + '/api/v1/products/one/pick?specification_code=' + specificationCode)
         .then((res) => {
-          if (res.data.status === 'success') {
-            this.updateProduct.id = res.data.product.id
-            this.updateProduct.productCode = res.data.product.product_code
-            this.updateProduct.productName = res.data.product.product_name
-            this.updateProduct.specificationName = res.data.product.specification_name
-            this.updateProduct.brand = res.data.product.brand
-            this.updateProduct.classification1 = res.data.product.classification_1
-            this.updateProduct.classification2 = res.data.product.classification_2
-            this.updateProduct.productSeries = res.data.product.product_series
-            this.updateProduct.stopStatus = res.data.product.stop_status
-            this.updateProduct.productWeight = res.data.product.product_weight
-            this.updateProduct.productLength = res.data.product.product_length
-            this.updateProduct.productWidth = res.data.product.product_width
-            this.updateProduct.productHeight = res.data.product.product_height
-            this.updateProduct.isCombined = res.data.product.is_combined
-            this.updateProduct.beAggregated = res.data.product.be_aggregated
-            this.updateProduct.isImport = res.data.product.is_import
-            this.updateProduct.supplierName = res.data.product.supplier_name
-            this.updateProduct.purchaseName = res.data.product.purchase_name
-            this.updateProduct.jitInventory = res.data.product.jit_inventory
-            this.updateProduct.moq = res.data.product.moq
-            this.message = '加载成功！'
-            this.showMessage = true
-          } else {
-            this.message = '加载失败！'
-            this.showMessage = true
-          }
+          this.updateProduct.id = res.data.product.id
+          this.updateProduct.productCode = res.data.product.product_code
+          this.updateProduct.productName = res.data.product.product_name
+          this.updateProduct.specificationName = res.data.product.specification_name
+          this.updateProduct.brand = res.data.product.brand
+          this.updateProduct.classification1 = res.data.product.classification_1
+          this.updateProduct.classification2 = res.data.product.classification_2
+          this.updateProduct.productSeries = res.data.product.product_series
+          this.updateProduct.stopStatus = res.data.product.stop_status
+          this.updateProduct.productWeight = res.data.product.product_weight
+          this.updateProduct.productLength = res.data.product.product_length
+          this.updateProduct.productWidth = res.data.product.product_width
+          this.updateProduct.productHeight = res.data.product.product_height
+          this.updateProduct.isCombined = res.data.product.is_combined
+          this.updateProduct.beAggregated = res.data.product.be_aggregated
+          this.updateProduct.isImport = res.data.product.is_import
+          this.updateProduct.supplierName = res.data.product.supplier_name
+          this.updateProduct.purchaseName = res.data.product.purchase_name
+          this.updateProduct.jitInventory = res.data.product.jit_inventory
+          this.updateProduct.moq = res.data.product.moq
+          this.message = '加载成功！'
+          this.showMessage = true
           this.loadOldProductDataClose()
         })
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '内部服务错误！'
+          if (error.response.status === 404) {
+            this.message = '加载失败！'
+          } else {
+            this.message = '内部服务错误！'
+          }
           this.showMessage = true
           this.loadOldProductDataClose()
         })
@@ -707,13 +694,8 @@ export default {
     async updateNewProductData (payload) {
       await axios.post(this.serverBaseURL + '/api/v1/products/one/update', payload)
         .then((res) => {
-          if (res.data.status === 'success') {
-            this.message = '更新成功！'
-            this.showMessage = true
-          } else {
-            this.message = '更新失败！'
-            this.showMessage = true
-          }
+          this.message = '更新成功！'
+          this.showMessage = true
           this.updateNewProductDataClose()
         })
         .catch((error) => {

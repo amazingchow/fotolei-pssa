@@ -27,7 +27,7 @@ option_blueprint = Blueprint(
 @restrict_access(access_level=ROLE_TYPE_ORDINARY_USER)
 @cost_count
 def list_all_options():
-    response_object = {"status": "success"}
+    response_object = {"status": ""}
 
     # TODO: 优化SQL
     stmt = "SELECT DISTINCT brand FROM fotolei_pssa.products;"

@@ -46,7 +46,7 @@ def download(filename):
 def get_oplogs():
     stmt = "SELECT oplog, DATE_FORMAT(create_time, '%Y-%m-%d %H:%i:%s') FROM fotolei_pssa.operation_logs ORDER BY create_time DESC LIMIT 20;"
     rets = db_connector.query(stmt)
-    response_object = {"status": "success"}
+    response_object = {"status": ""}
     response_object["oplogs"] = []
     if type(rets) is list and len(rets) > 0:
         for ret in rets:

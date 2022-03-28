@@ -17,10 +17,10 @@ if __name__ == "__main__":
         year_and_month = os.path.basename(csvfile)[0:7]
         year_and_month = year_and_month.replace(".", "-")
         fn = "{}/实时库存-{}.csv".format(args.dst, year_and_month)
-        fw = open(fn, "w", encoding='utf-8-sig')
+        fw = open(fn, "w", encoding="utf-8-sig")
         csv_writer = csv.writer(fw, delimiter=",")
         csv_writer.writerow(["规格编码", "实时可用库存"])
-        with open(csvfile, "r", encoding='utf-8-sig') as fd:
+        with open(csvfile, "r", encoding="utf-8-sig") as fd:
             csv_reader = csv.reader(fd, delimiter=",")
             next(csv_reader, None)  # skip the header line
             for row in csv_reader:

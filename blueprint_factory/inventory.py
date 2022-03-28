@@ -75,7 +75,7 @@ def upload_inventories():
         )
 
     load_file_repetition_lookup_table = shelve.open("{}/fotolei-pssa/tmp-files/inventories_load_file_repetition_lookup_table".format(
-        os.path.expanduser("~")), flag='c', writeback=False)
+        os.path.expanduser("~")), flag="c", writeback=False)
     digest = util_generate_bytes_in_hdd_digest(csv_file)
     if load_file_repetition_lookup_table.get(digest, False):
         load_file_repetition_lookup_table.close()
@@ -85,7 +85,7 @@ def upload_inventories():
         )
 
     not_inserted_sku_list = []
-    with open(csv_file, "r", encoding='utf-8-sig') as fd:
+    with open(csv_file, "r", encoding="utf-8-sig") as fd:
         csv_reader = csv.reader(fd, delimiter=",")
         next(csv_reader, None)  # skip the header line
         for row in csv_reader:
@@ -93,10 +93,10 @@ def upload_inventories():
                 not_inserted_sku_list.append(row[2])
     if len(not_inserted_sku_list) > 0:
         current_app.logger.info("There are {} SKUs not inserted".format(len(not_inserted_sku_list)))
-        response_object = {"message": "new SKUs", "added_skus": not_inserted_sku_list}
+        response_object = {"message": "", "added_skus": not_inserted_sku_list}
         return make_response(
             jsonify(response_object),
-            StatusCode.HTTP_400_BAD_REQUEST
+            StatusCode.HTTP_406_NOT_ACCEPTABLE
         )
 
     is_valid, err_msg = do_data_check_for_input_inventories(csv_file)
@@ -134,7 +134,7 @@ def upload_inventories():
         "extra_brand, extra_classification_1, extra_classification_2, extra_is_combined, anchor);"
     )
 
-    with open(csv_file, "r", encoding='utf-8-sig') as fd:
+    with open(csv_file, "r", encoding="utf-8-sig") as fd:
         csv_reader = csv.reader(fd, delimiter=",")
         for _ in csv_reader:
             pass
@@ -174,13 +174,17 @@ FROM fotolei_pssa.inventories ORDER BY create_time DESC LIMIT {}, {};".format(
         page_offset, page_limit)
     inventories = db_connector.query(stmt)
 
-    response_object = {"message": "success"}
     if (type(inventories) is not list) or (type(inventories) is list and len(inventories) == 0):
-        response_object = {"message": "not found"}
-        response_object["inventories"] = []
-    else:
-        response_object["inventories"] = inventories
-    return jsonify(response_object)
+        return make_response(
+            jsonify({"message": ""}),
+            StatusCode.HTTP_200_OK
+        )
+
+    response_object = {"message": "", "inventories": inventories}
+    return make_response(
+        jsonify(response_object),
+        StatusCode.HTTP_200_OK
+    )
 
 
 # 获取总库存条目量的接口
@@ -191,12 +195,15 @@ FROM fotolei_pssa.inventories ORDER BY create_time DESC LIMIT {}, {};".format(
 def get_inventories_total():
     stmt = "SELECT SUM(total) FROM fotolei_pssa.inventory_summary;"
     ret = db_connector.query(stmt)
-    response_object = {"message": "success"}
+    response_object = {"message": ""}
     if type(ret) is list and len(ret) > 0 and ret[0][0] is not None:
         response_object["inventories_total"] = ret[0][0]
     else:
         response_object["inventories_total"] = 0
-    return jsonify(response_object)
+    return make_response(
+        jsonify(response_object),
+        StatusCode.HTTP_200_OK
+    )
 
 
 # 删除所有库存条目的接口
@@ -277,11 +284,15 @@ CREATE TABLE IF NOT EXISTS fotolei_pssa.inventory_summary (
         clean_lookup_table_k_ct_sku_v_boolean()
 
         session["op_object"] = "进销存记录"
-        response_object = {"message": "success"}
-        return jsonify(response_object)
-    else:
-        response_object = {"message": "invalid input data"}
-        return jsonify(response_object)
+        return make_response(
+            jsonify({"message": ""}),
+            StatusCode.HTTP_200_OK
+        )
+
+    return make_response(
+        jsonify({"message": ""}),
+        StatusCode.HTTP_403_FORBIDDEN
+    )
 
 
 def do_data_schema_validation_for_input_inventories(csv_file: str):
@@ -293,7 +304,7 @@ def do_data_schema_validation_for_input_inventories(csv_file: str):
         "截止库存数量", "截止库存总额",
     ]
     is_valid = True
-    with open(csv_file, "r", encoding='utf-8-sig') as fd:
+    with open(csv_file, "r", encoding="utf-8-sig") as fd:
         csv_reader = csv.reader(fd, delimiter=",")
         for row in csv_reader:
             if len(row) != len(data_schema):
@@ -311,13 +322,13 @@ def do_data_schema_validation_for_input_inventories(csv_file: str):
 
 def do_data_check_for_input_inventories(csv_file: str):
     inventories_check_table = shelve.open("{}/fotolei-pssa/tmp-files/inventories_check_table".format(
-        os.path.expanduser("~")), flag='c', writeback=False)
+        os.path.expanduser("~")), flag="c", writeback=False)
     inventories_check_table_tmp = {}
 
     # 导入的起始库存数量 =? 最近一个月的截止库存数量
     is_valid = True
     err_msg = ""
-    with open(csv_file, "r", encoding='utf-8-sig') as fd:
+    with open(csv_file, "r", encoding="utf-8-sig") as fd:
         csv_reader = csv.reader(fd, delimiter=",")
         next(csv_reader, None)  # skip the header line
         line = 1
@@ -349,9 +360,9 @@ def do_data_check_for_input_inventories(csv_file: str):
 def do_intelligent_calibration_for_input_inventories(csv_file: str):
     # 1. 表格里面某些数据行存在多余的逗号，程序需要做下智能矫正
     # 2. “起始库存数量”，“起始库存总额”，等数据项存在非法输入，程序不需要做智能矫正，直接返回错误
-    fr = open(csv_file, "r", encoding='utf-8-sig')
+    fr = open(csv_file, "r", encoding="utf-8-sig")
     csv_reader = csv.reader(fr, delimiter=",")
-    fw = open(csv_file + ".tmp", "w", encoding='utf-8-sig')
+    fw = open(csv_file + ".tmp", "w", encoding="utf-8-sig")
     csv_writer = csv.writer(fw, delimiter=",")
 
     is_valid = True
@@ -477,9 +488,9 @@ def do_intelligent_calibration_for_input_inventories(csv_file: str):
 
 
 def add_date_brand_c1_c2_for_input_inventories(csv_file: str, import_date: str):
-    fr = open(csv_file, "r", encoding='utf-8-sig')
+    fr = open(csv_file, "r", encoding="utf-8-sig")
     csv_reader = csv.reader(fr, delimiter=",")
-    fw = open(csv_file + ".tmp", "w", encoding='utf-8-sig')
+    fw = open(csv_file + ".tmp", "w", encoding="utf-8-sig")
     csv_writer = csv.writer(fw, delimiter=",")
     line = 0
     for row in csv_reader:
@@ -503,9 +514,9 @@ def add_date_brand_c1_c2_for_input_inventories(csv_file: str, import_date: str):
 
 def record_first_and_last_import_date_for_input_inventories(csv_file: str):
     inventories_import_date_record_table = shelve.open("{}/fotolei-pssa/tmp-files/inventories_import_date_record_table".format(
-        os.path.expanduser("~")), flag='c', writeback=False)
+        os.path.expanduser("~")), flag="c", writeback=False)
 
-    with open(csv_file, "r", encoding='utf-8-sig') as fd:
+    with open(csv_file, "r", encoding="utf-8-sig") as fd:
         csv_reader = csv.reader(fd, delimiter=",")
         next(csv_reader, None)  # skip the header line
         for row in csv_reader:
@@ -529,9 +540,9 @@ def record_first_and_last_import_date_for_input_inventories(csv_file: str):
 def do_remove_repeat_inventories_updates(csv_file: str):
     repeat = 0
 
-    fr = open(csv_file, "r", encoding='utf-8-sig')
+    fr = open(csv_file, "r", encoding="utf-8-sig")
     csv_reader = csv.reader(fr, delimiter=",")
-    fw = open(csv_file + ".tmp", "w", encoding='utf-8-sig')
+    fw = open(csv_file + ".tmp", "w", encoding="utf-8-sig")
     csv_writer = csv.writer(fw, delimiter=",")
     line = 0
     for row in csv_reader:

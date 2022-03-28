@@ -68,7 +68,7 @@ def upload_jit_inventory_data():
 
     sku_inventory_tuple_list = []
     not_inserted_sku_list = []
-    with open(csv_file, "r", encoding='utf-8-sig') as fd:
+    with open(csv_file, "r", encoding="utf-8-sig") as fd:
         csv_reader = csv.reader(fd, delimiter=",")
         next(csv_reader, None)  # skip the header line
         for row in csv_reader:
@@ -79,19 +79,18 @@ def upload_jit_inventory_data():
     if len(not_inserted_sku_list) > 0:
         current_app.logger.info("There are {} SKUs not inserted".format(len(not_inserted_sku_list)))
         # 新增sku，需要向用户展示
-        response_object = {"message": "new SKUs", "added_skus": not_inserted_sku_list}
+        response_object = {"message": "", "added_skus": not_inserted_sku_list}
         return make_response(
             jsonify(response_object),
-            StatusCode.HTTP_400_BAD_REQUEST
+            StatusCode.HTTP_406_NOT_ACCEPTABLE
         )
 
     stmt = "UPDATE fotolei_pssa.products SET jit_inventory = %s WHERE specification_code = %s;"
     db_connector.batch_update(stmt, sku_inventory_tuple_list)
 
     session["op_object"] = csv_files[0].filename
-    response_object = {"message": ""}
     return make_response(
-        jsonify(response_object),
+        jsonify({"message": ""}),
         StatusCode.HTTP_200_OK
     )
 
@@ -101,7 +100,7 @@ def do_data_schema_validation_for_input_jit_inventories(csv_file: str):
         "规格编码", "实时可用库存",
     ]
     is_valid = True
-    with open(csv_file, "r", encoding='utf-8-sig') as fd:
+    with open(csv_file, "r", encoding="utf-8-sig") as fd:
         csv_reader = csv.reader(fd, delimiter=",")
         for row in csv_reader:
             if len(row) != len(data_schema):
@@ -120,7 +119,7 @@ def do_data_schema_validation_for_input_jit_inventories(csv_file: str):
 def do_data_check_for_input_jit_inventories(csv_file: str):
     is_valid = True
     err_msg = ""
-    with open(csv_file, "r", encoding='utf-8-sig') as fd:
+    with open(csv_file, "r", encoding="utf-8-sig") as fd:
         csv_reader = csv.reader(fd, delimiter=",")
         next(csv_reader, None)  # skip the header line
         line = 1

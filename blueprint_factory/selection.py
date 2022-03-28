@@ -27,7 +27,7 @@ selection_blueprint = Blueprint(
 @restrict_access(access_level=ROLE_TYPE_ORDINARY_USER)
 @cost_count
 def list_all_brand_selections():
-    response_object = {"status": "success"}
+    response_object = {"status": ""}
 
     # TODO: 优化SQL
     stmt = "SELECT DISTINCT brand FROM fotolei_pssa.products;"
@@ -50,7 +50,7 @@ def list_all_brand_selections():
 @restrict_access(access_level=ROLE_TYPE_ORDINARY_USER)
 @cost_count
 def list_all_classification_1_selections():
-    response_object = {"status": "success"}
+    response_object = {"status": ""}
 
     # TODO: 优化SQL
     stmt = "SELECT DISTINCT classification_1 FROM fotolei_pssa.products;"
@@ -73,7 +73,7 @@ def list_all_classification_1_selections():
 @restrict_access(access_level=ROLE_TYPE_ORDINARY_USER)
 @cost_count
 def list_all_supplier_selections():
-    response_object = {"status": "success"}
+    response_object = {"status": ""}
 
     # TODO: 优化SQL
     stmt = "SELECT DISTINCT supplier_name FROM fotolei_pssa.products;"

@@ -5,7 +5,8 @@ import shelve
 
 if __name__ == '__main__':
     customize_report_forms_ui = shelve.open("{}/fotolei-pssa/tmp-files/customize_report_forms_ui".format(
-        os.path.expanduser("~")), flag='c', writeback=False)
+        os.path.expanduser("~")), flag="c", writeback=False)
+
     customize_report_forms_ui["classification1_tags"] = ['数码', '传统耗材']
     customize_report_forms_ui["classification1_classification2_tags"] = [
         '数码|背带',
@@ -41,4 +42,5 @@ if __name__ == '__main__':
     ]
     customize_report_forms_ui["brand_topk_tag"] = 'top10'
     customize_report_forms_ui["brand_classification2_tags"] = []
+
     customize_report_forms_ui.close()
