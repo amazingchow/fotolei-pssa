@@ -6,10 +6,12 @@ sys.path.append(os.path.abspath("../utils"))
 
 from flask import Blueprint
 from flask import jsonify
+from flask import make_response
+from flask_api import status as StatusCode
 
+from .decorator_factory import cost_count
 from .decorator_factory import has_logged_in
 from .decorator_factory import restrict_access
-from .decorator_factory import cost_count
 from db import db_connector
 from utils import ROLE_TYPE_ORDINARY_USER
 
@@ -27,7 +29,7 @@ selection_blueprint = Blueprint(
 @restrict_access(access_level=ROLE_TYPE_ORDINARY_USER)
 @cost_count
 def list_all_brand_selections():
-    response_object = {"status": ""}
+    response_object = {"message": ""}
 
     # TODO: 优化SQL
     stmt = "SELECT DISTINCT brand FROM fotolei_pssa.products;"
@@ -41,7 +43,10 @@ def list_all_brand_selections():
                     if len(brand[0].strip()) > 0
         ]
 
-    return jsonify(response_object)
+    return make_response(
+        jsonify(response_object),
+        StatusCode.HTTP_200_OK
+    )
 
 
 # 导出所有可供选择的分类1的接口
@@ -50,7 +55,7 @@ def list_all_brand_selections():
 @restrict_access(access_level=ROLE_TYPE_ORDINARY_USER)
 @cost_count
 def list_all_classification_1_selections():
-    response_object = {"status": ""}
+    response_object = {"message": ""}
 
     # TODO: 优化SQL
     stmt = "SELECT DISTINCT classification_1 FROM fotolei_pssa.products;"
@@ -64,7 +69,10 @@ def list_all_classification_1_selections():
                     if len(classification_1[0].strip()) > 0
         ]
 
-    return jsonify(response_object)
+    return make_response(
+        jsonify(response_object),
+        StatusCode.HTTP_200_OK
+    )
 
 
 # 导出所有可供选择的供应商列表的接口
@@ -73,7 +81,7 @@ def list_all_classification_1_selections():
 @restrict_access(access_level=ROLE_TYPE_ORDINARY_USER)
 @cost_count
 def list_all_supplier_selections():
-    response_object = {"status": ""}
+    response_object = {"message": ""}
 
     # TODO: 优化SQL
     stmt = "SELECT DISTINCT supplier_name FROM fotolei_pssa.products;"
@@ -87,4 +95,7 @@ def list_all_supplier_selections():
                     if len(supplier_name_selection[0].strip()) > 0
         ]
 
-    return jsonify(response_object)
+    return make_response(
+        jsonify(response_object),
+        StatusCode.HTTP_200_OK
+    )

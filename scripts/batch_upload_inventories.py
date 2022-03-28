@@ -18,7 +18,7 @@ def do_batch_upload_inventories(session, url, year_and_month, csvfile):
         data=mp_encoder,
         headers={"Content-Type": mp_encoder.content_type}
     )
-    print("上传{}, 返回码: {}, 返回状态: {}".format(csvfile, resp.status_code, resp.json()["status"]))
+    print("上传{}, 返回码: {}, 返回状态: {}".format(csvfile, resp.status_code, resp.json()["message"]))
 
 
 if __name__ == "__main__":

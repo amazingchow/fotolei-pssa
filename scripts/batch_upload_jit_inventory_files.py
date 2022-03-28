@@ -13,7 +13,7 @@ def do_batch_upload_jit_inventory_file(session, url, csvfile):
         }
     )
     resp = session.post(url, data=mp_encoder, headers={"Content-Type": mp_encoder.content_type})
-    print("上传{}, 返回码: {}, 返回状态: {}".format(csvfile, resp.status_code, resp.json()["status"]))
+    print("上传{}, 返回码: {}, 返回状态: {}".format(csvfile, resp.status_code, resp.json()["message"]))
 
 
 if __name__ == "__main__":
