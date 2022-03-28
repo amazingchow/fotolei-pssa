@@ -141,7 +141,7 @@ def preview_report_file_case3():
     supplier_name = payload.get("supplier_name", "").strip().lower()
 
     # TODO: 优化SQL
-    stmt = "SELECT specification_code FROM fotolei_pssa.products WHERE "
+    stmt = "SELECT specification_code FROM fotolei_pssa.products"
     selections = []
     if len(product_code) > 0:
         selections.append("product_code = '{}'".format(product_code))
@@ -165,8 +165,14 @@ def preview_report_file_case3():
         selections.append("is_import = '{}'".format(is_import))
     if len(supplier_name) > 0:
         selections.append("supplier_name = '{}'".format(supplier_name))
-    stmt += " AND ".join(selections)
-    stmt += ";"
+
+    if len(selections) == 0:
+        stmt += ";"
+    elif len(selections) == 1:
+        stmt += " WHERE {};".format(selections[0])
+    else:
+        stmt += " WHERE {};".format(" AND ".join(selections))
+    
     rets = db_connector.query(stmt)
     if type(rets) is list and len(rets) > 0:
         for ret in rets:
