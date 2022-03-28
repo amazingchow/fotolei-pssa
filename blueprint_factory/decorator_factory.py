@@ -32,7 +32,9 @@ from utils import ACTION_TYPE_DELETE_ALL
 from utils import ACTION_TYPE_DELETE_ONE
 from utils import ACTION_TYPE_EXPORT
 from utils import ACTION_TYPE_IMPORT
+from utils import ACTION_TYPE_REGISTER
 from utils import ACTION_TYPE_UPDATE_ONE
+from utils import ACTION_TYPE_UNREGISTER
 from utils import ROLE_TYPE_SUPER_ADMIN
 
 
@@ -92,6 +94,10 @@ def record_action(action: int):
                     action_zh = "删除所有"
                 elif action == ACTION_TYPE_DELETE_ONE:
                     action_zh = "删除单条"
+                elif action == ACTION_TYPE_REGISTER:
+                    action_zh = "注册用户"
+                elif action == ACTION_TYPE_UNREGISTER:
+                    action_zh = "注销用户"
                 stmt = "INSERT INTO fotolei_pssa.operation_logs (oplog) VALUES (%s);"
                 db_connector.insert(stmt, ("{}{}{}".format(
                     session.get("username", "anonymous"), action_zh, session.get("op_object", "")),))

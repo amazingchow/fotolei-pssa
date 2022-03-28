@@ -18,6 +18,8 @@ from .decorator_factory import has_logged_in
 from .decorator_factory import restrict_access
 from .decorator_factory import cost_count
 from db import db_connector
+from utils import ACTION_TYPE_REGISTER
+from utils import ACTION_TYPE_UNREGISTER
 from utils import get_lookup_table_k_user_v_boolean
 from utils import put_lookup_table_k_user_v_boolean
 from utils import ROLE_TYPE_SUPER_ADMIN
@@ -36,6 +38,7 @@ user_blueprint = Blueprint(
 @user_blueprint.route("/register", methods=["POST"])
 @has_logged_in
 @restrict_access(access_level=ROLE_TYPE_SUPER_ADMIN)
+@record_action(action=ACTION_TYPE_REGISTER)
 @cost_count
 def register():
     payload = request.get_json()
@@ -62,6 +65,7 @@ def register():
     put_lookup_table_k_user_v_boolean(usr, True)
     current_app.logger.info("注册用户 <{}>".format(usr))
 
+    session["op_object"] = usr
     return make_response(
         jsonify({"message": "register {}".format(usr)}),
         StatusCode.HTTP_200_OK
@@ -73,6 +77,7 @@ def register():
 @user_blueprint.route("/unregister", methods=["DELETE"])
 @has_logged_in
 @restrict_access(access_level=ROLE_TYPE_SUPER_ADMIN)
+@record_action(action=ACTION_TYPE_UNREGISTER)
 @cost_count
 def unregister():
     usr = request.args.get("username")
@@ -93,6 +98,7 @@ def unregister():
     put_lookup_table_k_user_v_boolean(usr, False)
     current_app.logger.info("注销用户 <{}>".format(usr))
 
+    session["op_object"] = usr
     return make_response(
         jsonify({"message": "unregister {}".format(usr)}),
         StatusCode.HTTP_200_OK
