@@ -12,13 +12,15 @@ from collections import defaultdict
 
 from flask import Blueprint
 from flask import jsonify
+from flask import make_response
 from flask import request
 from flask import session
+from flask_api import status as StatusCode
 
-from .decorator_factory import has_logged_in
-from .decorator_factory import restrict_access
 from .decorator_factory import cost_count
+from .decorator_factory import has_logged_in
 from .decorator_factory import record_action
+from .decorator_factory import restrict_access
 from db import db_connector
 from utils import ACTION_TYPE_EXPORT
 from utils import ACTION_TYPE_UPDATE_ONE
@@ -46,14 +48,15 @@ case1_blueprint = Blueprint(
 @cost_count
 def fetch_ui():
     customize_report_forms_ui = shelve.open("{}/fotolei-pssa/tmp-files/customize_report_forms_ui".format(
-        os.path.expanduser("~")), flag='c', writeback=False)
-    ui = dict()
-    for k, v in customize_report_forms_ui.items():
-        ui[k] = v
+        os.path.expanduser("~")), flag="c", writeback=False)
+    ui = {k: v for k, v in customize_report_forms_ui.items()}
     customize_report_forms_ui.close()
-    response_object = {"status": "success"}
-    response_object["ui"] = ui
-    return jsonify(response_object)
+
+    response_object = {"message": "", "ui": ui}
+    return make_response(
+        jsonify(response_object),
+        StatusCode.HTTP_200_OK
+    )
 
 
 # 保存自定义UI
@@ -68,11 +71,11 @@ def save_ui():
     classification1_classification2_tags = payload.get("classification1_classification2_tags", [])
     classification1_topk_tags = payload.get("classification1_topk_tags", [])
     brand_tags = payload.get("brand_tags", [])
-    brand_topk_tag = payload.get("brand_topk_tag", '')
+    brand_topk_tag = payload.get("brand_topk_tag", "")
     brand_classification2_tags = payload.get("brand_classification2_tags", [])
 
     customize_report_forms_ui = shelve.open("{}/fotolei-pssa/tmp-files/customize_report_forms_ui".format(
-        os.path.expanduser("~")), flag='c', writeback=False)
+        os.path.expanduser("~")), flag="c", writeback=False)
     customize_report_forms_ui["classification1_tags"] = classification1_tags
     customize_report_forms_ui["classification1_classification2_tags"] = classification1_classification2_tags
     customize_report_forms_ui["classification1_topk_tags"] = classification1_topk_tags
@@ -82,8 +85,10 @@ def save_ui():
     customize_report_forms_ui.close()
 
     session["op_object"] = "销售报表（按分类汇总）输出格式"
-    response_object = {"status": "success"}
-    return jsonify(response_object)
+    return make_response(
+        jsonify({"message": ""}),
+        StatusCode.HTTP_200_OK
+    )
 
 
 '''
@@ -141,16 +146,21 @@ def preview_report_file_case1():
     st_date = payload.get("st_date", "").strip()
     ed_date = payload.get("ed_date", "").strip()
     if (st_date > ed_date):
-        response_object = {"status": "not found"}
-        return jsonify(response_object)
+        return make_response(
+            jsonify({"message": "invalid st_date and ed_date"}),
+            StatusCode.HTTP_400_BAD_REQUEST
+        )
 
     ui_classification1_tags = payload.get("ui_classification1_tags", [])
     ui_classification1_tags = [tag.lower() for tag in ui_classification1_tags]
     for tag in ui_classification1_tags:
         if tag not in get_lookup_table_k_c1_v_c1_c2_keys():
-            response_object = {"status": "invalid tag"}
+            response_object = {"message": "invalid tag"}
             response_object["err_msg"] = "输入ui参数错误 - 参与统计的分类1：{}不存在！".format(tag)
-            return jsonify(response_object)
+            return make_response(
+                jsonify(response_object),
+                StatusCode.HTTP_400_BAD_REQUEST
+            )
 
     ui_classification1_classification2_tags = payload.get("ui_classification1_classification2_tags", [])
     ui_classification1_classification2_lookup_table = defaultdict(list)
@@ -158,13 +168,19 @@ def preview_report_file_case1():
         c1_tag, c2_tag = tag.split("|")
         c1_tag, c2_tag = c1_tag.lower(), c2_tag.lower()
         if c1_tag not in ui_classification1_tags:
-            response_object = {"status": "invalid tag"}
+            response_object = {"message": "invalid tag"}
             response_object["err_msg"] = "输入ui参数错误 - 参与统计的分类1|分类2 - 分类1：{}不存在！".format(c1_tag)
-            return jsonify(response_object)
+            return make_response(
+                jsonify(response_object),
+                StatusCode.HTTP_400_BAD_REQUEST
+            )
         if tag.lower() not in get_lookup_table_k_c1_v_c1_c2(c1_tag):
-            response_object = {"status": "invalid tag"}
+            response_object = {"message": "invalid tag"}
             response_object["err_msg"] = "输入ui参数错误 - 参与统计的分类1|分类2 - 分类2：{}不存在！".format(c2_tag)
-            return jsonify(response_object)
+            return make_response(
+                jsonify(response_object),
+                StatusCode.HTTP_400_BAD_REQUEST
+            )
         ui_classification1_classification2_lookup_table[c1_tag].append(c2_tag)
 
     ui_classification1_topk_tags = payload.get("ui_classification1_topk_tags", [])
@@ -173,48 +189,72 @@ def preview_report_file_case1():
         c1_tag, topk_tag = tag.split("|")
         c1_tag = c1_tag.lower()
         if c1_tag not in ui_classification1_tags:
-            response_object = {"status": "invalid tag"}
+            response_object = {"message": "invalid tag"}
             response_object["err_msg"] = "输入ui参数错误 - 销售top必选（分类1）- 分类1：{}不存在！".format(c1_tag)
-            return jsonify(response_object)
+            return make_response(
+                jsonify(response_object),
+                StatusCode.HTTP_400_BAD_REQUEST
+            )
         if not topk_tag.startswith("top"):
-            response_object = {"status": "invalid tag"}
+            response_object = {"message": "invalid tag"}
             response_object["err_msg"] = "输入ui参数错误 - 销售top必选（分类1）- topk：{}格式不正确！".format(topk_tag)
-            return jsonify(response_object)
+            return make_response(
+                jsonify(response_object),
+                StatusCode.HTTP_400_BAD_REQUEST
+            )
         topk = topk_tag.lstrip("top")
         if REG_POSITIVE_INT.match(topk) is None:
-            response_object = {"status": "invalid tag"}
+            response_object = {"message": "invalid tag"}
             response_object["err_msg"] = "输入ui参数错误 - 销售top必选（分类1）- topk：{}格式不正确！".format(topk_tag)
-            return jsonify(response_object)
+            return make_response(
+                jsonify(response_object),
+                StatusCode.HTTP_400_BAD_REQUEST
+            )
         if int(topk) > len(get_lookup_table_k_c1_v_c1_c2(c1_tag)):
-            response_object = {"status": "invalid tag"}
+            response_object = {"message": "invalid tag"}
             response_object["err_msg"] = "输入ui参数错误 - 销售top必选（分类1）- topk：{}超过最大值top{}".format(
                 topk_tag, len(get_lookup_table_k_c1_v_c1_c2(c1_tag)))
-            return jsonify(response_object)
+            return make_response(
+                jsonify(response_object),
+                StatusCode.HTTP_400_BAD_REQUEST
+            )
         ui_classification1_topk_lookup_table[c1_tag] = int(topk)
 
     ui_brand_tags = payload.get("ui_brand_tags", [])
     ui_brand_tags = [tag.lower() for tag in ui_brand_tags]
     for tag in ui_brand_tags:
         if tag not in get_lookup_table_k_brand_v_brand_c2_keys():
-            response_object = {"status": "invalid tag"}
+            response_object = {"message": "invalid tag"}
             response_object["err_msg"] = "输入ui参数错误 - 参与统计的品牌：{}不存在！".format(tag)
-            return jsonify(response_object)
+            return make_response(
+                jsonify(response_object),
+                StatusCode.HTTP_400_BAD_REQUEST
+            )
 
     ui_brand_topk_tag = payload.get("ui_brand_topk_tag", "")
     if not ui_brand_topk_tag.startswith("top"):
-        response_object = {"status": "invalid tag"}
+        response_object = {"message": "invalid tag"}
         response_object["err_msg"] = "输入ui参数错误 - 销售top必选（品牌）- topk：{}格式不正确！".format(ui_brand_topk_tag)
-        return jsonify(response_object)
+        return make_response(
+            jsonify(response_object),
+            StatusCode.HTTP_400_BAD_REQUEST
+        )
     brand_topk = ui_brand_topk_tag.lstrip("top")
     if REG_POSITIVE_INT.match(brand_topk) is None:
-        response_object = {"status": "invalid tag"}
+        response_object = {"message": "invalid tag"}
         response_object["err_msg"] = "输入ui参数错误 - 销售top必选（品牌）- topk：{}格式不正确！".format(ui_brand_topk_tag)
-        return jsonify(response_object)
+        return make_response(
+            jsonify(response_object),
+            StatusCode.HTTP_400_BAD_REQUEST
+        )
     if int(brand_topk) > len(get_lookup_table_k_brand_v_brand_c2_keys()):
-        response_object = {"status": "invalid tag"}
+        response_object = {"message": "invalid tag"}
         response_object["err_msg"] = "输入ui参数错误 - 销售top必选（分类1）- topk：{}超过最大值top{}".format(
             ui_brand_topk_tag, len(get_lookup_table_k_brand_v_brand_c2_keys()))
-        return jsonify(response_object)
+        return make_response(
+            jsonify(response_object),
+            StatusCode.HTTP_400_BAD_REQUEST
+        )
 
     ui_brand_classification2_tags = payload.get("ui_brand_classification2_tags", [])
     ui_brand_classification2_tags_table = []
@@ -222,16 +262,21 @@ def preview_report_file_case1():
         brand_tag, c2_tag = tag.split("|")
         brand_tag, c2_tag = brand_tag.lower(), c2_tag.lower()
         if brand_tag not in get_lookup_table_k_brand_v_brand_c2_keys():
-            response_object = {"status": "invalid tag"}
+            response_object = {"message": "invalid tag"}
             response_object["err_msg"] = "输入ui参数错误 - 参与统计的品牌|分类2 - 品牌：{}不存在！".format(brand_tag)
-            return jsonify(response_object)
+            return make_response(
+                jsonify(response_object),
+                StatusCode.HTTP_400_BAD_REQUEST
+            )
         if tag not in get_lookup_table_k_brand_v_brand_c2(brand_tag):
-            response_object = {"status": "invalid tag"}
+            response_object = {"message": "invalid tag"}
             response_object["err_msg"] = "输入ui参数错误 - 参与统计的品牌|分类2 - 分类2：{}不存在！".format(c2_tag)
-            return jsonify(response_object)
+            return make_response(
+                jsonify(response_object),
+                StatusCode.HTTP_400_BAD_REQUEST
+            )
         ui_brand_classification2_tags_table.append((brand_tag, c2_tag))
 
-    response_object = {"status": "success"}
     preview_table = []
     preview_table.append(["{} ~ {}销售报表".format(st_date, ed_date), "", "占比"])
     # 计算202X年XX月~202X年XX月的总销售额
@@ -480,11 +525,16 @@ FROM fotolei_pssa.inventories WHERE extra_brand = '{}' AND extra_classification_
             preview_table = preview_table[:er_dian_idx] + preview_table[er_dian_idx + 1:]
             preview_table.insert(gui_gui_idx + 1, er_dian)
 
-        response_object["preview_table"] = preview_table
-        return jsonify(response_object)
-    else:
-        response_object = {"status": "not found"}
-        return jsonify(response_object)
+        response_object = {"message": "", "preview_table": preview_table}
+        return make_response(
+            jsonify(response_object),
+            StatusCode.HTTP_200_OK
+        )
+
+    return make_response(
+        jsonify({"message": ""}),
+        StatusCode.HTTP_404_NOT_FOUND
+    )
 
 
 # 预下载"销售报表（按分类汇总）"的接口
@@ -501,14 +551,17 @@ def prepare_report_file_case1():
     csv_file_sha256 = util_generate_digest("销售报表（按分类汇总）_{}.csv".format(ts))
     csv_file = "{}/fotolei-pssa/send_queue/{}".format(os.path.expanduser("~"), csv_file_sha256)
     output_file = "销售报表（按分类汇总）_{}.csv".format(ts)
-    with open(csv_file, "w", encoding='utf-8-sig') as fd:
+    with open(csv_file, "w", encoding="utf-8-sig") as fd:
         csv_writer = csv.writer(fd, delimiter=",")
         for row in preview_table:
             csv_writer.writerow(row)
 
-    response_object = {"status": "success"}
+    session["op_object"] = output_file
+
+    response_object = {"message": ""}
     response_object["output_file"] = output_file
     response_object["server_send_queue_file"] = csv_file_sha256
-
-    session["op_object"] = output_file
-    return jsonify(response_object)
+    return make_response(
+        jsonify(response_object),
+        StatusCode.HTTP_200_OK
+    )

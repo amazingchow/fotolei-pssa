@@ -1209,36 +1209,30 @@ export default {
       }
       axios.post(this.serverBaseURL + '/api/v1/inventories/upload', formData, config)
         .then((res) => {
-          if (res.data.status === 'success') {
-            this.listInventories()
-            this.getInventoriesTotal()
-            if (res.data.msg.length > 0) {
-              this.message = date + '数据导入成功！' + res.data.msg
-            } else {
-              this.message = date + '数据导入成功！'
-            }
-            this.showMessage = true
-          } else if (res.data.status === 'repetition') {
-            this.message = '导入失败！数据表格重复导入！'
-            this.showMessage = true
-          } else if (res.data.status === 'new SKUs') {
-            this.message = '禁止导入，有新增SKU！'
-            this.showMessage = true
-            this.addedSkus = res.data.added_skus
-            this.shouldOpenSidebar = true
-          } else if (res.data.status === 'invalid input data') {
-            this.message = '导入失败！' + res.data.err_msg
-            this.showMessage = true
+          this.listInventories()
+          this.getInventoriesTotal()
+          if (res.data.msg.length > 0) {
+            this.message = date + '数据导入成功！' + res.data.msg
           } else {
-            this.message = '导入失败！数据表格格式有变更，请人工复合！'
-            this.showMessage = true
+            this.message = date + '数据导入成功！'
           }
+          this.showMessage = true
           this.importCSVFileClose()
         })
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '内部服务错误！'
+          if (error.response.status === 400) {
+            this.message = '导入失败！' + error.data.message
+          } else if (error.response.status === 406) {
+            this.message = '禁止导入，有新增SKU！'
+            this.addedSkus = error.data.added_skus
+            this.shouldOpenSidebar = true
+          } else if (error.response.status === 409) {
+            this.message = '导入失败！数据表格重复导入！'
+          } else {
+            this.message = '内部服务错误！'
+          }
           this.showMessage = true
           this.importCSVFileClose()
         })
@@ -1284,19 +1278,17 @@ export default {
     cleanAllInventories (payload) {
       axios.post(this.serverBaseURL + '/api/v1/inventories/all/clean', payload)
         .then((res) => {
-          if (res.data.status === 'success') {
-            this.message = '删除成功！'
-            this.showMessage = true
-          } else if (res.data.status === 'invalid input data') {
-            this.message = '删除失败，管理员账号或密码错误！'
-            this.showMessage = true
-          }
+          this.message = '删除成功！'
+          this.showMessage = true
           this.cleanAllInventoriesClose()
         })
         .catch((error) => {
           // eslint-disable-next-line
-          console.log(error)
-          this.message = '内部服务错误！'
+          if (error.response.status === 403) {
+            this.message = '删除失败，管理员账号或密码错误！'
+          } else {
+            this.message = '内部服务错误！'
+          }
           this.showMessage = true
           this.cleanAllInventoriesClose()
         })
@@ -1376,23 +1368,21 @@ export default {
     previewReportFileCase1 (payload) {
       axios.post(this.serverBaseURL + '/api/v1/case1/preview', payload)
         .then((res) => {
-          if (res.data.status === 'success') {
-            const pt = Object.freeze(res.data.preview_table)
-            this.previewCase1.previewTable = pt
-            this.$refs.previewCase1Modal.show()
-          } else if (res.data.status === 'not found') {
-            this.message = '预览失败！不存在指定的库存条目。'
-            this.showMessage = true
-          } else if (res.data.status === 'invalid tag') {
-            this.message = res.data.err_msg
-            this.showMessage = true
-          }
+          const pt = Object.freeze(res.data.preview_table)
+          this.previewCase1.previewTable = pt
+          this.$refs.previewCase1Modal.show()
           this.previewReportFileCase1Close()
         })
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '内部服务错误！'
+          if (error.response.status === 404) {
+            this.message = '预览失败！不存在指定的库存条目。'
+          } else if (error.response.status === 400) {
+            this.message = error.data.message
+          } else {
+            this.message = '内部服务错误！'
+          }
           this.showMessage = true
           this.previewReportFileCase1Close()
         })
@@ -1445,20 +1435,21 @@ export default {
     previewReportFileCase2 (payload) {
       axios.post(this.serverBaseURL + '/api/v1/case2/preview', payload)
         .then((res) => {
-          if (res.data.status === 'success') {
-            const pt = Object.freeze(res.data.preview_table)
-            this.previewCase2.previewTable = pt
-            this.$refs.previewCase2Modal.show()
-          } else if (res.data.status === 'not found') {
-            this.message = '预览失败！不存在指定的库存条目。'
-            this.showMessage = true
-          }
+          const pt = Object.freeze(res.data.preview_table)
+          this.previewCase2.previewTable = pt
+          this.$refs.previewCase2Modal.show()
           this.previewReportFileCase2Close()
         })
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '内部服务错误！'
+          if (error.response.status === 404) {
+            this.message = '预览失败！不存在指定的库存条目。'
+          } else if (error.response.status === 400) {
+            this.message = error.data.message
+          } else {
+            this.message = '内部服务错误！'
+          }
           this.showMessage = true
           this.previewReportFileCase2Close()
         })
@@ -1507,20 +1498,21 @@ export default {
     previewReportFileCase3 (payload) {
       axios.post(this.serverBaseURL + '/api/v1/case3/preview', payload)
         .then((res) => {
-          if (res.data.status === 'success') {
-            const pt = Object.freeze(res.data.preview_table)
-            this.previewCase3.previewTable = pt
-            this.$refs.previewCase3Modal.show()
-          } else if (res.data.status === 'not found') {
-            this.message = '预览失败！不存在指定的库存条目。'
-            this.showMessage = true
-          }
+          const pt = Object.freeze(res.data.preview_table)
+          this.previewCase3.previewTable = pt
+          this.$refs.previewCase3Modal.show()
           this.previewReportFileCase3Close()
         })
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '内部服务错误！'
+          if (error.response.status === 404) {
+            this.message = '预览失败！不存在指定的库存条目。'
+          } else if (error.response.status === 400) {
+            this.message = error.data.message
+          } else {
+            this.message = '内部服务错误！'
+          }
           this.showMessage = true
           this.previewReportFileCase3Close()
         })
@@ -1591,20 +1583,21 @@ export default {
     previewReportFileCase4 (payload) {
       axios.post(this.serverBaseURL + '/api/v1/case4/preview', payload)
         .then((res) => {
-          if (res.data.status === 'success') {
-            const pt = Object.freeze(res.data.preview_table)
-            this.previewCase4.previewTable = pt
-            this.$refs.previewCase4Modal.show()
-          } else {
-            this.message = '预览失败！不存在指定的库存条目。'
-            this.showMessage = true
-          }
+          const pt = Object.freeze(res.data.preview_table)
+          this.previewCase4.previewTable = pt
+          this.$refs.previewCase4Modal.show()
           this.previewReportFileCase4Close()
         })
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '内部服务错误！'
+          if (error.response.status === 404) {
+            this.message = '预览失败！不存在指定的库存条目。'
+          } else if (error.response.status === 400) {
+            this.message = error.data.message
+          } else {
+            this.message = '内部服务错误！'
+          }
           this.showMessage = true
           this.previewReportFileCase4Close()
         })
@@ -1654,24 +1647,22 @@ export default {
     previewReportFileCase5Way (url, payload) {
       axios.post(this.serverBaseURL + url, payload)
         .then((res) => {
-          if (res.data.status === 'success') {
-            const pt = Object.freeze(res.data.preview_table)
-            this.previewCase5.previewTable = pt
-            this.supplierNameListFromScreeningWay1 = res.data.supplier_name_list_from_screening_way1
-            this.$refs.previewCase5Modal.show()
-          } else if (res.data.status === 'invalid operation') {
-            this.message = '预览失败！请先操作筛选1！！！'
-            this.showMessage = true
-          } else {
-            this.message = '预览失败！不存在指定的库存条目。'
-            this.showMessage = true
-          }
+          const pt = Object.freeze(res.data.preview_table)
+          this.previewCase5.previewTable = pt
+          this.supplierNameListFromScreeningWay1 = res.data.supplier_name_list_from_screening_way1
+          this.$refs.previewCase5Modal.show()
           this.previewReportFileCase5WayClose()
         })
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '内部服务错误！'
+          if (error.response.status === 404) {
+            this.message = '预览失败！不存在指定的库存条目。'
+          } else if (error.response.status === 400) {
+            this.message = error.data.message
+          } else {
+            this.message = '内部服务错误！'
+          }
           this.showMessage = true
           this.previewReportFileCase5WayClose()
         })
@@ -1755,28 +1746,23 @@ export default {
       }
       axios.post(this.serverBaseURL + '/api/v1/case6/upload', formData, config)
         .then((res) => {
-          if (res.data.status === 'success') {
-            if (res.data.demand_table.length > 0) {
-              this.message = '导入成功！'
-              this.showMessage = true
-              this.demandTable = res.data.demand_table
-            } else {
-              this.message = '导入成功！需求表是空的！'
-              this.showMessage = true
-            }
-          } else if (res.data.status === 'invalid input data schema') {
-            this.message = '导入失败！需求表格式有变更，请人工复核！'
+          if (res.data.demand_table.length > 0) {
+            this.message = '导入成功！'
             this.showMessage = true
-          } else if (res.data.status === 'invalid input data') {
-            this.message = '导入失败！' + res.data.err_msg
+            this.demandTable = res.data.demand_table
+          } else {
+            this.message = '导入成功！需求表是空的！'
             this.showMessage = true
           }
           this.importCSVFileForCase6Close()
         })
         .catch((error) => {
           // eslint-disable-next-line
-          console.log(error)
-          this.message = '内部服务错误！'
+          if (error.response.status === 400) {
+            this.message = '导入失败！' + error.data.message
+          } else {
+            this.message = '内部服务错误！'
+          }
           this.showMessage = true
           this.importCSVFileForCase6Close()
         })
@@ -1800,22 +1786,23 @@ export default {
     previewReportFileCase6 (payload) {
       axios.post(this.serverBaseURL + '/api/v1/case6/preview', payload)
         .then((res) => {
-          if (res.data.status === 'success') {
-            const pt = Object.freeze(res.data.preview_table)
-            this.previewCase6.previewTable = pt
-            const pst = Object.freeze(res.data.preview_summary_table)
-            this.previewCase6.previewSummaryTable = pst
-            this.$refs.previewCase6Modal.show()
-          } else {
-            this.message = '预览失败！不存在指定的商品条目。'
-            this.showMessage = true
-          }
+          const pt = Object.freeze(res.data.preview_table)
+          this.previewCase6.previewTable = pt
+          const pst = Object.freeze(res.data.preview_summary_table)
+          this.previewCase6.previewSummaryTable = pst
+          this.$refs.previewCase6Modal.show()
           this.previewReportFileCase6Close()
         })
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '内部服务错误！'
+          if (error.response.status === 404) {
+            this.message = '预览失败！不存在指定的库存条目。'
+          } else if (error.response.status === 400) {
+            this.message = error.data.message
+          } else {
+            this.message = '内部服务错误！'
+          }
           this.showMessage = true
           this.previewReportFileCase6Close()
         })
@@ -1850,18 +1837,17 @@ export default {
     prepareExportReportFile (url, payload) {
       axios.post(this.serverBaseURL + url, payload)
         .then((res) => {
-          if (res.data.status === 'success') {
-            this.exportReportFile(res.data.server_send_queue_file, res.data.output_file)
-          } else if (res.data.status === 'not found') {
-            this.message = '没有满足要求的数据条目！'
-            this.showMessage = true
-          }
+          this.exportReportFile(res.data.server_send_queue_file, res.data.output_file)
           this.prepareExportReportFileClose()
         })
         .catch((error) => {
           // eslint-disable-next-line
           console.log(error)
-          this.message = '内部服务错误！'
+          if (error.response.status === 404) {
+            this.message = '没有满足要求的数据条目！'
+          } else {
+            this.message = '内部服务错误！'
+          }
           this.showMessage = true
           this.prepareExportReportFileClose()
         })

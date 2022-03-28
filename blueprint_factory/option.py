@@ -6,6 +6,8 @@ sys.path.append(os.path.abspath("../utils"))
 
 from flask import Blueprint
 from flask import jsonify
+from flask import make_response
+from flask_api import status as StatusCode
 
 from .decorator_factory import has_logged_in
 from .decorator_factory import restrict_access
@@ -27,7 +29,7 @@ option_blueprint = Blueprint(
 @restrict_access(access_level=ROLE_TYPE_ORDINARY_USER)
 @cost_count
 def list_all_options():
-    response_object = {"status": "success"}
+    response_object = {"message": ""}
 
     # TODO: 优化SQL
     stmt = "SELECT DISTINCT brand FROM fotolei_pssa.products;"
@@ -65,4 +67,7 @@ def list_all_options():
     else:
         response_object["supplier_name_options"] = [{"id": i, "supplier-name": supplier_name[0]} for i, supplier_name in enumerate(supplier_name_options)]
 
-    return jsonify(response_object)
+    return make_response(
+        jsonify(response_object),
+        StatusCode.HTTP_200_OK
+    )

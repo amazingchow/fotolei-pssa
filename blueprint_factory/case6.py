@@ -9,13 +9,15 @@ import time
 
 from flask import Blueprint
 from flask import jsonify
+from flask import make_response
 from flask import request
 from flask import session
+from flask_api import status as StatusCode
 
-from .decorator_factory import has_logged_in
-from .decorator_factory import restrict_access
 from .decorator_factory import cost_count
+from .decorator_factory import has_logged_in
 from .decorator_factory import record_action
+from .decorator_factory import restrict_access
 from db import db_connector
 from utils import ACTION_TYPE_EXPORT
 from utils import get_lookup_table_k_sku_v_boolean
@@ -45,17 +47,20 @@ def upload_csv_file_for_case6():
     csv_files[0].save(csv_file)
 
     if not do_data_schema_validation_for_input_case6_demand_table(csv_file):
-        response_object = {"status": "invalid input data schema"}
-        return jsonify(response_object)
+        return make_response(
+            jsonify({"message": "invalid data schema"}),
+            StatusCode.HTTP_400_BAD_REQUEST
+        )
 
     is_valid, err_msg = do_data_check_for_input_case6_demand_table(csv_file)
     if not is_valid:
-        response_object = {"status": "invalid input data"}
-        response_object["err_msg"] = err_msg
-        return jsonify(response_object)
+        return make_response(
+            jsonify({"message": "invalid data: {}".format(err_msg)}),
+            StatusCode.HTTP_400_BAD_REQUEST
+        )
 
     demand_table = []
-    with open(csv_file, "r", encoding='utf-8-sig') as fd:
+    with open(csv_file, "r", encoding="utf-8-sig") as fd:
         csv_reader = csv.reader(fd, delimiter=",")
         next(csv_reader, None)  # skip the header line
         for row in csv_reader:
@@ -66,9 +71,11 @@ def upload_csv_file_for_case6():
                 }
             )
 
-    response_object = {"status": "success"}
-    response_object["demand_table"] = demand_table
-    return jsonify(response_object)
+    response_object = {"message": "", "demand_table": demand_table}
+    return make_response(
+        jsonify(response_object),
+        StatusCode.HTTP_200_OK
+    )
 
 
 '''
@@ -125,10 +132,13 @@ FROM fotolei_pssa.products WHERE specification_code = '{}';".format(item["specif
         preview_summary_table["product_volume_total"] += item["product_volume_total"]
         preview_summary_table["product_weight_total"] += item["product_weight_total"]
 
-    response_object = {"status": "success"}
+    response_object = {"message": ""}
     response_object["preview_table"] = preview_table
     response_object["preview_summary_table"] = preview_summary_table
-    return jsonify(response_object)
+    return make_response(
+        jsonify(response_object),
+        StatusCode.HTTP_200_OK
+    )
 
 
 # 预下载"体积、重量计算汇总单"的接口
@@ -146,7 +156,7 @@ def prepare_report_file_case6():
     csv_file_sha256 = util_generate_digest("体积、重量计算汇总单_{}.csv".format(ts))
     csv_file = "{}/fotolei-pssa/send_queue/{}".format(os.path.expanduser("~"), csv_file_sha256)
     output_file = "体积、重量计算汇总单_{}.csv".format(ts)
-    with open(csv_file, "w", encoding='utf-8-sig') as fd:
+    with open(csv_file, "w", encoding="utf-8-sig") as fd:
         csv_writer = csv.writer(fd, delimiter=",")
         csv_writer.writerow([
             "规格编码", "商品名称", "规格名称", "数量",
@@ -164,12 +174,15 @@ def prepare_report_file_case6():
             preview_summary_table["product_volume_total"], "", preview_summary_table["product_weight_total"],
         ])
 
-    response_object = {"status": "success"}
+    session["op_object"] = output_file
+
+    response_object = {"message": ""}
     response_object["output_file"] = output_file
     response_object["server_send_queue_file"] = csv_file_sha256
-
-    session["op_object"] = output_file
-    return jsonify(response_object)
+    return make_response(
+        jsonify(response_object),
+        StatusCode.HTTP_200_OK
+    )
 
 
 def do_data_schema_validation_for_input_case6_demand_table(csv_file: str):
@@ -177,7 +190,7 @@ def do_data_schema_validation_for_input_case6_demand_table(csv_file: str):
         "规格编码", "数量",
     ]
     is_valid = True
-    with open(csv_file, "r", encoding='utf-8-sig') as fd:
+    with open(csv_file, "r", encoding="utf-8-sig") as fd:
         csv_reader = csv.reader(fd, delimiter=",")
         for row in csv_reader:
             if len(row) != len(data_schema):
@@ -196,7 +209,7 @@ def do_data_schema_validation_for_input_case6_demand_table(csv_file: str):
 def do_data_check_for_input_case6_demand_table(csv_file: str):
     is_valid = True
     err_msg = ""
-    with open(csv_file, "r", encoding='utf-8-sig') as fd:
+    with open(csv_file, "r", encoding="utf-8-sig") as fd:
         csv_reader = csv.reader(fd, delimiter=",")
         next(csv_reader, None)  # skip the header line
         line = 1

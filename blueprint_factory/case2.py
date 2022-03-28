@@ -9,13 +9,15 @@ import time
 
 from flask import Blueprint
 from flask import jsonify
+from flask import make_response
 from flask import request
 from flask import session
+from flask_api import status as StatusCode
 
-from .decorator_factory import has_logged_in
-from .decorator_factory import restrict_access
 from .decorator_factory import cost_count
+from .decorator_factory import has_logged_in
 from .decorator_factory import record_action
+from .decorator_factory import restrict_access
 from db import db_connector
 from utils import ACTION_TYPE_EXPORT
 from utils import ROLE_TYPE_ORDINARY_USER
@@ -53,8 +55,10 @@ def preview_report_file_case2():
     st_date = payload.get("st_date", "").strip()
     ed_date = payload.get("ed_date", "").strip()
     if (st_date > ed_date):
-        response_object = {"status": "not found"}
-        return jsonify(response_object)
+        return make_response(
+            jsonify({"message": "invalid st_date and ed_date"}),
+            StatusCode.HTTP_400_BAD_REQUEST
+        )
 
     stmt = "SELECT specification_code, product_series, jit_inventory FROM fotolei_pssa.products \
 WHERE COALESCE(CHAR_LENGTH(product_series), 0) != 0 AND is_combined = '否';"
@@ -120,19 +124,25 @@ WHERE COALESCE(CHAR_LENGTH(product_series), 0) != 0 AND is_combined = '否';"
                 del cache[product_series]
 
         if len(cache.keys()) == 0:
-            response_object = {"status": "not found"}
-            return jsonify(response_object)
+            return make_response(
+                jsonify({"message": ""}),
+                StatusCode.HTTP_404_NOT_FOUND
+            )
 
         preview_table = []
         for k, v in cache.items():
             preview_table.append(v)
 
-        response_object = {"status": "success"}
-        response_object["preview_table"] = preview_table
-        return jsonify(response_object)
-    else:
-        response_object = {"status": "not found"}
-        return jsonify(response_object)
+        response_object = {"message": "", "preview_table": preview_table}
+        return make_response(
+            jsonify(response_object),
+            StatusCode.HTTP_200_OK
+        )
+
+    return make_response(
+        jsonify({"message": ""}),
+        StatusCode.HTTP_404_NOT_FOUND
+    )
 
 
 # 预下载"销售报表（按系列汇总）"的接口
@@ -149,7 +159,7 @@ def prepare_report_file_case2():
     csv_file_sha256 = util_generate_digest("销售报表（按系列汇总）_{}.csv".format(ts))
     csv_file = "{}/fotolei-pssa/send_queue/{}".format(os.path.expanduser("~"), csv_file_sha256)
     output_file = "销售报表（按系列汇总）_{}.csv".format(ts)
-    with open(csv_file, "w", encoding='utf-8-sig') as fd:
+    with open(csv_file, "w", encoding="utf-8-sig") as fd:
         csv_writer = csv.writer(fd, delimiter=",")
         csv_writer.writerow([
             "产品系列", "起始库存数量", "起始库存总额", "采购数量",
@@ -166,9 +176,12 @@ def prepare_report_file_case2():
                 item["others_total"], item["ed_inventory_qty"], item["ed_inventory_total"], item["jit_inventory"],
             ])
 
-    response_object = {"status": "success"}
+    session["op_object"] = output_file
+
+    response_object = {"message": ""}
     response_object["output_file"] = output_file
     response_object["server_send_queue_file"] = csv_file_sha256
-
-    session["op_object"] = output_file
-    return jsonify(response_object)
+    return make_response(
+        jsonify(response_object),
+        StatusCode.HTTP_200_OK
+    )

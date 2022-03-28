@@ -9,8 +9,10 @@ import time
 
 from flask import Blueprint
 from flask import jsonify
+from flask import make_response
 from flask import request
 from flask import session
+from flask_api import status as StatusCode
 
 from .decorator_factory import has_logged_in
 from .decorator_factory import restrict_access
@@ -55,14 +57,16 @@ def preview_report_file_case3():
     st_date = payload.get("st_date", "").strip()
     ed_date = payload.get("ed_date", "").strip()
     if (st_date > ed_date):
-        response_object = {"status": "not found"}
-        return jsonify(response_object)
+        return make_response(
+            jsonify({"message": "invalid st_date and ed_date"}),
+            StatusCode.HTTP_400_BAD_REQUEST
+        )
 
     specification_code = payload.get("specification_code", "").strip()
     specification_code_list = []
 
     def inline():
-        resp = {"status": "success"}
+        resp = {"message": ""}
         resp["preview_table"] = []
         for scode in specification_code_list:
             cache = {}
@@ -109,63 +113,80 @@ def preview_report_file_case3():
                 cache["jit_inventory"] = inner_rets[0][19]
 
                 resp["preview_table"].append(cache)
-        if len(resp["preview_table"]) == 0:
-            resp = {"status": "not found"}
         return resp
 
     if len(specification_code) > 0:
         specification_code_list.append(specification_code)
         response_object = inline()
-        return jsonify(response_object)
-    else:
-        product_code = payload.get("product_code", "").strip()
-        product_name = payload.get("product_name", "").strip()
-        brand = payload.get("brand", "").strip().lower()
-        classification_1 = payload.get("classification_1", "").strip().lower()
-        classification_2 = payload.get("classification_2", "").strip().lower()
-        product_series = payload.get("product_series", "").strip().lower()
-        stop_status = payload.get("stop_status", "全部").strip()
-        is_combined = payload.get("is_combined", "全部").strip()
-        be_aggregated = payload.get("be_aggregated", "全部").strip()
-        is_import = payload.get("is_import", "全部").strip()
-        supplier_name = payload.get("supplier_name", "").strip().lower()
+        if len(response_object["preview_table"]) == 0:
+            return make_response(
+                jsonify(response_object),
+                StatusCode.HTTP_404_NOT_FOUND
+            )
+        return make_response(
+            jsonify(response_object),
+            StatusCode.HTTP_200_OK
+        )
 
-        # TODO: 优化SQL
-        stmt = "SELECT specification_code FROM fotolei_pssa.products WHERE "
-        selections = []
-        if len(product_code) > 0:
-            selections.append("product_code = '{}'".format(product_code))
-        if len(product_name) > 0:
-            selections.append("product_name = '{}'".format(product_name))
-        if len(brand) > 0:
-            selections.append("brand = '{}'".format(brand))
-        if len(classification_1) > 0:
-            selections.append("classification_1 = '{}'".format(classification_1))
-        if len(classification_2) > 0:
-            selections.append("classification_2 = '{}'".format(classification_2))
-        if len(product_series) > 0:
-            selections.append("product_series = '{}'".format(product_series))
-        if stop_status != '全部':
-            selections.append("stop_status = '{}'".format(stop_status))
-        if is_combined != '全部':
-            selections.append("is_combined = '{}'".format(is_combined))
-        if be_aggregated != '全部':
-            selections.append("be_aggregated = '{}'".format(be_aggregated))
-        if is_import != '全部':
-            selections.append("is_import = '{}'".format(is_import))
-        if len(supplier_name) > 0:
-            selections.append("supplier_name = '{}'".format(supplier_name))
-        stmt += " AND ".join(selections)
+    product_code = payload.get("product_code", "").strip()
+    product_name = payload.get("product_name", "").strip()
+    brand = payload.get("brand", "").strip().lower()
+    classification_1 = payload.get("classification_1", "").strip().lower()
+    classification_2 = payload.get("classification_2", "").strip().lower()
+    product_series = payload.get("product_series", "").strip().lower()
+    stop_status = payload.get("stop_status", "全部").strip()
+    is_combined = payload.get("is_combined", "全部").strip()
+    be_aggregated = payload.get("be_aggregated", "全部").strip()
+    is_import = payload.get("is_import", "全部").strip()
+    supplier_name = payload.get("supplier_name", "").strip().lower()
+
+    # TODO: 优化SQL
+    stmt = "SELECT specification_code FROM fotolei_pssa.products"
+    selections = []
+    if len(product_code) > 0:
+        selections.append("product_code = '{}'".format(product_code))
+    if len(product_name) > 0:
+        selections.append("product_name = '{}'".format(product_name))
+    if len(brand) > 0:
+        selections.append("brand = '{}'".format(brand))
+    if len(classification_1) > 0:
+        selections.append("classification_1 = '{}'".format(classification_1))
+    if len(classification_2) > 0:
+        selections.append("classification_2 = '{}'".format(classification_2))
+    if len(product_series) > 0:
+        selections.append("product_series = '{}'".format(product_series))
+    if stop_status != '全部':
+        selections.append("stop_status = '{}'".format(stop_status))
+    if is_combined != '全部':
+        selections.append("is_combined = '{}'".format(is_combined))
+    if be_aggregated != '全部':
+        selections.append("be_aggregated = '{}'".format(be_aggregated))
+    if is_import != '全部':
+        selections.append("is_import = '{}'".format(is_import))
+    if len(supplier_name) > 0:
+        selections.append("supplier_name = '{}'".format(supplier_name))
+
+    if len(selections) == 0:
         stmt += ";"
-        rets = db_connector.query(stmt)
-        if type(rets) is list and len(rets) > 0:
-            for ret in rets:
-                specification_code_list.append(ret[0])
-            response_object = inline()
-            return jsonify(response_object)
-        else:
-            response_object = {"status": "not found"}
-            return jsonify(response_object)
+    elif len(selections) == 1:
+        stmt += " WHERE {};".format(selections[0])
+    else:
+        stmt += " WHERE {};".format(" AND ".join(selections))
+    
+    rets = db_connector.query(stmt)
+    if type(rets) is list and len(rets) > 0:
+        for ret in rets:
+            specification_code_list.append(ret[0])
+        response_object = inline()
+        return make_response(
+            jsonify(response_object),
+            StatusCode.HTTP_200_OK
+        )
+
+    return make_response(
+        jsonify({"message": ""}),
+        StatusCode.HTTP_404_NOT_FOUND
+    )
 
 
 # 预下载"销售报表（按单个SKU汇总）"的接口
@@ -182,7 +203,7 @@ def prepare_report_file_case3():
     csv_file_sha256 = util_generate_digest("销售报表（按单个SKU汇总）_{}.csv".format(ts))
     csv_file = "{}/fotolei-pssa/send_queue/{}".format(os.path.expanduser("~"), csv_file_sha256)
     output_file = "销售报表（按单个SKU汇总）_{}.csv".format(ts)
-    with open(csv_file, "w", encoding='utf-8-sig') as fd:
+    with open(csv_file, "w", encoding="utf-8-sig") as fd:
         csv_writer = csv.writer(fd, delimiter=",")
         csv_writer.writerow([
             "商品编码", "规格编码", "商品名称", "规格名称",
@@ -206,9 +227,12 @@ def prepare_report_file_case3():
                 item["ed_inventory_qty"], item["ed_inventory_total"], item["jit_inventory"],
             ])
 
-    response_object = {"status": "success"}
+    session["op_object"] = output_file
+
+    response_object = {"message": ""}
     response_object["output_file"] = output_file
     response_object["server_send_queue_file"] = csv_file_sha256
-
-    session["op_object"] = output_file
-    return jsonify(response_object)
+    return make_response(
+        jsonify(response_object),
+        StatusCode.HTTP_200_OK
+    )

@@ -7,8 +7,8 @@ import threading
 
 from collections import defaultdict
 
-from db import db_connector
 from .util_funcs import util_generate_digest
+from db import db_connector
 
 
 _LOOKUP_TABLE_USER_LOCK = threading.Lock()

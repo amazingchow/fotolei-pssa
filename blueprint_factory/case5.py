@@ -12,13 +12,15 @@ import time
 from flask import current_app
 from flask import Blueprint
 from flask import jsonify
+from flask import make_response
 from flask import request
 from flask import session
+from flask_api import status as StatusCode
 
-from .decorator_factory import has_logged_in
-from .decorator_factory import restrict_access
 from .decorator_factory import cost_count
+from .decorator_factory import has_logged_in
 from .decorator_factory import record_action
+from .decorator_factory import restrict_access
 from db import db_connector
 from utils import ACTION_TYPE_EXPORT
 from utils import ROLE_TYPE_ORDINARY_USER
@@ -57,8 +59,10 @@ def preview_report_file_case5():
         if len(supplier_name) == 0:
             supplier_name_list_from_screening_way1 = payload.get("supplier_name_list_from_screening_way1", [])
             if len(supplier_name_list_from_screening_way1) == 0:
-                response_object = {"status": "invalid operation"}
-                return jsonify(response_object)
+                return make_response(
+                    jsonify({"message": "invalid operation"}),
+                    StatusCode.HTTP_400_BAD_REQUEST
+                )
 
     # 过去X个月
     time_quantum_in_month_x = int(payload.get("time_quantum_x", "6"))
@@ -120,7 +124,7 @@ jit_inventory, product_weight, product_length, product_width, product_height, mo
 
     if len(specification_code_list) > 0:
         inventories_import_date_record_table = shelve.open("{}/fotolei-pssa/tmp-files/inventories_import_date_record_table".format(
-            os.path.expanduser("~")), flag='c', writeback=False)
+            os.path.expanduser("~")), flag="c", writeback=False)
         real_specification_code_list = []
         for specification_code in specification_code_list:
             v = inventories_import_date_record_table.get(specification_code, [])
@@ -237,18 +241,24 @@ jit_inventory, product_weight, product_length, product_width, product_height, mo
             current_app.logger.info("筛选2, 输出的SKU数量等于{}".format(len(preview_table)))
 
         if len(preview_table) > 0:
-            response_object = {"status": "success"}
+            response_object = {"message": ""}
             if len(supplier_name) == 0:
                 preview_table.sort(key=lambda x: x["supplier_name"], reverse=False)
             response_object["preview_table"] = preview_table
             response_object["supplier_name_list_from_screening_way1"] = supplier_name_list_from_screening_way1
-            return jsonify(response_object)
-        else:
-            response_object = {"status": "not found"}
-            return jsonify(response_object)
-    else:
-        response_object = {"status": "not found"}
-        return jsonify(response_object)
+            return make_response(
+                jsonify(response_object),
+                StatusCode.HTTP_200_OK
+            )
+        return make_response(
+            jsonify({"message": ""}),
+            StatusCode.HTTP_404_NOT_FOUND
+        )
+
+    return make_response(
+        jsonify({"message": ""}),
+        StatusCode.HTTP_404_NOT_FOUND
+    )
 
 
 # 预下载"采购辅助分析报表"的接口
@@ -267,7 +277,7 @@ def prepare_report_file_case5():
     csv_file_sha256 = util_generate_digest("采购辅助分析报表_{}.csv".format(ts))
     csv_file = "{}/fotolei-pssa/send_queue/{}".format(os.path.expanduser("~"), csv_file_sha256)
     output_file = "采购辅助分析报表_{}.csv".format(ts)
-    with open(csv_file, "w", encoding='utf-8-sig') as fd:
+    with open(csv_file, "w", encoding="utf-8-sig") as fd:
         csv_writer = csv.writer(fd, delimiter=",")
         csv_writer.writerow([
             "规格编码", "品牌", "商品名称", "规格名称", "采购名称", "供应商",
@@ -291,12 +301,15 @@ def prepare_report_file_case5():
                 item["remark"],
             ])
 
-    response_object = {"status": "success"}
+    session["op_object"] = output_file
+
+    response_object = {"message": ""}
     response_object["output_file"] = output_file
     response_object["server_send_queue_file"] = csv_file_sha256
-
-    session["op_object"] = output_file
-    return jsonify(response_object)
+    return make_response(
+        jsonify(response_object),
+        StatusCode.HTTP_200_OK
+    )
 
 
 def process_sale_qty(g_cache, specification_code, the_past_m_month, the_time_quantum, is_the_past_x_month, reduced_btn_option, first_import_date):

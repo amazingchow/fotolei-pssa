@@ -18,10 +18,10 @@ from flask import request
 from flask import session
 from flask_api import status as StatusCode
 
-from .decorator_factory import has_logged_in
-from .decorator_factory import restrict_access
 from .decorator_factory import cost_count
+from .decorator_factory import has_logged_in
 from .decorator_factory import record_action
+from .decorator_factory import restrict_access
 from db import db_connector
 from utils import ACTION_TYPE_DELETE_ALL
 from utils import ACTION_TYPE_DELETE_ONE
@@ -85,7 +85,7 @@ def upload_products():
 
     # 用于检查是否是重复导入的数据报表？
     load_file_repetition_lookup_table = shelve.open("{}/fotolei-pssa/tmp-files/products_load_file_repetition_lookup_table".format(
-        os.path.expanduser("~")), flag='c', writeback=False)
+        os.path.expanduser("~")), flag="c", writeback=False)
     digest = util_generate_bytes_in_hdd_digest(csv_file)
     if load_file_repetition_lookup_table.get(digest, False):
         load_file_repetition_lookup_table.close()
@@ -126,7 +126,7 @@ def upload_products():
             "purchase_name, jit_inventory, moq);"
         )
 
-        with open(csv_file, "r", encoding='utf-8-sig') as fd:
+        with open(csv_file, "r", encoding="utf-8-sig") as fd:
             csv_reader = csv.reader(fd, delimiter=",")
             for _ in csv_reader:
                 pass
@@ -403,11 +403,11 @@ CREATE TABLE IF NOT EXISTS fotolei_pssa.product_summary (
             jsonify({"message": ""}),
             StatusCode.HTTP_200_OK
         )
-    else:
-        return make_response(
-            jsonify({"message": ""}),
-            StatusCode.HTTP_403_FORBIDDEN
-        )
+
+    return make_response(
+        jsonify({"message": ""}),
+        StatusCode.HTTP_403_FORBIDDEN
+    )
 
 
 # 删除单条商品条目的接口
@@ -430,11 +430,11 @@ def clean_one_product():
             jsonify({"message": ""}),
             StatusCode.HTTP_200_OK
         )
-    else:
-        return make_response(
-            jsonify({"message": ""}),
-            StatusCode.HTTP_403_FORBIDDEN
-        )
+
+    return make_response(
+        jsonify({"message": ""}),
+        StatusCode.HTTP_403_FORBIDDEN
+    )
 
 
 # 预下载"新增SKU数据表"的接口
@@ -450,7 +450,7 @@ def prepare_added_skus():
     csv_file_sha256 = util_generate_digest("新增SKU_{}.csv".format(ts))
     csv_file = "{}/fotolei-pssa/send_queue/{}".format(os.path.expanduser("~"), csv_file_sha256)
     output_file = "新增SKU_{}.csv".format(ts)
-    with open(csv_file, "w", encoding='utf-8-sig') as fd:
+    with open(csv_file, "w", encoding="utf-8-sig") as fd:
         csv_writer = csv.writer(fd, delimiter=",")
         csv_writer.writerow(["新增SKU"])
         for sku in added_skus:
@@ -477,7 +477,7 @@ def do_data_schema_validation_for_input_products(csv_file: str):
     is_valid = True
     # 详情见 https://stackoverflow.com/questions/17912307/u-ufeff-in-python-string
     # 真是一个非常难搞的问题啊!!!
-    with open(csv_file, "r", encoding='utf-8-sig') as fd:
+    with open(csv_file, "r", encoding="utf-8-sig") as fd:
         csv_reader = csv.reader(fd, delimiter=",")
         for row in csv_reader:
             if len(row) != len(data_schema):
@@ -504,9 +504,9 @@ def do_intelligent_calibration_for_input_products(csv_file: str):
     is_valid = True
     err_msg = ""
 
-    fr = open(csv_file, "r", encoding='utf-8-sig')
+    fr = open(csv_file, "r", encoding="utf-8-sig")
     csv_reader = csv.reader(fr, delimiter=",")
-    fw = open(csv_file + ".tmp", "w", encoding='utf-8-sig')
+    fw = open(csv_file + ".tmp", "w", encoding="utf-8-sig")
     csv_writer = csv.writer(fw, delimiter=",")
     line = 0
     for row in csv_reader:
@@ -620,12 +620,12 @@ def do_intelligent_calibration_for_input_products(csv_file: str):
 
 
 def do_data_check_for_input_products(csv_file: str):
-    fw = open(csv_file + ".tmp", "w", encoding='utf-8-sig')
+    fw = open(csv_file + ".tmp", "w", encoding="utf-8-sig")
     csv_writer = csv.writer(fw, delimiter=",")
 
     exist = 0
     total = 0
-    with open(csv_file, "r", encoding='utf-8-sig') as fd:
+    with open(csv_file, "r", encoding="utf-8-sig") as fd:
         csv_reader = csv.reader(fd, delimiter=",")
         line = 0
         for row in csv_reader:

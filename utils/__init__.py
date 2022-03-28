@@ -4,7 +4,9 @@ from .action_type import (
     ACTION_TYPE_EXPORT,
     ACTION_TYPE_UPDATE_ONE,
     ACTION_TYPE_DELETE_ALL,
-    ACTION_TYPE_DELETE_ONE
+    ACTION_TYPE_DELETE_ONE,
+    ACTION_TYPE_REGISTER,
+    ACTION_TYPE_UNREGISTER
 )
 from .lookup_table import (
     init_lookup_table_k_user_v_boolean,
@@ -68,6 +70,8 @@ __all__ = [
     ACTION_TYPE_UPDATE_ONE,
     ACTION_TYPE_DELETE_ALL,
     ACTION_TYPE_DELETE_ONE,
+    ACTION_TYPE_REGISTER,
+    ACTION_TYPE_UNREGISTER,
 
     init_lookup_table_k_user_v_boolean,
     get_lookup_table_k_user_v_boolean,

@@ -110,6 +110,7 @@ class MySQLConnector():
 
     @db_r_w_cost_count
     def insert(self, stmt: str, record: tuple):
+        _db_logger.info("[SQL] {}".format(stmt))
         cnx = self._cnx_pool.get_connection()
         cur = cnx.cursor()
         try:
@@ -124,6 +125,7 @@ class MySQLConnector():
 
     @db_r_w_cost_count
     def batch_insert(self, stmt: str, records: list):
+        _db_logger.info("[SQL] {}".format(stmt))
         cnx = self._cnx_pool.get_connection()
         cur = cnx.cursor()
         try:
@@ -138,6 +140,7 @@ class MySQLConnector():
 
     @db_r_w_cost_count
     def load_data_infile(self, stmt: str):
+        _db_logger.info("[SQL] {}".format(stmt))
         cnx = self._cnx_pool.get_connection()
         cur = cnx.cursor()
         try:
@@ -152,6 +155,7 @@ class MySQLConnector():
 
     @db_r_w_cost_count
     def query(self, stmt: str):
+        _db_logger.info("[SQL] {}".format(stmt))
         cnx = self._cnx_pool.get_connection()
         cur = cnx.cursor()
         result = object()
@@ -167,6 +171,7 @@ class MySQLConnector():
 
     @db_r_w_cost_count
     def update(self, stmt: str):
+        _db_logger.info("[SQL] {}".format(stmt))
         cnx = self._cnx_pool.get_connection()
         cur = cnx.cursor()
         try:
@@ -181,6 +186,7 @@ class MySQLConnector():
 
     @db_r_w_cost_count
     def batch_update(self, stmt: str, records: list):
+        _db_logger.info("[SQL] {}".format(stmt))
         cnx = self._cnx_pool.get_connection()
         cur = cnx.cursor()
         try:
@@ -195,6 +201,7 @@ class MySQLConnector():
 
     @db_r_w_cost_count
     def delete(self, stmt: str):
+        _db_logger.info("[SQL] {}".format(stmt))
         cnx = self._cnx_pool.get_connection()
         cur = cnx.cursor()
         try:
@@ -209,6 +216,7 @@ class MySQLConnector():
 
     @db_r_w_cost_count
     def create_table(self, stmt: str):
+        _db_logger.info("[SQL] {}".format(stmt))
         cnx = self._cnx_pool.get_connection()
         cur = cnx.cursor()
         try:
@@ -223,6 +231,7 @@ class MySQLConnector():
 
     @db_r_w_cost_count
     def drop_table(self, stmt: str):
+        _db_logger.info("[SQL] {}".format(stmt))
         cnx = self._cnx_pool.get_connection()
         cur = cnx.cursor()
         try:
