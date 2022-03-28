@@ -1,10 +1,6 @@
 <template>
   <div class="container-fluid">
-    <div class="row">
-      <div class="col-sm-12">
-        <alert :message=message v-if="showMessage"></alert>
-      </div>
-    </div>
+    <alert :message=message v-if="showMessage"></alert>
     <div class="row">
       <div class="col-sm-4">
       </div>
@@ -16,7 +12,7 @@
             label-align-sm="right"
             label-cols-sm="3"
             >
-            <b-form-input v-model="loginForm.username" class="login-input"></b-form-input>
+            <b-form-input v-model="loginForm.username"></b-form-input>
           </b-form-group>
           <b-form-group
             label="密码"
@@ -24,7 +20,7 @@
             label-align-sm="right"
             label-cols-sm="3"
             >
-            <b-form-input v-model="loginForm.password" class="login-input" type="password"></b-form-input>
+            <b-form-input v-model="loginForm.password" type="password"></b-form-input>
           </b-form-group>
           <br/>
           <div id="login-btn" class="w-100 d-block">
@@ -41,14 +37,11 @@
 <style>
 #login-form {
   margin-top: 200px;
+  max-width: 300px;
 }
 
 #login-btn {
-  text-align: center;
-}
-
-.login-input {
-  max-width: 300px;
+  text-align: right;
 }
 </style>
 
@@ -61,10 +54,12 @@ export default {
   data () {
     return {
       serverBaseURL: process.env.SERVER_BASE_URL,
+
       loginForm: {
         username: '',
         password: ''
       },
+
       showMessage: false
     }
   },
@@ -79,8 +74,9 @@ export default {
       }
       await axios.post(this.serverBaseURL + '/api/v1/users/login', payload)
         .then((res) => {
-          this.$cookies.set('logged', res.headers['set-logged'])
-          this.$cookies.set('role', res.headers['set-role'])
+          this.$cookies.set('logged', res.headers['set-logged'].split('=')[1])
+          this.$cookies.set('username', res.headers['set-user'].split('=')[1])
+          this.$cookies.set('role', res.headers['set-role'].split('=')[1])
           router.push('/')
         })
         .catch((_) => {

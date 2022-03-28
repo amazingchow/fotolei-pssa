@@ -55,7 +55,7 @@ Session(pssa_server)
 CORS(
     pssa_server,
     resources={r"/api/v1/*": {"origins": "*"}},
-    expose_headers=["Set-Logged", "Set-Role"],
+    expose_headers=["Set-Logged", "Set-User", "Set-Role"],
     supports_credentials=True
 )
 pssa_server.logger.setLevel(logging.INFO)

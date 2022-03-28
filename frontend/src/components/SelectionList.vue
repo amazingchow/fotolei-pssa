@@ -1,24 +1,8 @@
 <template>
   <div class="container-fluid">
-    <div class="row">
-      <div class="col-sm-12">
-        <b-navbar type="dark" variant="dark">
-          <b-navbar-nav>
-            <b-nav-item :active="false" href="/product">商品明细库</b-nav-item>
-            <b-nav-item :active="false" href="/">库存明细库</b-nav-item>
-            <b-nav-item :active="true" href="/slist">辅助查询</b-nav-item>
-            <b-nav-item :active="false" href="/oplog">操作日志</b-nav-item>
-            <b-nav-item :active="false" href="/user">用户管理</b-nav-item>
-          </b-navbar-nav>
-        </b-navbar>
-      </div>
-    </div>
+    <navbar></navbar>
     <br/>
-    <div class="row">
-      <div class="col-sm-12">
-        <alert :message=message v-if="showMessage"></alert>
-      </div>
-    </div>
+    <alert :message=message v-if="showMessage"></alert>
     <div class="row">
       <div class="col-sm-12">
         <h6>提示：<b-badge>点击“关联查询”按钮，导出下一级关联标签；点击“复制结果”按钮，结果自动复制到剪切板</b-badge></h6>
@@ -184,6 +168,7 @@
 <script>
 import axios from 'axios'
 import Alert from './Alert.vue'
+import Navbar from './Navbar.vue'
 import router from '../router'
 
 export default {
@@ -217,12 +202,14 @@ export default {
         classification2Selections: [],
         classification2Selection: ''
       },
+
       message: '',
       showMessage: false
     }
   },
   components: {
-    alert: Alert
+    alert: Alert,
+    navbar: Navbar
   },
   methods: {
     async listAllBrandSelections () {

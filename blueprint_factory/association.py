@@ -9,6 +9,7 @@ from flask import request
 
 from .decorator_factory import has_logged_in
 from .decorator_factory import restrict_access
+from .decorator_factory import cost_count
 from utils import get_lookup_table_k_brand_k_c1_k_c2_k_product_series_v_supplier_name
 from utils import get_lookup_table_k_brand_k_c1_k_c2_k_product_series_v_supplier_name_keys_c1
 from utils import get_lookup_table_k_brand_k_c1_k_c2_k_product_series_v_supplier_name_keys_c2
@@ -16,7 +17,6 @@ from utils import get_lookup_table_k_brand_k_c1_k_c2_k_product_series_v_supplier
 from utils import get_lookup_table_k_brand_v_brand_c2
 from utils import get_lookup_table_k_c1_v_c1_c2
 from utils import ROLE_TYPE_ORDINARY_USER
-from utils import util_cost_count
 
 
 association_blueprint = Blueprint(
@@ -30,7 +30,7 @@ association_blueprint = Blueprint(
 @association_blueprint.route("/bc1c2", methods=["POST"])
 @has_logged_in
 @restrict_access(access_level=ROLE_TYPE_ORDINARY_USER)
-@util_cost_count
+@cost_count
 def fetch_associations_bc1c2():
     payload = request.get_json()
     brand = payload["brand"].strip()
@@ -68,7 +68,7 @@ def fetch_associations_bc1c2():
 @association_blueprint.route("/c1c2", methods=["POST"])
 @has_logged_in
 @restrict_access(access_level=ROLE_TYPE_ORDINARY_USER)
-@util_cost_count
+@cost_count
 def fetch_associations_c1c2():
     payload = request.get_json()
     classification_1 = payload["classification_1"].strip()
@@ -83,7 +83,7 @@ def fetch_associations_c1c2():
 @association_blueprint.route("/bc2", methods=["POST"])
 @has_logged_in
 @restrict_access(access_level=ROLE_TYPE_ORDINARY_USER)
-@util_cost_count
+@cost_count
 def fetch_associations_bc2():
     payload = request.get_json()
     brand = payload["brand"].strip()

@@ -16,11 +16,11 @@ from flask_api import status as StatusCode
 
 from .decorator_factory import has_logged_in
 from .decorator_factory import restrict_access
+from .decorator_factory import cost_count
 from db import db_connector
 from utils import get_lookup_table_k_user_v_boolean
 from utils import put_lookup_table_k_user_v_boolean
 from utils import ROLE_TYPE_SUPER_ADMIN
-from utils import util_cost_count
 from utils import util_generate_n_digit_nums_and_letters
 
 
@@ -36,7 +36,7 @@ user_blueprint = Blueprint(
 @user_blueprint.route("/register", methods=["POST"])
 @has_logged_in
 @restrict_access(access_level=ROLE_TYPE_SUPER_ADMIN)
-@util_cost_count
+@cost_count
 def register():
     payload = request.get_json()
     usr = payload.get("username", "")
@@ -73,7 +73,7 @@ def register():
 @user_blueprint.route("/unregister", methods=["DELETE"])
 @has_logged_in
 @restrict_access(access_level=ROLE_TYPE_SUPER_ADMIN)
-@util_cost_count
+@cost_count
 def unregister():
     usr = request.args.get("username")
     if len(usr) < 4 or len(usr) > 32:
@@ -104,7 +104,7 @@ def unregister():
 @user_blueprint.route("/", methods=["GET"])
 @has_logged_in
 @restrict_access(access_level=ROLE_TYPE_SUPER_ADMIN)
-@util_cost_count
+@cost_count
 def list_users():
     page_offset = request.args.get("page.offset", 0)
     page_limit = request.args.get("page.limit", 20)
@@ -127,14 +127,13 @@ def list_users():
 # 用户登录的接口
 # curl -s -v -c cookies.txt -d '{"username": "fotolei", "password": "asdf5678"}' -H "Content-Type: application/json" -X POST http://localhost:15555/api/v1/users/login | jq
 @user_blueprint.route("/login", methods=["POST"])
-@util_cost_count
+@cost_count
 def login():
     is_logged_in = session.get("is_logged_in", False)
     if is_logged_in:
         return make_response(
             jsonify({"message": "logged in"}),
-            StatusCode.HTTP_200_OK,
-            {"Set-Role": "role={}".format(session["role"]), "Set-Logged": "logged=in"}
+            StatusCode.HTTP_409_CONFLICT
         )
 
     payload = request.get_json()
@@ -169,12 +168,17 @@ def login():
 
     session["is_logged_in"] = True
     session["role"] = user[2]
-    current_app.logger.info("用户 <usr: {}> 已登录".format(usr))
+    current_app.logger.info("用户 <usr: {}, sid: {}> 已登录".format(usr, session.sid))
 
     return make_response(
         jsonify({"message": "logged in"}),
         StatusCode.HTTP_200_OK,
-        {"Set-Role": "role={}".format(session["role"]), "Set-Logged": "logged=in"}
+        {
+
+            "Set-Logged": "logged=in",
+            "Set-User": "user={}".format(usr),
+            "Set-Role": "role={}".format(session["role"])
+        }
     )
 
 
@@ -183,7 +187,7 @@ def login():
 @user_blueprint.route("/issuperadmin", methods=["GET"])
 @has_logged_in
 @restrict_access(access_level=ROLE_TYPE_SUPER_ADMIN)
-@util_cost_count
+@cost_count
 def is_super_admin():
     return make_response(
         jsonify({"message": "is super admin"}),
@@ -194,7 +198,7 @@ def is_super_admin():
 # 用户登出的接口
 # curl -s -v -b cookies.txt -X DELETE http://localhost:15555/api/v1/users/logout | jq
 @user_blueprint.route("/logout", methods=["DELETE"])
-@util_cost_count
+@cost_count
 def logout():
     is_logged_in = session.get("is_logged_in", False)
     if is_logged_in:

@@ -16,6 +16,7 @@ from flask import request
 
 from .decorator_factory import has_logged_in
 from .decorator_factory import restrict_access
+from .decorator_factory import cost_count
 from db import db_connector
 from utils import get_lookup_table_k_brand_v_brand_c2
 from utils import get_lookup_table_k_brand_v_brand_c2_keys
@@ -24,7 +25,6 @@ from utils import get_lookup_table_k_c1_v_c1_c2_keys
 from utils import REG_POSITIVE_INT
 from utils import ROLE_TYPE_ORDINARY_USER
 from utils import ROLE_TYPE_SUPER_ADMIN
-from utils import util_cost_count
 from utils import util_generate_digest
 
 
@@ -38,8 +38,8 @@ case1_blueprint = Blueprint(
 # 获取自定义UI
 @case1_blueprint.route("/ui/fetch", methods=["GET"])
 @has_logged_in
-@restrict_access(access_level=ROLE_TYPE_SUPER_ADMIN)
-@util_cost_count
+@restrict_access(access_level=ROLE_TYPE_ORDINARY_USER)
+@cost_count
 def fetch_ui():
     customize_report_forms_ui = shelve.open("{}/fotolei-pssa/tmp-files/customize_report_forms_ui".format(
         os.path.expanduser("~")), flag='c', writeback=False)
@@ -56,7 +56,7 @@ def fetch_ui():
 @case1_blueprint.route("/ui/save", methods=["POST"])
 @has_logged_in
 @restrict_access(access_level=ROLE_TYPE_SUPER_ADMIN)
-@util_cost_count
+@cost_count
 def save_ui():
     payload = request.get_json()
     classification1_tags = payload.get("classification1_tags", [])
@@ -128,7 +128,7 @@ poilotfoto
 @case1_blueprint.route("/preview", methods=["POST"])
 @has_logged_in
 @restrict_access(access_level=ROLE_TYPE_ORDINARY_USER)
-@util_cost_count
+@cost_count
 def preview_report_file_case1():
     payload = request.get_json()
     # 起始日期和截止日期用于过滤掉时间条件不符合的记录项
@@ -485,7 +485,7 @@ FROM fotolei_pssa.inventories WHERE extra_brand = '{}' AND extra_classification_
 @case1_blueprint.route("/prepare", methods=["POST"])
 @has_logged_in
 @restrict_access(access_level=ROLE_TYPE_ORDINARY_USER)
-@util_cost_count
+@cost_count
 def prepare_report_file_case1():
     payload = request.get_json()
     preview_table = payload.get("preview_table", [])

@@ -46,7 +46,6 @@ from .role_type import (
     ROLE_TYPE_ORDINARY_USER
 )
 from .util_funcs import (
-    util_cost_count,
     util_generate_bytes_in_hdd_digest,
     util_generate_bytes_in_mem_digest,
     util_generate_digest,
@@ -100,7 +99,6 @@ __all__ = [
     ROLE_TYPE_ADMIN,
     ROLE_TYPE_ORDINARY_USER,
 
-    util_cost_count,
     util_generate_bytes_in_hdd_digest,
     util_generate_bytes_in_mem_digest,
     util_generate_digest,
