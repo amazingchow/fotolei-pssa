@@ -38,7 +38,7 @@ case1_blueprint = Blueprint(
 # 获取自定义UI
 @case1_blueprint.route("/ui/fetch", methods=["GET"])
 @has_logged_in
-@restrict_access(access_level=ROLE_TYPE_SUPER_ADMIN)
+@restrict_access(access_level=ROLE_TYPE_ORDINARY_USER)
 @cost_count
 def fetch_ui():
     customize_report_forms_ui = shelve.open("{}/fotolei-pssa/tmp-files/customize_report_forms_ui".format(

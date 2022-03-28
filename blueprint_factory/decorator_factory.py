@@ -22,6 +22,7 @@ from functools import wraps
 
 from flask import jsonify
 from flask import make_response
+from flask import Response
 from flask import session
 from flask_api import status as StatusCode
 
@@ -64,3 +65,15 @@ def cost_count(func):
         _profile_logger.info("%s took time: %f secs", func.__name__, time.time() - start)
         return t
     return wrapper
+
+
+def record_action(action: str):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            t = func(*args, **kwargs)
+            if Response(t).status_code == StatusCode.HTTP_200_OK:
+                pass
+            return t
+        return wrapper
+    return decorator
