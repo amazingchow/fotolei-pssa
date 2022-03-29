@@ -16,10 +16,7 @@
         <b-table-simple striped hover small id="product-table">
           <b-thead>
             <b-tr>
-              <b-th scope="col">商品编码</b-th>
               <b-th scope="col">规格编码</b-th>
-              <b-th scope="col">商品名称</b-th>
-              <b-th scope="col">规格名称</b-th>
               <b-th scope="col">品牌</b-th>
               <b-th scope="col">分类1</b-th>
               <b-th scope="col">分类2</b-th>
@@ -31,6 +28,7 @@
               <b-th scope="col">采购名称</b-th>
               <b-th scope="col">实时可用库存</b-th>
               <b-th scope="col">MOQ</b-th>
+              <b-th scope="col">单价</b-th>
             </b-tr>
           </b-thead>
           <b-tbody>
@@ -48,13 +46,11 @@
               <b-td>{{ product[10] }}</b-td>
               <b-td>{{ product[11] }}</b-td>
               <b-td>{{ product[12] }}</b-td>
-              <b-td>{{ product[13] }}</b-td>
-              <b-td>{{ product[14] }}</b-td>
             </b-tr>
           </b-tbody>
           <b-tfoot id="product-table-footer">
             <b-tr>
-              <b-td colspan="15" variant="secondary">总共录入<b>{{ productsTotal }}</b>条记录，共计<b>{{ pageTotal }}</b>页，当前展示第<b>{{ pageCurr }}</b>页，共<b>{{ productsNum }}</b>条记录</b-td>
+              <b-td colspan="13" variant="secondary">总共录入<b>{{ productsTotal }}</b>条记录，共计<b>{{ pageTotal }}</b>页，当前展示第<b>{{ pageCurr }}</b>页，共<b>{{ productsNum }}</b>条记录</b-td>
             </b-tr>
           </b-tfoot>
         </b-table-simple>
