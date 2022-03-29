@@ -527,7 +527,7 @@ export default {
           if (error.response.status === 401) {
             router.push('/login')
           } else if (error.response.status === 400) {
-            this.message = '导入失败！' + error.data.message
+            this.message = '导入失败！' + error.response.data.message
             this.showMessage = true
           } else if (error.response.status === 409) {
             this.message = '导入失败！数据表格重复导入！'
@@ -561,7 +561,7 @@ export default {
           if (error.response.status === 401) {
             router.push('/login')
           } else if (error.response.status === 400) {
-            this.message = '导入失败！' + error.data.message
+            this.message = '导入失败！' + error.response.data.message
             this.showMessage = true
           } else if (error.response.status === 406) {
             this.message = '导入失败，有新增SKU，请人工复核！'

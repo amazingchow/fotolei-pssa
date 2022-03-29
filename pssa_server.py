@@ -81,4 +81,9 @@ pssa_server.register_blueprint(user_blueprint)
 
 
 if __name__ == "__main__":
+    # 初始化前的检查，检查是否已经生成系统依赖的自定义文件
+    if not os.path.exists("{}/fotolei-pssa/tmp-files/customize_report_forms_ui".format(os.path.expanduser("~"))):
+        print("请先生成'customize_report_forms_ui'")
+        sys.exit(-1)
+
     pssa_server.run(host="0.0.0.0", port=15555)

@@ -48,14 +48,14 @@ def upload_csv_file_for_case6():
 
     if not do_data_schema_validation_for_input_case6_demand_table(csv_file):
         return make_response(
-            jsonify({"message": "invalid data schema"}),
+            jsonify({"message": "非法的输入数据格式，请人工复查！"}),
             StatusCode.HTTP_400_BAD_REQUEST
         )
 
     is_valid, err_msg = do_data_check_for_input_case6_demand_table(csv_file)
     if not is_valid:
         return make_response(
-            jsonify({"message": "invalid data: {}".format(err_msg)}),
+            jsonify({"message": err_msg}),
             StatusCode.HTTP_400_BAD_REQUEST
         )
 

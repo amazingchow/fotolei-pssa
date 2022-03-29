@@ -147,7 +147,7 @@ def preview_report_file_case1():
     ed_date = payload.get("ed_date", "").strip()
     if (st_date > ed_date):
         return make_response(
-            jsonify({"message": "invalid st_date and ed_date"}),
+            jsonify({"message": "无效的输入日期"}),
             StatusCode.HTTP_400_BAD_REQUEST
         )
 
@@ -155,8 +155,7 @@ def preview_report_file_case1():
     ui_classification1_tags = [tag.lower() for tag in ui_classification1_tags]
     for tag in ui_classification1_tags:
         if tag not in get_lookup_table_k_c1_v_c1_c2_keys():
-            response_object = {"message": "invalid tag"}
-            response_object["err_msg"] = "输入ui参数错误 - 参与统计的分类1：{}不存在！".format(tag)
+            response_object = {"message": "输入ui参数错误 - 参与统计的分类1：{}不存在！".format(tag)}
             return make_response(
                 jsonify(response_object),
                 StatusCode.HTTP_400_BAD_REQUEST
@@ -168,15 +167,13 @@ def preview_report_file_case1():
         c1_tag, c2_tag = tag.split("|")
         c1_tag, c2_tag = c1_tag.lower(), c2_tag.lower()
         if c1_tag not in ui_classification1_tags:
-            response_object = {"message": "invalid tag"}
-            response_object["err_msg"] = "输入ui参数错误 - 参与统计的分类1|分类2 - 分类1：{}不存在！".format(c1_tag)
+            response_object = {"message": "输入ui参数错误 - 参与统计的分类1|分类2 - 分类1：{}不存在！".format(c1_tag)}
             return make_response(
                 jsonify(response_object),
                 StatusCode.HTTP_400_BAD_REQUEST
             )
         if tag.lower() not in get_lookup_table_k_c1_v_c1_c2(c1_tag):
-            response_object = {"message": "invalid tag"}
-            response_object["err_msg"] = "输入ui参数错误 - 参与统计的分类1|分类2 - 分类2：{}不存在！".format(c2_tag)
+            response_object = {"message": "输入ui参数错误 - 参与统计的分类1|分类2 - 分类2：{}不存在！".format(c2_tag)}
             return make_response(
                 jsonify(response_object),
                 StatusCode.HTTP_400_BAD_REQUEST
@@ -189,31 +186,26 @@ def preview_report_file_case1():
         c1_tag, topk_tag = tag.split("|")
         c1_tag = c1_tag.lower()
         if c1_tag not in ui_classification1_tags:
-            response_object = {"message": "invalid tag"}
-            response_object["err_msg"] = "输入ui参数错误 - 销售top必选（分类1）- 分类1：{}不存在！".format(c1_tag)
+            response_object = {"message": "输入ui参数错误 - 销售top必选（分类1）- 分类1：{}不存在！".format(c1_tag)}
             return make_response(
                 jsonify(response_object),
                 StatusCode.HTTP_400_BAD_REQUEST
             )
         if not topk_tag.startswith("top"):
-            response_object = {"message": "invalid tag"}
-            response_object["err_msg"] = "输入ui参数错误 - 销售top必选（分类1）- topk：{}格式不正确！".format(topk_tag)
+            response_object = {"message": "输入ui参数错误 - 销售top必选（分类1）- topk：{}格式不正确！".format(topk_tag)}
             return make_response(
                 jsonify(response_object),
                 StatusCode.HTTP_400_BAD_REQUEST
             )
         topk = topk_tag.lstrip("top")
         if REG_POSITIVE_INT.match(topk) is None:
-            response_object = {"message": "invalid tag"}
-            response_object["err_msg"] = "输入ui参数错误 - 销售top必选（分类1）- topk：{}格式不正确！".format(topk_tag)
+            response_object = {"message": "输入ui参数错误 - 销售top必选（分类1）- topk：{}格式不正确！".format(topk_tag)}
             return make_response(
                 jsonify(response_object),
                 StatusCode.HTTP_400_BAD_REQUEST
             )
         if int(topk) > len(get_lookup_table_k_c1_v_c1_c2(c1_tag)):
-            response_object = {"message": "invalid tag"}
-            response_object["err_msg"] = "输入ui参数错误 - 销售top必选（分类1）- topk：{}超过最大值top{}".format(
-                topk_tag, len(get_lookup_table_k_c1_v_c1_c2(c1_tag)))
+            response_object = {"message": "输入ui参数错误 - 销售top必选（分类1）- topk：{}超过最大值top{}".format(topk_tag, len(get_lookup_table_k_c1_v_c1_c2(c1_tag)))}
             return make_response(
                 jsonify(response_object),
                 StatusCode.HTTP_400_BAD_REQUEST
@@ -224,8 +216,7 @@ def preview_report_file_case1():
     ui_brand_tags = [tag.lower() for tag in ui_brand_tags]
     for tag in ui_brand_tags:
         if tag not in get_lookup_table_k_brand_v_brand_c2_keys():
-            response_object = {"message": "invalid tag"}
-            response_object["err_msg"] = "输入ui参数错误 - 参与统计的品牌：{}不存在！".format(tag)
+            response_object = {"message": "输入ui参数错误 - 参与统计的品牌：{}不存在！".format(tag)}
             return make_response(
                 jsonify(response_object),
                 StatusCode.HTTP_400_BAD_REQUEST
@@ -233,24 +224,20 @@ def preview_report_file_case1():
 
     ui_brand_topk_tag = payload.get("ui_brand_topk_tag", "")
     if not ui_brand_topk_tag.startswith("top"):
-        response_object = {"message": "invalid tag"}
-        response_object["err_msg"] = "输入ui参数错误 - 销售top必选（品牌）- topk：{}格式不正确！".format(ui_brand_topk_tag)
+        response_object = {"message": "输入ui参数错误 - 销售top必选（品牌）- topk：{}格式不正确！".format(ui_brand_topk_tag)}
         return make_response(
             jsonify(response_object),
             StatusCode.HTTP_400_BAD_REQUEST
         )
     brand_topk = ui_brand_topk_tag.lstrip("top")
     if REG_POSITIVE_INT.match(brand_topk) is None:
-        response_object = {"message": "invalid tag"}
-        response_object["err_msg"] = "输入ui参数错误 - 销售top必选（品牌）- topk：{}格式不正确！".format(ui_brand_topk_tag)
+        response_object = {"message": "输入ui参数错误 - 销售top必选（品牌）- topk：{}格式不正确！".format(ui_brand_topk_tag)}
         return make_response(
             jsonify(response_object),
             StatusCode.HTTP_400_BAD_REQUEST
         )
     if int(brand_topk) > len(get_lookup_table_k_brand_v_brand_c2_keys()):
-        response_object = {"message": "invalid tag"}
-        response_object["err_msg"] = "输入ui参数错误 - 销售top必选（分类1）- topk：{}超过最大值top{}".format(
-            ui_brand_topk_tag, len(get_lookup_table_k_brand_v_brand_c2_keys()))
+        response_object = {"message": "输入ui参数错误 - 销售top必选（分类1）- topk：{}超过最大值top{}".format(ui_brand_topk_tag, len(get_lookup_table_k_brand_v_brand_c2_keys()))}
         return make_response(
             jsonify(response_object),
             StatusCode.HTTP_400_BAD_REQUEST
@@ -262,15 +249,13 @@ def preview_report_file_case1():
         brand_tag, c2_tag = tag.split("|")
         brand_tag, c2_tag = brand_tag.lower(), c2_tag.lower()
         if brand_tag not in get_lookup_table_k_brand_v_brand_c2_keys():
-            response_object = {"message": "invalid tag"}
-            response_object["err_msg"] = "输入ui参数错误 - 参与统计的品牌|分类2 - 品牌：{}不存在！".format(brand_tag)
+            response_object = {"message": "输入ui参数错误 - 参与统计的品牌|分类2 - 品牌：{}不存在！".format(brand_tag)}
             return make_response(
                 jsonify(response_object),
                 StatusCode.HTTP_400_BAD_REQUEST
             )
         if tag not in get_lookup_table_k_brand_v_brand_c2(brand_tag):
-            response_object = {"message": "invalid tag"}
-            response_object["err_msg"] = "输入ui参数错误 - 参与统计的品牌|分类2 - 分类2：{}不存在！".format(c2_tag)
+            response_object = {"message": "输入ui参数错误 - 参与统计的品牌|分类2 - 分类2：{}不存在！".format(c2_tag)}
             return make_response(
                 jsonify(response_object),
                 StatusCode.HTTP_400_BAD_REQUEST
