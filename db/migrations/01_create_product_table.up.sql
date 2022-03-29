@@ -22,8 +22,11 @@ CREATE TABLE IF NOT EXISTS fotolei_pssa.products (
     purchase_name      VARCHAR(128),           /* 采购名称 */
     jit_inventory      INT,                    /* 实时可用库存 */
     moq                INT,                    /* 最小订货单元 */
+    unit_price         FLOAT,                  /* 单价 */
     PRIMARY KEY (id),
     KEY products_specification_code (specification_code),
+    KEY products_specification_code_jit_inventory (specification_code, jit_inventory),
+    KEY products_specification_code_unit_price (specification_code, unit_price),
     KEY products_is_combined_product_series (is_combined, product_series),
     KEY products_is_combined_stop_status_be_aggregated_supplier_name (is_combined, stop_status, be_aggregated, supplier_name)
 ) ENGINE=InnoDB;

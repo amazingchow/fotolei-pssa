@@ -22,24 +22,24 @@ from .decorator_factory import restrict_access
 from db import db_connector
 from utils import ACTION_TYPE_IMPORT
 from utils import get_lookup_table_k_sku_v_boolean
-from utils import REG_INT
+from utils import REG_INT_AND_FLOAT
 from utils import ROLE_TYPE_SUPER_ADMIN
 
 
-jit_inventory_blueprint = Blueprint(
-    name="fotolei_pssa_jit_inventory_blueprint",
+unit_price_blueprint = Blueprint(
+    name="fotolei_pssa_unit_price_blueprint",
     import_name=__name__,
-    url_prefix="/api/v1/jitinventory",
+    url_prefix="/api/v1/unitprice",
 )
 
 
-# 载入"实时可用库存表"的接口
-@jit_inventory_blueprint.route("/upload", methods=["POST"])
+# 载入"单价表"的接口
+@unit_price_blueprint.route("/upload", methods=["POST"])
 @has_logged_in
 @restrict_access(access_level=ROLE_TYPE_SUPER_ADMIN)
 @record_action(action=ACTION_TYPE_IMPORT)
 @cost_count
-def upload_jit_inventory_data():
+def upload_unit_price_data():
     csv_files = request.files.getlist("file")
     if len(csv_files) != 1:
         return make_response(
@@ -47,18 +47,18 @@ def upload_jit_inventory_data():
             StatusCode.HTTP_400_BAD_REQUEST
         )
 
-    csv_file = "{}/fotolei-pssa/jit-inventory/{}_{}".format(
+    csv_file = "{}/fotolei-pssa/unit-price/{}_{}".format(
         os.path.expanduser("~"), int(time.time()), csv_files[0].filename
     )
     csv_files[0].save(csv_file)
 
-    if not do_data_schema_validation_for_input_jit_inventories(csv_file):
+    if not do_data_schema_validation_for_input_unit_price(csv_file):
         return make_response(
             jsonify({"message": "非法的输入数据格式，请人工复查！"}),
             StatusCode.HTTP_400_BAD_REQUEST
         )
 
-    is_valid, err_msg = do_data_check_for_input_jit_inventories(csv_file)
+    is_valid, err_msg = do_data_check_for_input_unit_price(csv_file)
     if not is_valid:
         response_object = {"message": err_msg}
         return make_response(
@@ -66,7 +66,7 @@ def upload_jit_inventory_data():
             StatusCode.HTTP_400_BAD_REQUEST
         )
 
-    sku_inventory_tuple_list = []
+    sku_unit_price_tuple_list = []
     not_inserted_sku_list = []
     with open(csv_file, "r", encoding="utf-8-sig") as fd:
         csv_reader = csv.reader(fd, delimiter=",")
@@ -75,7 +75,7 @@ def upload_jit_inventory_data():
             if not get_lookup_table_k_sku_v_boolean(row[0]):
                 not_inserted_sku_list.append(row[0])
             else:
-                sku_inventory_tuple_list.append((row[1], row[0]))
+                sku_unit_price_tuple_list.append((row[1], row[0]))
     if len(not_inserted_sku_list) > 0:
         current_app.logger.info("There are {} SKUs not inserted".format(len(not_inserted_sku_list)))
         # 新增sku，需要向用户展示
@@ -85,8 +85,8 @@ def upload_jit_inventory_data():
             StatusCode.HTTP_406_NOT_ACCEPTABLE
         )
 
-    stmt = "UPDATE fotolei_pssa.products SET jit_inventory = %s WHERE specification_code = %s;"
-    db_connector.batch_update(stmt, sku_inventory_tuple_list)
+    stmt = "UPDATE fotolei_pssa.products SET unit_price = %s WHERE specification_code = %s;"
+    db_connector.batch_update(stmt, sku_unit_price_tuple_list)
 
     session["op_object"] = csv_files[0].filename
     return make_response(
@@ -95,9 +95,9 @@ def upload_jit_inventory_data():
     )
 
 
-def do_data_schema_validation_for_input_jit_inventories(csv_file: str):
+def do_data_schema_validation_for_input_unit_price(csv_file: str):
     data_schema = [
-        "规格编码", "实时可用库存",
+        "规格编码", "单价",
     ]
     is_valid = True
     with open(csv_file, "r", encoding="utf-8-sig") as fd:
@@ -116,7 +116,7 @@ def do_data_schema_validation_for_input_jit_inventories(csv_file: str):
     return is_valid
 
 
-def do_data_check_for_input_jit_inventories(csv_file: str):
+def do_data_check_for_input_unit_price(csv_file: str):
     is_valid = True
     err_msg = ""
     with open(csv_file, "r", encoding="utf-8-sig") as fd:
@@ -124,9 +124,9 @@ def do_data_check_for_input_jit_inventories(csv_file: str):
         next(csv_reader, None)  # skip the header line
         line = 1
         for row in csv_reader:
-            if REG_INT.match(row[1]) is None:
+            if REG_INT_AND_FLOAT.match(row[1]) is None:
                 is_valid = False
-                err_msg = "'实时可用库存'数据存在非法输入，出现在第{}行。".format(line)
+                err_msg = "'单价'数据存在非法输入，出现在第{}行。".format(line)
                 break
             line += 1
     if not is_valid:

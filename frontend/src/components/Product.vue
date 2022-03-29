@@ -10,6 +10,7 @@
           <button type="button" class="btn btn-secondary btn-sm" v-b-modal.products-clean-all-modal>删除全量商品明细</button>
           <button type="button" class="btn btn-secondary btn-sm" v-b-modal.product-clean-one-modal>删除单条商品明细</button>
           <button type="button" class="btn btn-secondary btn-sm" v-b-modal.jit-inventory-csv-file-modal>导入即时库存</button>
+          <button type="button" class="btn btn-secondary btn-sm" v-b-modal.unit-price-csv-file-modal>导入单价</button>
           <button type="button" class="btn btn-secondary btn-sm" v-b-modal.update-one-product-modal>更新商品明细</button>
         </div>
         <b-table-simple striped hover small id="product-table">
@@ -91,6 +92,23 @@
             accept=".csv"
             v-model="uploadJITInventoryCSVFile"
             :state="Boolean(uploadJITInventoryCSVFile)"
+            placeholder="请选择UTF-8编码的CSV文件">
+          </b-form-file>
+        </b-form-group>
+        <br/>
+        <div id="product-table-operate-btn" class="w-100 d-block">
+          <b-button type="submit" variant="dark">导入</b-button>
+          <b-button type="reset" variant="dark">取消</b-button>
+        </div>
+      </b-form>
+    </b-modal>
+    <b-modal ref="importUnitPriceCSVFileModal" id="unit-price-csv-file-modal" title="导入单价" hide-footer>
+      <b-form @submit="onImportUnitPrice" @reset="onCancelImportUnitPrice">
+        <b-form-group>
+          <b-form-file
+            accept=".csv"
+            v-model="uploadUnitPriceCSVFile"
+            :state="Boolean(uploadUnitPriceCSVFile)"
             placeholder="请选择UTF-8编码的CSV文件">
           </b-form-file>
         </b-form-group>
@@ -424,6 +442,7 @@ export default {
       pageOffsetMax: 0,
       uploadProductCSVFile: null,
       uploadJITInventoryCSVFile: null,
+      uploadUnitPriceCSVFile: null,
       adminUsr: '',
       adminPwd: '',
       specificationCode: '',
@@ -558,6 +577,45 @@ export default {
         })
         .catch((error) => {
           this.importJITInventoryCSVFileClose()
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else if (error.response.status === 400) {
+            this.message = '导入失败！' + error.response.data.message
+            this.showMessage = true
+          } else if (error.response.status === 406) {
+            this.message = '导入失败，有新增SKU，请人工复核！'
+            this.showMessage = true
+            this.addedSkus = error.data.added_skus
+            this.shouldOpenSidebar = true
+          } else if (error.response.status === 409) {
+            this.message = '导入失败！数据表格重复导入！'
+            this.showMessage = true
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
+          }
+        })
+    },
+    importUnitPriceCSVFileClose () {
+      this.$refs.processingModal.hide()
+      this.uploadUnitPriceCSVFile = null
+    },
+    importUnitPriceCSVFile (formData) {
+      let config = {
+        header: {
+          'Content-Type': 'multipart/form-data'
+        }
+      }
+      axios.post(this.serverBaseURL + '/api/v1/unitprice/upload', formData, config)
+        .then((res) => {
+          this.message = '导入成功!'
+          this.showMessage = true
+          this.listProducts()
+          this.importUnitPriceCSVFileClose()
+        })
+        .catch((error) => {
+          this.importUnitPriceCSVFileClose()
           if (error.response.status === 401) {
             router.push('/login')
           } else if (error.response.status === 400) {
@@ -806,6 +864,24 @@ export default {
       evt.preventDefault()
       this.$refs.importJITInventoryCSVFileModal.hide()
       this.uploadJITInventoryCSVFile = null
+    },
+    onImportUnitPrice (evt) {
+      evt.preventDefault()
+      if (this.uploadUnitPriceCSVFile === null) {
+        this.message = '输入文件不能为空！'
+        this.showMessage = true
+      } else {
+        this.$refs.importUnitPriceCSVFileModal.hide()
+        this.$refs.processingModal.show()
+        let formData = new FormData()
+        formData.append('file', this.uploadUnitPriceCSVFile, this.uploadUnitPriceCSVFile.name)
+        this.importUnitPriceCSVFile(formData)
+      }
+    },
+    onCancelImportUnitPrice (evt) {
+      evt.preventDefault()
+      this.$refs.importUnitPriceCSVFileModal.hide()
+      this.uploadUnitPriceCSVFile = null
     },
     onCleanAllProducts (evt) {
       evt.preventDefault()

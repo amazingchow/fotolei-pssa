@@ -57,7 +57,7 @@ def upload_inventories():
     csv_files = request.files.getlist("file")
     if len(csv_files) != 1:
         return make_response(
-            jsonify({"message": "invalid upload"}),
+            jsonify({"message": "上传的文件数量不等于一份"}),
             StatusCode.HTTP_400_BAD_REQUEST
         )
 
