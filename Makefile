@@ -33,7 +33,7 @@ stop_mysql:
 
 .PHONY: run_server_local
 run_server_local:
-	@python pssa_server.py
+	@python pssa_server.py || true
 
 .PHONY: run_server
 run_server:
