@@ -46,7 +46,10 @@ export default {
           this.$cookies.set('logged', res.headers['set-logged'].split('=')[1])
           router.push('/login')
         })
-        .catch((_) => {
+        .catch((error) => {
+          // eslint-disable-next-line
+          console.log(error)
+          router.push('/500')
         })
     }
   },

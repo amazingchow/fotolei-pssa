@@ -1106,10 +1106,13 @@ export default {
           this.supplierNameOptions = res.data.supplier_name_options
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          this.message = '内部服务错误！'
-          this.showMessage = true
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
+          }
         })
     },
     listAllSupplierSelections () {
@@ -1118,10 +1121,13 @@ export default {
           this.supplierNameSelections = res.data.supplier_name_selections
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          this.message = '内部服务错误！'
-          this.showMessage = true
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
+          }
         })
     },
     listInventories () {
@@ -1141,8 +1147,7 @@ export default {
           } else {
             // eslint-disable-next-line
             console.log(error)
-            this.message = '内部服务错误！'
-            this.showMessage = true
+            router.push('/500')
           }
         })
     },
@@ -1158,10 +1163,13 @@ export default {
           }
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          this.message = '内部服务错误！'
-          this.showMessage = true
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
+          }
         })
     },
     initExportForm () {
@@ -1220,21 +1228,25 @@ export default {
           this.importCSVFileClose()
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          if (error.response.status === 400) {
+          this.importCSVFileClose()
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else if (error.response.status === 400) {
             this.message = '导入失败！' + error.data.message
+            this.showMessage = true
           } else if (error.response.status === 406) {
             this.message = '禁止导入，有新增SKU！'
+            this.showMessage = true
             this.addedSkus = error.data.added_skus
             this.shouldOpenSidebar = true
           } else if (error.response.status === 409) {
             this.message = '导入失败！数据表格重复导入！'
+            this.showMessage = true
           } else {
-            this.message = '内部服务错误！'
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
           }
-          this.showMessage = true
-          this.importCSVFileClose()
         })
     },
     onImport (evt) {
@@ -1283,14 +1295,17 @@ export default {
           this.cleanAllInventoriesClose()
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          if (error.response.status === 403) {
-            this.message = '删除失败，管理员账号或密码错误！'
-          } else {
-            this.message = '内部服务错误！'
-          }
-          this.showMessage = true
           this.cleanAllInventoriesClose()
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else if (error.response.status === 403) {
+            this.message = '删除失败，管理员账号或密码错误！'
+            this.showMessage = true
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
+          }
         })
     },
     onCleanAllInventories (evt) {
@@ -1321,10 +1336,13 @@ export default {
           this.customizeCase1.brand_classification2_tags = res.data.ui.brand_classification2_tags
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          this.message = '内部服务错误！'
-          this.showMessage = true
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
+          }
         })
     },
     saveUI (payload) {
@@ -1334,10 +1352,13 @@ export default {
           this.showMessage = true
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          this.message = '内部服务错误！'
-          this.showMessage = true
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
+          }
         })
     },
     onCustomizeCase1 (evt) {
@@ -1374,17 +1395,20 @@ export default {
           this.previewReportFileCase1Close()
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          if (error.response.status === 404) {
+          this.previewReportFileCase1Close()
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else if (error.response.status === 404) {
             this.message = '预览失败！不存在指定的库存条目。'
+            this.showMessage = true
           } else if (error.response.status === 400) {
             this.message = error.data.message
+            this.showMessage = true
           } else {
-            this.message = '内部服务错误！'
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
           }
-          this.showMessage = true
-          this.previewReportFileCase1Close()
         })
     },
     onPreviewCase1 (evt) {
@@ -1441,17 +1465,20 @@ export default {
           this.previewReportFileCase2Close()
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          if (error.response.status === 404) {
+          this.previewReportFileCase2Close()
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else if (error.response.status === 404) {
             this.message = '预览失败！不存在指定的库存条目。'
+            this.showMessage = true
           } else if (error.response.status === 400) {
             this.message = error.data.message
+            this.showMessage = true
           } else {
-            this.message = '内部服务错误！'
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/login')
           }
-          this.showMessage = true
-          this.previewReportFileCase2Close()
         })
     },
     onPreviewCase2 (evt) {
@@ -1504,17 +1531,20 @@ export default {
           this.previewReportFileCase3Close()
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          if (error.response.status === 404) {
+          this.previewReportFileCase3Close()
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else if (error.response.status === 404) {
             this.message = '预览失败！不存在指定的库存条目。'
+            this.showMessage = true
           } else if (error.response.status === 400) {
             this.message = error.data.message
+            this.showMessage = true
           } else {
-            this.message = '内部服务错误！'
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
           }
-          this.showMessage = true
-          this.previewReportFileCase3Close()
         })
     },
     onPreviewCase3 (evt) {
@@ -1589,17 +1619,20 @@ export default {
           this.previewReportFileCase4Close()
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          if (error.response.status === 404) {
+          this.previewReportFileCase4Close()
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else if (error.response.status === 404) {
             this.message = '预览失败！不存在指定的库存条目。'
+            this.showMessage = true
           } else if (error.response.status === 400) {
             this.message = error.data.message
+            this.showMessage = true
           } else {
-            this.message = '内部服务错误！'
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
           }
-          this.showMessage = true
-          this.previewReportFileCase4Close()
         })
     },
     onPreviewCase4 (evt) {
@@ -1654,17 +1687,20 @@ export default {
           this.previewReportFileCase5WayClose()
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          if (error.response.status === 404) {
+          this.previewReportFileCase5WayClose()
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else if (error.response.status === 404) {
             this.message = '预览失败！不存在指定的库存条目。'
+            this.showMessage = true
           } else if (error.response.status === 400) {
             this.message = error.data.message
+            this.showMessage = true
           } else {
-            this.message = '内部服务错误！'
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
           }
-          this.showMessage = true
-          this.previewReportFileCase5WayClose()
         })
     },
     onPreviewCase5Pattern1 (evt) {
@@ -1757,14 +1793,17 @@ export default {
           this.importCSVFileForCase6Close()
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          if (error.response.status === 400) {
-            this.message = '导入失败！' + error.data.message
-          } else {
-            this.message = '内部服务错误！'
-          }
-          this.showMessage = true
           this.importCSVFileForCase6Close()
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else if (error.response.status === 400) {
+            this.message = '导入失败！' + error.data.message
+            this.showMessage = true
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
+          }
         })
     },
     onPreviewCase6 (evt) {
@@ -1794,17 +1833,20 @@ export default {
           this.previewReportFileCase6Close()
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          if (error.response.status === 404) {
+          this.previewReportFileCase6Close()
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else if (error.response.status === 404) {
             this.message = '预览失败！不存在指定的库存条目。'
+            this.showMessage = true
           } else if (error.response.status === 400) {
             this.message = error.data.message
+            this.showMessage = true
           } else {
-            this.message = '内部服务错误！'
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
           }
-          this.showMessage = true
-          this.previewReportFileCase6Close()
         })
     },
     onExportCase6 (evt) {
@@ -1841,15 +1883,17 @@ export default {
           this.prepareExportReportFileClose()
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          if (error.response.status === 404) {
-            this.message = '没有满足要求的数据条目！'
-          } else {
-            this.message = '内部服务错误！'
-          }
-          this.showMessage = true
           this.prepareExportReportFileClose()
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else if (error.response.status === 404) {
+            this.message = '没有满足要求的数据条目！'
+            this.showMessage = true
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
+          }
         })
     },
     exportReportFile (queryFile, saveFile) {
@@ -1867,10 +1911,13 @@ export default {
           this.showMessage = true
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          this.message = '内部服务错误！'
-          this.showMessage = true
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
+          }
         })
     },
     // ------------------------------ 新增SKU下载 ------------------------------
@@ -1880,10 +1927,13 @@ export default {
           this.downloadAddedSKUs(res.data.server_send_queue_file, res.data.output_file)
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          this.message = '内部服务错误！'
-          this.showMessage = true
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
+          }
         })
     },
     downloadAddedSKUs (queryFile, saveFile) {
@@ -1901,10 +1951,13 @@ export default {
           this.showMessage = true
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          this.message = '内部服务错误！'
-          this.showMessage = true
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
+          }
         })
     },
     onDownloadAddedSKUs (evt) {
@@ -1989,12 +2042,21 @@ export default {
   created () {
     console.log(process.env.NODE_ENV)
     console.log(process.env.SERVER_BASE_URL)
-    this.listAllOptions()
-    this.listAllSupplierSelections()
-    this.listInventories()
-    this.getInventoriesTotal()
-    this.setDefaultDate()
-    this.fetchUI()
+
+    if (this.$cookies.isKey('logged')) {
+      if (this.$cookies.get('logged') === 'in') {
+        this.listInventories()
+        this.getInventoriesTotal()
+        this.fetchUI()
+        this.listAllOptions()
+        this.listAllSupplierSelections()
+        this.setDefaultDate()
+      } else {
+        router.push('/login')
+      }
+    } else {
+      router.push('/login')
+    }
   }
 }
 </script>

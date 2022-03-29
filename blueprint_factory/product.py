@@ -178,7 +178,7 @@ FROM fotolei_pssa.products ORDER BY specification_code LIMIT {}, {};".format(
     )
 
 
-# 获取总商品条目量的接口
+# 获取商品条目总量的接口
 @product_blueprint.route("/total", methods=["GET"])
 @has_logged_in
 @restrict_access(access_level=ROLE_TYPE_ORDINARY_USER)
