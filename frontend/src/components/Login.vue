@@ -2,7 +2,8 @@
   <div class="container-fluid">
     <alert :message=message v-if="showMessage"></alert>
     <div class="row">
-      <div class="col-sm-4">
+      <div class="col-sm-8" id="logo-area">
+        <h1 id="logo">FOTOLEI PSSA SYSTEM</h1>
       </div>
       <div class="col-sm-4" id="login-form-area">
         <b-form id="login-form">
@@ -28,13 +29,20 @@
           </div>
         </b-form>
       </div>
-      <div class="col-sm-4">
-      </div>
     </div>
   </div>
 </template>
 
 <style>
+#logo-area {
+  display: flex;
+  justify-content: center;
+}
+
+#logo {
+  margin-top: 200px;
+}
+
 #login-form-area {
   display: flex;
   justify-content: center;
@@ -84,10 +92,21 @@ export default {
           this.$cookies.set('role', res.headers['set-role'].split('=')[1])
           router.push('/')
         })
-        .catch((_) => {
-          // eslint-disable-next-line
-          this.message = '登录失败，请检查账号和密码'
-          this.showMessage = true
+        .catch((error) => {
+          if (error.response.status === 401) {
+            this.message = '登录失败，账号未注册！'
+            this.showMessage = true
+          } else if (error.response.status === 404) {
+            this.message = '登录失败，请检查账号和密码！'
+            this.showMessage = true
+          } else if (error.response.status === 409) {
+            this.message = '禁止重复登录！'
+            this.showMessage = true
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
+          }
         })
     }
   },

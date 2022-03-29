@@ -160,7 +160,7 @@
     <b-modal ref="previewCase1Modal" title="预览销售报表（按分类汇总）" size="xl" hide-footer>
       <b-table-simple striped hover small id="preview-table">
         <b-tbody>
-          <b-tr v-for="(item, index) in previewCase1.previewTable" :key="index">
+          <b-tr v-for="(item, index) in previewCaseN.previewTable" :key="index">
             <b-td>{{ item[0] }}</b-td>
             <b-td>{{ item[1] }}</b-td>
             <b-td>{{ item[2] }}</b-td>
@@ -315,7 +315,7 @@
           </b-tr>
         </b-thead>
         <b-tbody>
-          <b-tr v-for="(item, index) in previewCase2.previewTable" :key="index">
+          <b-tr v-for="(item, index) in previewCaseN.previewTablePartialView" :key="index">
             <b-td>{{ item.product_series }}</b-td>
             <b-td>{{ item.st_inventory_qty }}</b-td>
             <b-td>{{ item.st_inventory_total }}</b-td>
@@ -336,6 +336,8 @@
         </b-tbody>
       </b-table-simple>
       <div id="inventory-table-operate-btn" class="w-100 d-block">
+        <b-button variant="dark" :disabled="previewTableSliceOffset==0" @click="onPrevPreviewPage">上一页</b-button>
+        <b-button variant="dark" :disabled="previewTableSliceOffset==previewTableSliceOffsetMax" @click="onNextPreviewPage">下一页</b-button>
         <b-button variant="dark" @click="onExportCase2">下载报表</b-button>
         <b-button variant="dark" @click="onCancelPreviewCase2">取消</b-button>
       </div>
@@ -498,7 +500,7 @@
           </b-tr>
         </b-thead>
         <b-tbody>
-          <b-tr v-for="(item, index) in previewCase3.previewTable" :key="index">
+          <b-tr v-for="(item, index) in previewCaseN.previewTablePartialView" :key="index">
             <b-td>{{ item.product_code }}</b-td>
             <b-td>{{ item.specification_code }}</b-td>
             <b-td>{{ item.product_name }}</b-td>
@@ -512,6 +514,8 @@
         </b-tbody>
       </b-table-simple>
       <div id="inventory-table-operate-btn" class="w-100 d-block">
+        <b-button variant="dark" :disabled="previewTableSliceOffset==0" @click="onPrevPreviewPage">上一页</b-button>
+        <b-button variant="dark" :disabled="previewTableSliceOffset==previewTableSliceOffsetMax" @click="onNextPreviewPage">下一页</b-button>
         <b-button variant="dark" @click="onExportCase3">下载报表</b-button>
         <b-button variant="dark" @click="onCancelPreviewCase3">取消</b-button>
       </div>
@@ -668,7 +672,7 @@
           </b-tr>
         </b-thead>
         <b-tbody>
-          <b-tr v-for="(item, index) in previewCase4.previewTable" :key="index">
+          <b-tr v-for="(item, index) in previewCaseN.previewTablePartialView" :key="index">
             <b-td>{{ item.product_code }}</b-td>
             <b-td>{{ item.specification_code }}</b-td>
             <b-td>{{ item.product_name }}</b-td>
@@ -684,6 +688,8 @@
         </b-tbody>
       </b-table-simple>
       <div id="inventory-table-operate-btn" class="w-100 d-block">
+        <b-button variant="dark" :disabled="previewTableSliceOffset==0" @click="onPrevPreviewPage">上一页</b-button>
+        <b-button variant="dark" :disabled="previewTableSliceOffset==previewTableSliceOffsetMax" @click="onNextPreviewPage">下一页</b-button>
         <b-button variant="dark" @click="onExportCase4">下载报表</b-button>
         <b-button variant="dark" @click="onCancelPreviewCase4">取消</b-button>
       </div>
@@ -797,7 +803,7 @@
           </b-tr>
         </b-thead>
         <b-tbody>
-          <b-tr v-for="(item, index) in previewCase5.previewTable" :key="index">
+          <b-tr v-for="(item, index) in previewCaseN.previewTablePartialView" :key="index">
             <b-td>{{ item.specification_code }}</b-td>
             <b-td>{{ item.brand }}</b-td>
             <b-td>{{ item.product_name }}</b-td>
@@ -821,6 +827,8 @@
         </b-tbody>
       </b-table-simple>
       <div id="inventory-table-operate-btn" class="w-100 d-block">
+        <b-button variant="dark" :disabled="previewTableSliceOffset==0" @click="onPrevPreviewPage">上一页</b-button>
+        <b-button variant="dark" :disabled="previewTableSliceOffset==previewTableSliceOffsetMax" @click="onNextPreviewPage">下一页</b-button>
         <b-button variant="dark" @click="onExportCase5">下载报表</b-button>
         <b-button variant="dark" @click="onCancelPreviewCase5">取消</b-button>
       </div>
@@ -873,7 +881,7 @@
           </b-tr>
         </b-thead>
         <b-tbody>
-          <b-tr v-for="(item, index) in previewCase6.previewTable" :key="index">
+          <b-tr v-for="(item, index) in previewCaseN.previewTablePartialView" :key="index">
             <b-td>{{ item.specification_code }}</b-td>
             <b-td>{{ item.product_name }}</b-td>
             <b-td>{{ item.specification_name }}</b-td>
@@ -889,17 +897,19 @@
             <b-td></b-td>
             <b-td></b-td>
             <b-td></b-td>
-            <b-td>{{ previewCase6.previewSummaryTable.quantity }}</b-td>
+            <b-td>{{ previewCaseN.previewSummaryTable.quantity }}</b-td>
             <b-td></b-td>
             <b-td></b-td>
             <b-td></b-td>
-            <b-td>{{ previewCase6.previewSummaryTable.product_volume_total }}</b-td>
+            <b-td>{{ previewCaseN.previewSummaryTable.product_volume_total }}</b-td>
             <b-td></b-td>
-            <b-td>{{ previewCase6.previewSummaryTable.product_weight_total }}</b-td>
+            <b-td>{{ previewCaseN.previewSummaryTable.product_weight_total }}</b-td>
           </b-tr>
         </b-tbody>
       </b-table-simple>
       <div id="inventory-table-operate-btn" class="w-100 d-block">
+        <b-button variant="dark" :disabled="previewTableSliceOffset==0" @click="onPrevPreviewPage">上一页</b-button>
+        <b-button variant="dark" :disabled="previewTableSliceOffset==previewTableSliceOffsetMax" @click="onNextPreviewPage">下一页</b-button>
         <b-button variant="dark" @click="onExportCase6">下载报表</b-button>
         <b-button variant="dark" @click="onCancelPreviewCase6">取消</b-button>
       </div>
@@ -992,9 +1002,12 @@ export default {
   data () {
     return {
       serverBaseURL: process.env.SERVER_BASE_URL,
+
       dateReg: /^20[1-3][0-9]-(0[1-9]|1[0-2])$/,
+
       adminUsr: '',
       adminPwd: '',
+
       customDateSelection: '',
       stDateSelectionForCase1: '',
       stDateSelection: '',
@@ -1045,23 +1058,12 @@ export default {
         brand_topk_tag: '',
         brand_classification2_tags: []
       },
-      previewCase1: {
-        previewTable: []
-      },
-      previewCase2: {
-        previewTable: []
-      },
-      previewCase3: {
-        previewTable: []
-      },
-      previewCase4: {
-        previewTable: []
-      },
-      previewCase5: {
-        previewTable: []
-      },
-      previewCase6: {
+      previewTableSliceOffset: 0,
+      previewTableSliceOffsetMax: 0,
+      previewCaseN: {
         previewTable: [],
+        previewTotal: 0,
+        previewTablePartialView: [],
         previewSummaryTable: []
       },
       supplierNameListFromScreeningWay1: [],
@@ -1106,10 +1108,13 @@ export default {
           this.supplierNameOptions = res.data.supplier_name_options
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          this.message = '内部服务错误！'
-          this.showMessage = true
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
+          }
         })
     },
     listAllSupplierSelections () {
@@ -1118,10 +1123,13 @@ export default {
           this.supplierNameSelections = res.data.supplier_name_selections
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          this.message = '内部服务错误！'
-          this.showMessage = true
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
+          }
         })
     },
     listInventories () {
@@ -1141,8 +1149,7 @@ export default {
           } else {
             // eslint-disable-next-line
             console.log(error)
-            this.message = '内部服务错误！'
-            this.showMessage = true
+            router.push('/500')
           }
         })
     },
@@ -1158,10 +1165,13 @@ export default {
           }
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          this.message = '内部服务错误！'
-          this.showMessage = true
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
+          }
         })
     },
     initExportForm () {
@@ -1178,13 +1188,12 @@ export default {
       this.beAggregatedSelection = '参与'
       this.isImportSelection = '全部'
       this.supplierNameSelection = ''
-      this.previewCase1.previewTable = []
-      this.previewCase2.previewTable = []
-      this.previewCase3.previewTable = []
-      this.previewCase4.previewTable = []
-      this.previewCase5.previewTable = []
-      this.previewCase6.previewTable = []
-      this.previewCase6.previewSummaryTable = []
+      this.previewTableSliceOffset = 0
+      this.previewTableSliceOffsetMax = 0
+      this.previewCaseN.previewTable = []
+      this.previewCaseN.previewTotal = 0
+      this.previewCaseN.previewTablePartialView = []
+      this.previewCaseN.previewSummaryTable = []
       this.supplierNameListFromScreeningWay1 = []
       this.timeQuantumX = '6'
       this.thresholdX = '2'
@@ -1220,21 +1229,25 @@ export default {
           this.importCSVFileClose()
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          if (error.response.status === 400) {
-            this.message = '导入失败！' + error.data.message
+          this.importCSVFileClose()
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else if (error.response.status === 400) {
+            this.message = '导入失败！' + error.response.data.message
+            this.showMessage = true
           } else if (error.response.status === 406) {
             this.message = '禁止导入，有新增SKU！'
+            this.showMessage = true
             this.addedSkus = error.data.added_skus
             this.shouldOpenSidebar = true
           } else if (error.response.status === 409) {
             this.message = '导入失败！数据表格重复导入！'
+            this.showMessage = true
           } else {
-            this.message = '内部服务错误！'
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
           }
-          this.showMessage = true
-          this.importCSVFileClose()
         })
     },
     onImport (evt) {
@@ -1283,14 +1296,17 @@ export default {
           this.cleanAllInventoriesClose()
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          if (error.response.status === 403) {
-            this.message = '删除失败，管理员账号或密码错误！'
-          } else {
-            this.message = '内部服务错误！'
-          }
-          this.showMessage = true
           this.cleanAllInventoriesClose()
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else if (error.response.status === 403) {
+            this.message = '删除失败，管理员账号或密码错误！'
+            this.showMessage = true
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
+          }
         })
     },
     onCleanAllInventories (evt) {
@@ -1321,10 +1337,13 @@ export default {
           this.customizeCase1.brand_classification2_tags = res.data.ui.brand_classification2_tags
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          this.message = '内部服务错误！'
-          this.showMessage = true
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
+          }
         })
     },
     saveUI (payload) {
@@ -1334,10 +1353,13 @@ export default {
           this.showMessage = true
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          this.message = '内部服务错误！'
-          this.showMessage = true
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
+          }
         })
     },
     onCustomizeCase1 (evt) {
@@ -1369,22 +1391,25 @@ export default {
       axios.post(this.serverBaseURL + '/api/v1/case1/preview', payload)
         .then((res) => {
           const pt = Object.freeze(res.data.preview_table)
-          this.previewCase1.previewTable = pt
+          this.previewCaseN.previewTable = pt
           this.$refs.previewCase1Modal.show()
           this.previewReportFileCase1Close()
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          if (error.response.status === 404) {
-            this.message = '预览失败！不存在指定的库存条目。'
-          } else if (error.response.status === 400) {
-            this.message = error.data.message
-          } else {
-            this.message = '内部服务错误！'
-          }
-          this.showMessage = true
           this.previewReportFileCase1Close()
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else if (error.response.status === 404) {
+            this.message = '预览失败！不存在指定的库存条目。'
+            this.showMessage = true
+          } else if (error.response.status === 400) {
+            this.message = error.response.data.message
+            this.showMessage = true
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
+          }
         })
     },
     onPreviewCase1 (evt) {
@@ -1420,7 +1445,7 @@ export default {
       this.$refs.exportFileCase1Modal.hide()
       this.$refs.processingModal.show()
       const payload = {
-        preview_table: this.previewCase1.previewTable
+        preview_table: this.previewCaseN.previewTable
       }
       this.prepareExportReportFile('/api/v1/case1/prepare', payload)
     },
@@ -1436,22 +1461,34 @@ export default {
       axios.post(this.serverBaseURL + '/api/v1/case2/preview', payload)
         .then((res) => {
           const pt = Object.freeze(res.data.preview_table)
-          this.previewCase2.previewTable = pt
+          this.previewCaseN.previewTable = pt
+          this.previewCaseN.previewTotal = this.previewCaseN.previewTable.length
+          this.previewTableSliceOffset = 0
+          if (this.previewCaseN.previewTotal > 10) {
+            this.previewTableSliceOffsetMax = this.previewCaseN.previewTotal - this.previewCaseN.previewTotal % 10
+            this.previewCaseN.previewTablePartialView = this.previewCaseN.previewTable.slice(this.previewTableSliceOffset, this.previewTableSliceOffset + 10)
+          } else {
+            this.previewTableSliceOffsetMax = 0
+            this.previewCaseN.previewTablePartialView = this.previewCaseN.previewTable.slice(0, this.previewCaseN.previewTotal)
+          }
           this.$refs.previewCase2Modal.show()
           this.previewReportFileCase2Close()
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          if (error.response.status === 404) {
-            this.message = '预览失败！不存在指定的库存条目。'
-          } else if (error.response.status === 400) {
-            this.message = error.data.message
-          } else {
-            this.message = '内部服务错误！'
-          }
-          this.showMessage = true
           this.previewReportFileCase2Close()
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else if (error.response.status === 404) {
+            this.message = '预览失败！不存在指定的库存条目。'
+            this.showMessage = true
+          } else if (error.response.status === 400) {
+            this.message = error.response.data.message
+            this.showMessage = true
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/login')
+          }
         })
     },
     onPreviewCase2 (evt) {
@@ -1481,7 +1518,7 @@ export default {
       this.$refs.exportFileCase2Modal.hide()
       this.$refs.processingModal.show()
       const payload = {
-        preview_table: this.previewCase2.previewTable
+        preview_table: this.previewCaseN.previewTable
       }
       this.prepareExportReportFile('/api/v1/case2/prepare', payload)
     },
@@ -1499,22 +1536,34 @@ export default {
       axios.post(this.serverBaseURL + '/api/v1/case3/preview', payload)
         .then((res) => {
           const pt = Object.freeze(res.data.preview_table)
-          this.previewCase3.previewTable = pt
+          this.previewCaseN.previewTable = pt
+          this.previewCaseN.previewTotal = this.previewCaseN.previewTable.length
+          this.previewTableSliceOffset = 0
+          if (this.previewCaseN.previewTotal > 10) {
+            this.previewTableSliceOffsetMax = this.previewCaseN.previewTotal - this.previewCaseN.previewTotal % 10
+            this.previewCaseN.previewTablePartialView = this.previewCaseN.previewTable.slice(this.previewTableSliceOffset, this.previewTableSliceOffset + 10)
+          } else {
+            this.previewTableSliceOffsetMax = 0
+            this.previewCaseN.previewTablePartialView = this.previewCaseN.previewTable.slice(0, this.previewCaseN.previewTotal)
+          }
           this.$refs.previewCase3Modal.show()
           this.previewReportFileCase3Close()
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          if (error.response.status === 404) {
-            this.message = '预览失败！不存在指定的库存条目。'
-          } else if (error.response.status === 400) {
-            this.message = error.data.message
-          } else {
-            this.message = '内部服务错误！'
-          }
-          this.showMessage = true
           this.previewReportFileCase3Close()
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else if (error.response.status === 404) {
+            this.message = '预览失败！不存在指定的库存条目。'
+            this.showMessage = true
+          } else if (error.response.status === 400) {
+            this.message = error.response.data.message
+            this.showMessage = true
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
+          }
         })
     },
     onPreviewCase3 (evt) {
@@ -1556,7 +1605,7 @@ export default {
       this.$refs.exportFileCase3Modal.hide()
       this.$refs.processingModal.show()
       const payload = {
-        preview_table: this.previewCase3.previewTable
+        preview_table: this.previewCaseN.previewTable
       }
       this.prepareExportReportFile('/api/v1/case3/prepare', payload)
     },
@@ -1573,7 +1622,7 @@ export default {
       this.$refs.exportFileCase4Modal.hide()
       this.$refs.processingModal.show()
       const payload = {
-        preview_table: this.previewCase4.previewTable
+        preview_table: this.previewCaseN.previewTable
       }
       this.prepareExportReportFile('/api/v1/case4/prepare', payload)
     },
@@ -1584,22 +1633,34 @@ export default {
       axios.post(this.serverBaseURL + '/api/v1/case4/preview', payload)
         .then((res) => {
           const pt = Object.freeze(res.data.preview_table)
-          this.previewCase4.previewTable = pt
+          this.previewCaseN.previewTable = pt
+          this.previewCaseN.previewTotal = this.previewCaseN.previewTable.length
+          this.previewTableSliceOffset = 0
+          if (this.previewCaseN.previewTotal > 10) {
+            this.previewTableSliceOffsetMax = this.previewCaseN.previewTotal - this.previewCaseN.previewTotal % 10
+            this.previewCaseN.previewTablePartialView = this.previewCaseN.previewTable.slice(this.previewTableSliceOffset, this.previewTableSliceOffset + 10)
+          } else {
+            this.previewTableSliceOffsetMax = 0
+            this.previewCaseN.previewTablePartialView = this.previewCaseN.previewTable.slice(0, this.previewCaseN.previewTotal)
+          }
           this.$refs.previewCase4Modal.show()
           this.previewReportFileCase4Close()
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          if (error.response.status === 404) {
-            this.message = '预览失败！不存在指定的库存条目。'
-          } else if (error.response.status === 400) {
-            this.message = error.data.message
-          } else {
-            this.message = '内部服务错误！'
-          }
-          this.showMessage = true
           this.previewReportFileCase4Close()
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else if (error.response.status === 404) {
+            this.message = '预览失败！不存在指定的库存条目。'
+            this.showMessage = true
+          } else if (error.response.status === 400) {
+            this.message = error.response.data.message
+            this.showMessage = true
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
+          }
         })
     },
     onPreviewCase4 (evt) {
@@ -1648,23 +1709,35 @@ export default {
       axios.post(this.serverBaseURL + url, payload)
         .then((res) => {
           const pt = Object.freeze(res.data.preview_table)
-          this.previewCase5.previewTable = pt
+          this.previewCaseN.previewTable = pt
+          this.previewCaseN.previewTotal = this.previewCaseN.previewTable.length
+          this.previewTableSliceOffset = 0
+          if (this.previewCaseN.previewTotal > 10) {
+            this.previewTableSliceOffsetMax = this.previewCaseN.previewTotal - this.previewCaseN.previewTotal % 10
+            this.previewCaseN.previewTablePartialView = this.previewCaseN.previewTable.slice(this.previewTableSliceOffset, this.previewTableSliceOffset + 10)
+          } else {
+            this.previewTableSliceOffsetMax = 0
+            this.previewCaseN.previewTablePartialView = this.previewCaseN.previewTable.slice(0, this.previewCaseN.previewTotal)
+          }
           this.supplierNameListFromScreeningWay1 = res.data.supplier_name_list_from_screening_way1
           this.$refs.previewCase5Modal.show()
           this.previewReportFileCase5WayClose()
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          if (error.response.status === 404) {
-            this.message = '预览失败！不存在指定的库存条目。'
-          } else if (error.response.status === 400) {
-            this.message = error.data.message
-          } else {
-            this.message = '内部服务错误！'
-          }
-          this.showMessage = true
           this.previewReportFileCase5WayClose()
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else if (error.response.status === 404) {
+            this.message = '预览失败！不存在指定的库存条目。'
+            this.showMessage = true
+          } else if (error.response.status === 400) {
+            this.message = error.response.data.message
+            this.showMessage = true
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
+          }
         })
     },
     onPreviewCase5Pattern1 (evt) {
@@ -1712,7 +1785,7 @@ export default {
       const payload = {
         time_quantum_x: this.timeQuantumX,
         time_quantum_y: this.timeQuantumY,
-        preview_table: this.previewCase5.previewTable
+        preview_table: this.previewCaseN.previewTable
       }
       this.prepareExportReportFile('/api/v1/case5/prepare', payload)
     },
@@ -1757,14 +1830,17 @@ export default {
           this.importCSVFileForCase6Close()
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          if (error.response.status === 400) {
-            this.message = '导入失败！' + error.data.message
-          } else {
-            this.message = '内部服务错误！'
-          }
-          this.showMessage = true
           this.importCSVFileForCase6Close()
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else if (error.response.status === 400) {
+            this.message = '导入失败！' + error.response.data.message
+            this.showMessage = true
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
+          }
         })
     },
     onPreviewCase6 (evt) {
@@ -1787,24 +1863,36 @@ export default {
       axios.post(this.serverBaseURL + '/api/v1/case6/preview', payload)
         .then((res) => {
           const pt = Object.freeze(res.data.preview_table)
-          this.previewCase6.previewTable = pt
+          this.previewCaseN.previewTable = pt
+          this.previewCaseN.previewTotal = this.previewCaseN.previewTable.length
+          this.previewTableSliceOffset = 0
+          if (this.previewCaseN.previewTotal > 10) {
+            this.previewTableSliceOffsetMax = this.previewCaseN.previewTotal - this.previewCaseN.previewTotal % 10
+            this.previewCaseN.previewTablePartialView = this.previewCaseN.previewTable.slice(this.previewTableSliceOffset, this.previewTableSliceOffset + 10)
+          } else {
+            this.previewTableSliceOffsetMax = 0
+            this.previewCaseN.previewTablePartialView = this.previewCaseN.previewTable.slice(0, this.previewCaseN.previewTotal)
+          }
           const pst = Object.freeze(res.data.preview_summary_table)
-          this.previewCase6.previewSummaryTable = pst
+          this.previewCaseN.previewSummaryTable = pst
           this.$refs.previewCase6Modal.show()
           this.previewReportFileCase6Close()
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          if (error.response.status === 404) {
-            this.message = '预览失败！不存在指定的库存条目。'
-          } else if (error.response.status === 400) {
-            this.message = error.data.message
-          } else {
-            this.message = '内部服务错误！'
-          }
-          this.showMessage = true
           this.previewReportFileCase6Close()
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else if (error.response.status === 404) {
+            this.message = '预览失败！不存在指定的库存条目。'
+            this.showMessage = true
+          } else if (error.response.status === 400) {
+            this.message = error.response.data.message
+            this.showMessage = true
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
+          }
         })
     },
     onExportCase6 (evt) {
@@ -1813,8 +1901,8 @@ export default {
       this.$refs.exportFileCase6Modal.hide()
       this.$refs.processingModal.show()
       const payload = {
-        preview_table: this.previewCase6.previewTable,
-        preview_summary_table: this.previewCase6.previewSummaryTable
+        preview_table: this.previewCaseN.previewTable,
+        preview_summary_table: this.previewCaseN.previewSummaryTable
       }
       this.prepareExportReportFile('/api/v1/case6/prepare', payload)
     },
@@ -1841,15 +1929,17 @@ export default {
           this.prepareExportReportFileClose()
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          if (error.response.status === 404) {
-            this.message = '没有满足要求的数据条目！'
-          } else {
-            this.message = '内部服务错误！'
-          }
-          this.showMessage = true
           this.prepareExportReportFileClose()
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else if (error.response.status === 404) {
+            this.message = '没有满足要求的数据条目！'
+            this.showMessage = true
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
+          }
         })
     },
     exportReportFile (queryFile, saveFile) {
@@ -1867,10 +1957,13 @@ export default {
           this.showMessage = true
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          this.message = '内部服务错误！'
-          this.showMessage = true
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
+          }
         })
     },
     // ------------------------------ 新增SKU下载 ------------------------------
@@ -1880,10 +1973,13 @@ export default {
           this.downloadAddedSKUs(res.data.server_send_queue_file, res.data.output_file)
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          this.message = '内部服务错误！'
-          this.showMessage = true
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
+          }
         })
     },
     downloadAddedSKUs (queryFile, saveFile) {
@@ -1901,10 +1997,13 @@ export default {
           this.showMessage = true
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          this.message = '内部服务错误！'
-          this.showMessage = true
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
+          }
         })
     },
     onDownloadAddedSKUs (evt) {
@@ -1921,7 +2020,18 @@ export default {
       this.shouldOpenSidebar = false
       this.addedSkus = []
     },
-    // ------------------------------ 翻页 ------------------------------
+    // ------------------------------ 预览数据翻页 ------------------------------
+    onPrevPreviewPage (evt) {
+      evt.preventDefault()
+      this.previewTableSliceOffset -= 10
+      this.previewCaseN.previewTablePartialView = this.previewCaseN.previewTable.slice(this.previewTableSliceOffset, this.previewTableSliceOffset + 10)
+    },
+    onNextPreviewPage (evt) {
+      evt.preventDefault()
+      this.previewTableSliceOffset += 10
+      this.previewCaseN.previewTablePartialView = this.previewCaseN.previewTable.slice(this.previewTableSliceOffset, this.previewTableSliceOffset + 10)
+    },
+    // ------------------------------ 进销存数据翻页 ------------------------------
     onFirstPage (evt) {
       evt.preventDefault()
       this.pageOffset = 0
@@ -1989,12 +2099,21 @@ export default {
   created () {
     console.log(process.env.NODE_ENV)
     console.log(process.env.SERVER_BASE_URL)
-    this.listAllOptions()
-    this.listAllSupplierSelections()
-    this.listInventories()
-    this.getInventoriesTotal()
-    this.setDefaultDate()
-    this.fetchUI()
+
+    if (this.$cookies.isKey('logged')) {
+      if (this.$cookies.get('logged') === 'in') {
+        this.listInventories()
+        this.getInventoriesTotal()
+        this.fetchUI()
+        this.listAllOptions()
+        this.listAllSupplierSelections()
+        this.setDefaultDate()
+      } else {
+        router.push('/login')
+      }
+    } else {
+      router.push('/login')
+    }
   }
 }
 </script>

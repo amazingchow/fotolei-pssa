@@ -225,8 +225,7 @@ export default {
           } else {
             // eslint-disable-next-line
             console.log(error)
-            this.message = '内部服务错误！'
-            this.showMessage = true
+            router.push('/500')
           }
         })
     },
@@ -237,10 +236,13 @@ export default {
           this.region2.classification1Selections = c1ss
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          this.message = '内部服务错误！'
-          this.showMessage = true
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
+          }
         })
     },
     async onRegion1FetchAssociations1 (evt) {
@@ -264,10 +266,13 @@ export default {
           }
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          this.message = '内部服务错误！'
-          this.showMessage = true
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
+          }
         })
     },
     async onRegion1FetchAssociations2 (evt) {
@@ -290,10 +295,13 @@ export default {
           }
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          this.message = '内部服务错误！'
-          this.showMessage = true
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
+          }
         })
     },
     async onRegion1FetchAssociations3 (evt) {
@@ -315,10 +323,13 @@ export default {
           }
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          this.message = '内部服务错误！'
-          this.showMessage = true
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
+          }
         })
     },
     async onRegion1FetchAssociations4 (evt) {
@@ -336,10 +347,13 @@ export default {
           this.region1.supplierNameSelections = snss
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          this.message = '内部服务错误！'
-          this.showMessage = true
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
+          }
         })
     },
     async onRegion2FetchAssociations (evt) {
@@ -354,10 +368,13 @@ export default {
           this.region2.classification2Selections = c2ss
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          this.message = '内部服务错误！'
-          this.showMessage = true
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
+          }
         })
     },
     async onRegion3FetchAssociations (evt) {
@@ -372,10 +389,13 @@ export default {
           this.region3.classification2Selections = c2ss
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          this.message = '内部服务错误！'
-          this.showMessage = true
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
+          }
         })
     },
     async copyText (value) {
@@ -392,8 +412,17 @@ export default {
   created () {
     console.log(process.env.NODE_ENV)
     console.log(process.env.SERVER_BASE_URL)
-    this.listAllBrandSelections()
-    this.listAllClassification1Selections()
+
+    if (this.$cookies.isKey('logged')) {
+      if (this.$cookies.get('logged') === 'in') {
+        this.listAllBrandSelections()
+        this.listAllClassification1Selections()
+      } else {
+        router.push('/login')
+      }
+    } else {
+      router.push('/login')
+    }
   }
 }
 </script>

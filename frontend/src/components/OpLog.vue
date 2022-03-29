@@ -72,8 +72,7 @@ export default {
           } else {
             // eslint-disable-next-line
             console.log(error)
-            this.message = '内部服务错误！'
-            this.showMessage = true
+            router.push('/500')
           }
         })
     }
@@ -81,7 +80,16 @@ export default {
   created () {
     console.log(process.env.NODE_ENV)
     console.log(process.env.SERVER_BASE_URL)
-    this.listOpLogs()
+
+    if (this.$cookies.isKey('logged')) {
+      if (this.$cookies.get('logged') === 'in') {
+        this.listOpLogs()
+      } else {
+        router.push('/login')
+      }
+    } else {
+      router.push('/login')
+    }
   }
 }
 </script>

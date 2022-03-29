@@ -54,13 +54,13 @@ def upload_jit_inventory_data():
 
     if not do_data_schema_validation_for_input_jit_inventories(csv_file):
         return make_response(
-            jsonify({"message": "invalid data schema"}),
+            jsonify({"message": "非法的输入数据格式，请人工复查！"}),
             StatusCode.HTTP_400_BAD_REQUEST
         )
 
     is_valid, err_msg = do_data_check_for_input_jit_inventories(csv_file)
     if not is_valid:
-        response_object = {"message": "invalid data: {}".format(err_msg)}
+        response_object = {"message": err_msg}
         return make_response(
             jsonify(response_object),
             StatusCode.HTTP_400_BAD_REQUEST

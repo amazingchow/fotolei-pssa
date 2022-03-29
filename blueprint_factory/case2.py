@@ -56,7 +56,7 @@ def preview_report_file_case2():
     ed_date = payload.get("ed_date", "").strip()
     if (st_date > ed_date):
         return make_response(
-            jsonify({"message": "invalid st_date and ed_date"}),
+            jsonify({"message": "无效的输入日期"}),
             StatusCode.HTTP_400_BAD_REQUEST
         )
 

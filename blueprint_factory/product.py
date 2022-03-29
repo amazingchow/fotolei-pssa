@@ -79,7 +79,7 @@ def upload_products():
     # 校验表格格式，格式有变更，当前不让导入，需要人工干预解决
     if not do_data_schema_validation_for_input_products(csv_file):
         return make_response(
-            jsonify({"message": "invalid data schema"}),
+            jsonify({"message": "非法的输入数据格式，请人工复查！"}),
             StatusCode.HTTP_400_BAD_REQUEST
         )
 
@@ -98,7 +98,7 @@ def upload_products():
     is_valid, err_msg = do_intelligent_calibration_for_input_products(csv_file)
     if not is_valid:
         return make_response(
-            jsonify({"message": "invalid data: {}".format(err_msg)}),
+            jsonify({"message": err_msg}),
             StatusCode.HTTP_400_BAD_REQUEST
         )
 
@@ -178,7 +178,7 @@ FROM fotolei_pssa.products ORDER BY specification_code LIMIT {}, {};".format(
     )
 
 
-# 获取总商品条目量的接口
+# 获取商品条目总量的接口
 @product_blueprint.route("/total", methods=["GET"])
 @has_logged_in
 @restrict_access(access_level=ROLE_TYPE_ORDINARY_USER)

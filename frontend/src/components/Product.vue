@@ -477,8 +477,7 @@ export default {
           } else {
             // eslint-disable-next-line
             console.log(error)
-            this.message = '内部服务错误！'
-            this.showMessage = true
+            router.push('/500')
           }
         })
     },
@@ -494,10 +493,13 @@ export default {
           }
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          this.message = '内部服务错误！'
-          this.showMessage = true
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
+          }
         })
     },
     importProductCSVFileClose () {
@@ -521,16 +523,20 @@ export default {
           this.importProductCSVFileClose()
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          if (error.response.status === 400) {
-            this.message = '导入失败！' + error.data.message
+          this.importProductCSVFileClose()
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else if (error.response.status === 400) {
+            this.message = '导入失败！' + error.response.data.message
+            this.showMessage = true
           } else if (error.response.status === 409) {
             this.message = '导入失败！数据表格重复导入！'
+            this.showMessage = true
           } else {
-            this.message = '内部服务错误！'
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
           }
-          this.showMessage = true
-          this.importProductCSVFileClose()
         })
     },
     importJITInventoryCSVFileClose () {
@@ -551,21 +557,25 @@ export default {
           this.importJITInventoryCSVFileClose()
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          if (error.response.status === 400) {
-            this.message = '导入失败！' + error.data.message
+          this.importJITInventoryCSVFileClose()
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else if (error.response.status === 400) {
+            this.message = '导入失败！' + error.response.data.message
+            this.showMessage = true
           } else if (error.response.status === 406) {
             this.message = '导入失败，有新增SKU，请人工复核！'
+            this.showMessage = true
             this.addedSkus = error.data.added_skus
             this.shouldOpenSidebar = true
           } else if (error.response.status === 409) {
             this.message = '导入失败！数据表格重复导入！'
+            this.showMessage = true
           } else {
-            this.message = '内部服务错误！'
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
           }
-          this.showMessage = true
-          this.importJITInventoryCSVFileClose()
         })
     },
     cleanAllProductsClose () {
@@ -589,15 +599,17 @@ export default {
           this.cleanAllProductsClose()
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          if (error.response.status === 403) {
-            this.message = '删除失败，管理员账号或密码错误！'
-          } else {
-            this.message = '内部服务错误！'
-          }
-          this.showMessage = true
           this.cleanAllProductsClose()
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else if (error.response.status === 403) {
+            this.message = '删除失败，管理员账号或密码错误！'
+            this.showMessage = true
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
+          }
         })
     },
     cleanOneProductClose () {
@@ -614,15 +626,17 @@ export default {
           this.cleanOneProductClose()
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          if (error.response.status === 403) {
-            this.message = '删除失败，管理员账号或密码错误！'
-          } else {
-            this.message = '内部服务错误！'
-          }
-          this.showMessage = true
           this.cleanOneProductClose()
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else if (error.response.status === 403) {
+            this.message = '删除失败，管理员账号或密码错误！'
+            this.showMessage = true
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
+          }
         })
     },
     loadOldProductDataClose () {
@@ -656,15 +670,17 @@ export default {
           this.loadOldProductDataClose()
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          if (error.response.status === 404) {
-            this.message = '加载失败！'
-          } else {
-            this.message = '内部服务错误！'
-          }
-          this.showMessage = true
           this.loadOldProductDataClose()
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else if (error.response.status === 404) {
+            this.message = '加载失败！'
+            this.showMessage = true
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
+          }
         })
     },
     updateNewProductDataClose () {
@@ -699,11 +715,14 @@ export default {
           this.updateNewProductDataClose()
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          this.message = '内部服务错误！'
-          this.showMessage = true
           this.updateNewProductDataClose()
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
+          }
         })
     },
     preDownloadAddedSKUsClose () {
@@ -718,11 +737,14 @@ export default {
           this.preDownloadAddedSKUsClose()
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          this.message = '内部服务错误！'
-          this.showMessage = true
           this.preDownloadAddedSKUsClose()
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
+          }
         })
     },
     async downloadAddedSKUs (queryFile, saveFile) {
@@ -740,10 +762,13 @@ export default {
           this.showMessage = true
         })
         .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error)
-          this.message = '内部服务错误！'
-          this.showMessage = true
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
+          }
         })
     },
     onImportProducts (evt) {
@@ -920,8 +945,17 @@ export default {
   created () {
     console.log(process.env.NODE_ENV)
     console.log(process.env.SERVER_BASE_URL)
-    this.listProducts()
-    this.getProductsTotal()
+
+    if (this.$cookies.isKey('logged')) {
+      if (this.$cookies.get('logged') === 'in') {
+        this.listProducts()
+        this.getProductsTotal()
+      } else {
+        router.push('/login')
+      }
+    } else {
+      router.push('/login')
+    }
   }
 }
 </script>

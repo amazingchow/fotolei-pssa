@@ -1,5 +1,5 @@
 <template>
-  <div class="container-fluid" v-if="showUserManagementModule">
+  <div class="container-fluid" v-if="showUserManagementPage">
     <navbar></navbar>
     <br/>
     <alert :message=message v-if="showMessage"></alert>
@@ -162,7 +162,7 @@ export default {
 
       message: '',
       showMessage: false,
-      showUserManagementModule: false
+      showUserManagementPage: false
     }
   },
   components: {
@@ -182,11 +182,9 @@ export default {
           } else if (error.response.status === 403) {
             router.push('/404')
           } else {
-            router.push('/500')
             // eslint-disable-next-line
             console.log(error)
-            this.message = '内部服务错误！'
-            this.showMessage = true
+            router.push('/500')
           }
         })
     },
@@ -221,11 +219,9 @@ export default {
           } else if (error.response.status === 403) {
             router.push('/404')
           } else {
-            router.push('/500')
             // eslint-disable-next-line
             console.log(error)
-            this.message = '内部服务错误！'
-            this.showMessage = true
+            router.push('/500')
           }
         })
     },
@@ -256,11 +252,9 @@ export default {
           } else if (error.response.status === 403) {
             router.push('/404')
           } else {
-            router.push('/500')
             // eslint-disable-next-line
             console.log(error)
-            this.message = '内部服务错误！'
-            this.showMessage = true
+            router.push('/500')
           }
         })
     }
@@ -271,14 +265,14 @@ export default {
 
     if (this.$cookies.isKey('role')) {
       if (this.$cookies.get('role') === '0') {
-        this.showUserManagementModule = true
+        this.showUserManagementPage = true
         this.listUsers()
       } else {
-        this.showUserManagementModule = false
+        this.showUserManagementPage = false
         router.push('/404')
       }
     } else {
-      this.showUserManagementModule = false
+      this.showUserManagementPage = false
       router.push('/login')
     }
   }
