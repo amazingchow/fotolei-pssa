@@ -2,7 +2,8 @@
   <div class="container-fluid">
     <alert :message=message v-if="showMessage"></alert>
     <div class="row">
-      <div class="col-sm-4">
+      <div class="col-sm-8" id="logo-area">
+        <h1 id="logo">FOTOLEI PSSA SYSTEM</h1>
       </div>
       <div class="col-sm-4" id="login-form-area">
         <b-form id="login-form">
@@ -28,13 +29,20 @@
           </div>
         </b-form>
       </div>
-      <div class="col-sm-4">
-      </div>
     </div>
   </div>
 </template>
 
 <style>
+#logo-area {
+  display: flex;
+  justify-content: center;
+}
+
+#logo {
+  margin-top: 200px;
+}
+
 #login-form-area {
   display: flex;
   justify-content: center;
