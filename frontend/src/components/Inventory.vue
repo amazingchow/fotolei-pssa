@@ -871,12 +871,11 @@
             <b-th scope="col">规格编码</b-th>
             <b-th scope="col">商品名称</b-th>
             <b-th scope="col">规格名称</b-th>
+            <b-th scope="col">采购名称</b-th>
+            <b-th scope="col">单价</b-th>
             <b-th scope="col">数量</b-th>
-            <b-th scope="col">长度/cm</b-th>
-            <b-th scope="col">宽度/cm</b-th>
-            <b-th scope="col">高度/cm</b-th>
+            <b-th scope="col">金额</b-th>
             <b-th scope="col">体积合计/m³</b-th>
-            <b-th scope="col">重量/g</b-th>
             <b-th scope="col">重量合计/kg</b-th>
           </b-tr>
         </b-thead>
@@ -885,24 +884,22 @@
             <b-td>{{ item.specification_code }}</b-td>
             <b-td>{{ item.product_name }}</b-td>
             <b-td>{{ item.specification_name }}</b-td>
+            <b-td>{{ item.purchase_name }}</b-td>
+            <b-td>{{ item.unit_price }}</b-td>
             <b-td>{{ item.quantity }}</b-td>
-            <b-td>{{ item.product_length }}</b-td>
-            <b-td>{{ item.product_width }}</b-td>
-            <b-td>{{ item.product_height }}</b-td>
+            <b-td>{{ item.product_price_total }}</b-td>
             <b-td>{{ item.product_volume_total }}</b-td>
-            <b-td>{{ item.product_weight }}</b-td>
             <b-td>{{ item.product_weight_total }}</b-td>
           </b-tr>
           <b-tr>
             <b-td></b-td>
             <b-td></b-td>
             <b-td></b-td>
+            <b-td></b-td>
+            <b-td></b-td>
             <b-td>{{ previewCaseN.previewSummaryTable.quantity }}</b-td>
-            <b-td></b-td>
-            <b-td></b-td>
-            <b-td></b-td>
+            <b-td>{{ previewCaseN.previewSummaryTable.product_price_total }}</b-td>
             <b-td>{{ previewCaseN.previewSummaryTable.product_volume_total }}</b-td>
-            <b-td></b-td>
             <b-td>{{ previewCaseN.previewSummaryTable.product_weight_total }}</b-td>
           </b-tr>
         </b-tbody>
