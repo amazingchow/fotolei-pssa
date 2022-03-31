@@ -5,6 +5,7 @@ sys.path.append(os.path.abspath("./blueprint_factory"))
 sys.path.append(os.path.abspath("./utils"))
 
 import logging
+import platform
 
 from flask import Flask
 from flask import has_request_context
@@ -26,6 +27,7 @@ from blueprint_factory import jit_inventory_blueprint
 from blueprint_factory import option_blueprint
 from blueprint_factory import product_blueprint
 from blueprint_factory import selection_blueprint
+from blueprint_factory import unit_price_blueprint
 from blueprint_factory import user_blueprint
 
 
@@ -77,13 +79,19 @@ pssa_server.register_blueprint(jit_inventory_blueprint)
 pssa_server.register_blueprint(option_blueprint)
 pssa_server.register_blueprint(product_blueprint)
 pssa_server.register_blueprint(selection_blueprint)
+pssa_server.register_blueprint(unit_price_blueprint)
 pssa_server.register_blueprint(user_blueprint)
 
 
 if __name__ == "__main__":
     # 初始化前的检查，检查是否已经生成系统依赖的自定义文件
-    if not os.path.exists("{}/fotolei-pssa/tmp-files/customize_report_forms_ui".format(os.path.expanduser("~"))):
-        print("请先生成'customize_report_forms_ui'")
-        sys.exit(-1)
+    if platform.system() == "Linux":
+        if not os.path.exists("{}/fotolei-pssa/tmp-files/customize_report_forms_ui".format(os.path.expanduser("~"))):
+            print("请先生成'customize_report_forms_ui'")
+            sys.exit(-1)
+    else:
+        if not os.path.exists("{}/fotolei-pssa/tmp-files/customize_report_forms_ui.db".format(os.path.expanduser("~"))):
+            print("请先生成'customize_report_forms_ui'")
+            sys.exit(-1)
 
     pssa_server.run(host="0.0.0.0", port=15555)

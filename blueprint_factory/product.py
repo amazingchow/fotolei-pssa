@@ -158,15 +158,14 @@ def list_products():
     page_limit = request.args.get("page.limit", 20)
 
     # TODO: 优化SQL
-    stmt = "SELECT product_code, specification_code, product_name, specification_name, \
-brand, classification_1, classification_2, product_series, stop_status, \
-is_combined, is_import, supplier_name, purchase_name, jit_inventory, moq \
+    stmt = "SELECT specification_code, brand, classification_1, classification_2, product_series, \
+stop_status, is_combined, is_import, supplier_name, purchase_name, jit_inventory, moq, unit_price \
 FROM fotolei_pssa.products ORDER BY specification_code LIMIT {}, {};".format(
         page_offset, page_limit)
     products = db_connector.query(stmt)
 
     if (type(products) is not list) or (type(products) is list and len(products) == 0):
-        response_object = {"message": "not found", "products": []}
+        response_object = {"message": "", "products": []}
         return make_response(
             jsonify(response_object),
             StatusCode.HTTP_200_OK

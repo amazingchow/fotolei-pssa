@@ -81,7 +81,7 @@ def upload_csv_file_for_case6():
 '''
 预览效果
 
-规格编码 | 商品名称 | 规格名称 | 数量 | 长度/cm | 宽度/cm | 高度/cm | 体积合计/m³ | 重量/g | 重量合计/kg
+规格编码 | 商品名称 | 规格名称 | 采购名称 | 数量 | 单价 | 金额 | 长度/cm | 宽度/cm | 高度/cm | 体积合计/m³ | 重量/g | 重量合计/kg
 '''
 
 
@@ -97,7 +97,7 @@ def preview_report_file_case6():
     preview_table = []
     for item in demand_table:
         stmt = "SELECT product_name, specification_name, \
-product_weight, product_length, product_width, product_height \
+product_weight, product_length, product_width, product_height, purchase_name, unit_price \
 FROM fotolei_pssa.products WHERE specification_code = '{}';".format(item["specification_code"])
         rets = db_connector.query(stmt)
         cache = {}
@@ -106,31 +106,42 @@ FROM fotolei_pssa.products WHERE specification_code = '{}';".format(item["specif
         if type(rets) is list and len(rets) > 0:
             cache["product_name"] = rets[0][0]
             cache["specification_name"] = rets[0][1]
+            cache["purchase_name"] = rets[0][6]
+            cache["unit_price"] = rets[0][7]
+            cache["product_price_total"] = float("{:.2f}".format(rets[0][7] * int(item["quantity"])))
             cache["product_length"] = rets[0][3]
             cache["product_width"] = rets[0][4]
             cache["product_height"] = rets[0][5]
-            cache["product_volume_total"] = float("{:.3f}".format(((rets[0][3] * rets[0][4] * rets[0][5] * int(item["quantity"])) / 1e6)))
+            cache["product_volume_total"] = float("{:.3f}".format((rets[0][3] * rets[0][4] * rets[0][5] * int(item["quantity"])) / 1e6))
             cache["product_weight"] = rets[0][2]
-            cache["product_weight_total"] = float("{:.3f}".format(((rets[0][2] * int(item["quantity"])) / 1e3)))
+            cache["product_weight_total"] = float("{:.3f}".format((rets[0][2] * int(item["quantity"])) / 1e3))
         else:
             cache["product_name"] = ""
             cache["specification_name"] = ""
-            cache["product_length"] = 0
-            cache["product_width"] = 0
-            cache["product_height"] = 0
-            cache["product_volume_total"] = 0
-            cache["product_weight"] = 0
-            cache["product_weight_total"] = 0
+            cache["purchase_name"] = ""
+            cache["unit_price"] = 0.0
+            cache["product_price_total"] = 0.0
+            cache["product_length"] = 0.0
+            cache["product_width"] = 0.0
+            cache["product_height"] = 0.0
+            cache["product_volume_total"] = 0.0
+            cache["product_weight"] = 0.0
+            cache["product_weight_total"] = 0.0
         preview_table.append(cache)
     preview_summary_table = {
         "quantity": 0,
-        "product_volume_total": 0,
-        "product_weight_total": 0
+        "product_price_total": 0.0,
+        "product_volume_total": 0.0,
+        "product_weight_total": 0.0
     }
     for item in preview_table:
         preview_summary_table["quantity"] += item["quantity"]
+        preview_summary_table["product_price_total"] += item["product_price_total"]
         preview_summary_table["product_volume_total"] += item["product_volume_total"]
         preview_summary_table["product_weight_total"] += item["product_weight_total"]
+    preview_summary_table["product_price_total"] = float("{:.2f}".format(preview_summary_table["product_price_total"]))
+    preview_summary_table["product_volume_total"] = float("{:.3f}".format(preview_summary_table["product_volume_total"]))
+    preview_summary_table["product_weight_total"] = float("{:.3f}".format(preview_summary_table["product_weight_total"]))
 
     response_object = {"message": ""}
     response_object["preview_table"] = preview_table
@@ -159,19 +170,23 @@ def prepare_report_file_case6():
     with open(csv_file, "w", encoding="utf-8-sig") as fd:
         csv_writer = csv.writer(fd, delimiter=",")
         csv_writer.writerow([
-            "规格编码", "商品名称", "规格名称", "数量",
-            "长度/cm", "宽度/cm", "高度/cm", "体积合计/m³", "重量/g", "重量合计/kg",
+            "规格编码", "商品名称", "规格名称", "采购名称",
+            "单价", "金额", "数量",
+            "长度/cm", "宽度/cm", "高度/cm", "体积合计/m³",
+            "重量/g", "重量合计/kg"
         ])
         for item in preview_table:
             csv_writer.writerow([
-                item["specification_code"], item["product_name"], item["specification_name"], item["quantity"],
-                item["product_length"], item["product_width"], item["product_height"],
-                item["product_volume_total"], item["product_weight"], item["product_weight_total"],
+                item["specification_code"], item["product_name"], item["specification_name"], item["purchase_name"],
+                item["quantity"], item["unit_price"], item["product_price_total"],
+                item["product_length"], item["product_width"], item["product_height"], item["product_volume_total"],
+                item["product_weight"], item["product_weight_total"]
             ])
         csv_writer.writerow([
-            "", "", "", preview_summary_table["quantity"],
-            "", "", "",
-            preview_summary_table["product_volume_total"], "", preview_summary_table["product_weight_total"],
+            "", "", "", "",
+            preview_summary_table["quantity"], "", preview_summary_table["product_price_total"],
+            "", "", "", preview_summary_table["product_volume_total"],
+            "", preview_summary_table["product_weight_total"],
         ])
 
     session["op_object"] = output_file
