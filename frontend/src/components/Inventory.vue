@@ -783,8 +783,6 @@
           <b-tr>
             <b-th scope="col">规格编码</b-th>
             <b-th scope="col">品牌</b-th>
-            <b-th scope="col">商品名称</b-th>
-            <b-th scope="col">规格名称</b-th>
             <b-th scope="col">采购名称</b-th>
             <b-th scope="col">供应商</b-th>
             <b-th scope="col">{{ timeQuantumX }}个月销量</b-th>
@@ -795,6 +793,8 @@
             <b-th scope="col">库存/{{ timeQuantumX }}个月折算销量</b-th>
             <b-th scope="col">库存/{{ timeQuantumY }}个月折算销量</b-th>
             <b-th scope="col">拟定进货量</b-th>
+            <b-th scope="col">单价</b-th>
+            <b-th scope="col">金额</b-th>
             <b-th scope="col">单个重量/g</b-th>
             <b-th scope="col">小计重量/kg</b-th>
             <b-th scope="col">单个体积/cm³</b-th>
@@ -806,8 +806,6 @@
           <b-tr v-for="(item, index) in previewCaseN.previewTablePartialView" :key="index">
             <b-td>{{ item.specification_code }}</b-td>
             <b-td>{{ item.brand }}</b-td>
-            <b-td>{{ item.product_name }}</b-td>
-            <b-td>{{ item.specification_name }}</b-td>
             <b-td>{{ item.purchase_name }}</b-td>
             <b-td>{{ item.supplier_name }}</b-td>
             <b-td>{{ item.sale_qty_x_months }}</b-td>
@@ -818,6 +816,8 @@
             <b-td>{{ item.inventory_divided_by_reduced_sale_qty_x_months }}</b-td>
             <b-td>{{ item.inventory_divided_by_reduced_sale_qty_y_months }}</b-td>
             <b-td>{{ item.projected_purchase }}</b-td>
+            <b-td>{{ item.unit_price }}</b-td>
+            <b-td>{{ item.price_total }}</b-td>
             <b-td>{{ item.weight }}</b-td>
             <b-td>{{ item.weight_total }}</b-td>
             <b-td>{{ item.volume }}</b-td>
@@ -872,8 +872,8 @@
             <b-th scope="col">商品名称</b-th>
             <b-th scope="col">规格名称</b-th>
             <b-th scope="col">采购名称</b-th>
-            <b-th scope="col">单价</b-th>
             <b-th scope="col">数量</b-th>
+            <b-th scope="col">单价</b-th>
             <b-th scope="col">金额</b-th>
             <b-th scope="col">体积合计/m³</b-th>
             <b-th scope="col">重量合计/kg</b-th>
@@ -885,8 +885,8 @@
             <b-td>{{ item.product_name }}</b-td>
             <b-td>{{ item.specification_name }}</b-td>
             <b-td>{{ item.purchase_name }}</b-td>
-            <b-td>{{ item.unit_price }}</b-td>
             <b-td>{{ item.quantity }}</b-td>
+            <b-td>{{ item.unit_price }}</b-td>
             <b-td>{{ item.product_price_total }}</b-td>
             <b-td>{{ item.product_volume_total }}</b-td>
             <b-td>{{ item.product_weight_total }}</b-td>
@@ -896,8 +896,8 @@
             <b-td></b-td>
             <b-td></b-td>
             <b-td></b-td>
-            <b-td></b-td>
             <b-td>{{ previewCaseN.previewSummaryTable.quantity }}</b-td>
+            <b-td></b-td>
             <b-td>{{ previewCaseN.previewSummaryTable.product_price_total }}</b-td>
             <b-td>{{ previewCaseN.previewSummaryTable.product_volume_total }}</b-td>
             <b-td>{{ previewCaseN.previewSummaryTable.product_weight_total }}</b-td>

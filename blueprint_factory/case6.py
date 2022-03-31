@@ -81,7 +81,7 @@ def upload_csv_file_for_case6():
 '''
 预览效果
 
-规格编码 | 商品名称 | 规格名称 | 采购名称 | 单价 | 数量 | 金额 | 长度/cm | 宽度/cm | 高度/cm | 体积合计/m³ | 重量/g | 重量合计/kg
+规格编码 | 商品名称 | 规格名称 | 采购名称 | 数量 | 单价 | 金额 | 长度/cm | 宽度/cm | 高度/cm | 体积合计/m³ | 重量/g | 重量合计/kg
 '''
 
 
@@ -171,20 +171,20 @@ def prepare_report_file_case6():
         csv_writer = csv.writer(fd, delimiter=",")
         csv_writer.writerow([
             "规格编码", "商品名称", "规格名称", "采购名称",
-            "单价", "数量", "金额",
+            "单价", "金额", "数量",
             "长度/cm", "宽度/cm", "高度/cm", "体积合计/m³",
             "重量/g", "重量合计/kg"
         ])
         for item in preview_table:
             csv_writer.writerow([
                 item["specification_code"], item["product_name"], item["specification_name"], item["purchase_name"],
-                item["unit_price"], item["quantity"], item["product_price_total"],
+                item["quantity"], item["unit_price"], item["product_price_total"],
                 item["product_length"], item["product_width"], item["product_height"], item["product_volume_total"],
                 item["product_weight"], item["product_weight_total"]
             ])
         csv_writer.writerow([
             "", "", "", "",
-            "", preview_summary_table["quantity"], preview_summary_table["product_price_total"],
+            preview_summary_table["quantity"], "", preview_summary_table["product_price_total"],
             "", "", "", preview_summary_table["product_volume_total"],
             "", preview_summary_table["product_weight_total"],
         ])

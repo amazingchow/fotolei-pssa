@@ -40,7 +40,7 @@ case5_blueprint = Blueprint(
 预览效果
 
 规格编码 | 品牌 | 商品名称 | 规格名称 | 采购名称 | 供应商 | X个月销量 | Y个月销量 | 库存量 | 库存/X个月销量 | 库存/Y个月销量 |
-库存/X个月折算销量 | 库存/Y个月折算销量	| 拟定进货量 | 单个重量/g | 小计重量/kg | 单个体积/cm³ | 小计体积/m³
+库存/X个月折算销量 | 库存/Y个月折算销量	| 拟定进货量 | 单价 | 金额 | 单个重量/g | 小计重量/kg | 单个体积/cm³ | 小计体积/m³
 '''
 
 
@@ -85,7 +85,7 @@ def preview_report_file_case5():
 
     # “供应商”选项为空，则为全部供应商（包括没有供应商的商品条目）
     stmt = "SELECT specification_code, brand, product_name, specification_name, purchase_name, supplier_name, \
-jit_inventory, product_weight, product_length, product_width, product_height, moq FROM fotolei_pssa.products"
+jit_inventory, product_weight, product_length, product_width, product_height, moq, unit_price FROM fotolei_pssa.products"
     conds = []
     if len(supplier_name) > 0:
         conds.append("supplier_name = '{}'".format(supplier_name))
@@ -121,6 +121,7 @@ jit_inventory, product_weight, product_length, product_width, product_height, mo
             cache[specification_code]["weight"] = ret[7]
             cache[specification_code]["volume"] = ret[8] * ret[9] * ret[10]
             cache[specification_code]["moq"] = ret[11]
+            cache[specification_code]["unit_price"] = ret[12]
 
     if len(specification_code_list) > 0:
         inventories_import_date_record_table = shelve.open("{}/fotolei-pssa/tmp-files/inventories_import_date_record_table".format(
@@ -151,10 +152,12 @@ jit_inventory, product_weight, product_length, product_width, product_height, mo
                         continue
                     else:
                         cache[specification_code]["projected_purchase"] = 0
+                        cache[specification_code]["price_total"] = 0.0
                         cache[specification_code]["weight_total"] = 0.0
                         cache[specification_code]["volume_total"] = 0.0
                 else:
                     cache[specification_code]["projected_purchase"] = 0
+                    cache[specification_code]["price_total"] = 0.0
                     cache[specification_code]["weight_total"] = 0.0
                     cache[specification_code]["volume_total"] = 0.0
             else:
@@ -200,6 +203,7 @@ jit_inventory, product_weight, product_length, product_width, product_height, mo
                         if cache[specification_code]["projected_purchase"] < 0:
                             cache[specification_code]["projected_purchase"] = 0
                 if cache[specification_code]["projected_purchase"] == 0:
+                    cache[specification_code]["price_total"] = 0.0
                     cache[specification_code]["weight_total"] = 0.0
                     cache[specification_code]["volume_total"] = 0.0
                 else:
@@ -220,6 +224,7 @@ jit_inventory, product_weight, product_length, product_width, product_height, mo
                             else:
                                 x = x - x % y
                         cache[specification_code]["projected_purchase"] = x
+                    cache[specification_code]["price_total"] = float("{:.2f}".format(cache[specification_code]["unit_price"] * cache[specification_code]["projected_purchase"]))
                     cache[specification_code]["weight_total"] = float("{:.3f}".format((cache[specification_code]["weight"] * cache[specification_code]["projected_purchase"]) / 1e3))
                     cache[specification_code]["volume_total"] = float("{:.3f}".format((cache[specification_code]["volume"] * cache[specification_code]["projected_purchase"]) / 1e6))
         inventories_import_date_record_table.close()
@@ -286,7 +291,7 @@ def prepare_report_file_case5():
             "库存量",
             "库存/{}个月销量".format(time_quantum_x), "库存/{}个月折算销量".format(time_quantum_x),
             "库存/{}个月销量".format(time_quantum_y), "库存/{}个月折算销量".format(time_quantum_y),
-            "拟定进货量", "单个重量/g", "小计重量/kg", "单个体积/cm³", "小计体积/m³",
+            "拟定进货量", "单价", "金额", "单个重量/g", "小计重量/kg", "单个体积/cm³", "小计体积/m³",
             "备注",
         ])
         for item in preview_table:
@@ -297,7 +302,7 @@ def prepare_report_file_case5():
                 item["inventory"],
                 item["inventory_divided_by_sale_qty_x_months"], item["inventory_divided_by_reduced_sale_qty_x_months"],
                 item["inventory_divided_by_sale_qty_y_months"], item["inventory_divided_by_reduced_sale_qty_y_months"],
-                item["projected_purchase"], item["weight"], item["weight_total"], item["volume"], item["volume_total"],
+                item["projected_purchase"], item["unit_price"], item["price_total"], item["weight"], item["weight_total"], item["volume"], item["volume_total"],
                 item["remark"],
             ])
 
