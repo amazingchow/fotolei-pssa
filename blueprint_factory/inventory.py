@@ -143,13 +143,17 @@ def upload_inventories():
 
     init_lookup_table_k_ct_sku_v_boolean()
 
-    load_file_repetition_lookup_table[digest] = True
+    sku_unit_price_tuple_list = compute_unit_price(csv_file)
+    stmt = "UPDATE fotolei_pssa.products SET unit_price = %s WHERE specification_code = %s;"
+    db_connector.batch_update(stmt, sku_unit_price_tuple_list)
 
     response_object = {"message": ""}
     if repeat > 0:
         response_object["message"] = "已自动删除{}条尝试重复导入的库存明细数据，目前不支持库存明细数据的覆盖写操作！".format(repeat)
 
+    load_file_repetition_lookup_table[digest] = True
     load_file_repetition_lookup_table.close()
+
     session["op_object"] = csv_files[0].filename
     return make_response(
         jsonify(response_object),
@@ -561,3 +565,18 @@ def do_remove_repeat_inventories_updates(csv_file: str):
     shutil.move(csv_file + ".tmp", csv_file)
 
     return repeat
+
+
+def compute_unit_price(csv_file: str):
+    sku_unit_price_tuple_list = []
+    with open(csv_file, "r", encoding="utf-8-sig") as fd:
+        csv_reader = csv.reader(fd, delimiter=",")
+        next(csv_reader, None)  # skip the header line
+        for row in csv_reader:
+            ed_inventory_qty = int(row[17])
+            ed_inventory_total = float(row[18])
+            if ed_inventory_qty <= 0 or ed_inventory_total <= 0.0:
+                continue
+            unit_price = float("{:.2f}".format(ed_inventory_total / ed_inventory_qty))
+            sku_unit_price_tuple_list.append((unit_price, row[3]))
+    return sku_unit_price_tuple_list
