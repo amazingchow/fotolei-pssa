@@ -23,6 +23,7 @@ from .decorator_factory import record_action
 from .decorator_factory import restrict_access
 from db import db_connector
 from utils import ACTION_TYPE_EXPORT
+from utils import ROLE_TYPE_ADMIN
 from utils import ROLE_TYPE_ORDINARY_USER
 from utils import util_calc_month_num
 from utils import util_generate_digest
@@ -249,6 +250,14 @@ jit_inventory, product_weight, product_length, product_width, product_height, mo
             response_object = {"message": ""}
             if len(supplier_name) == 0:
                 preview_table.sort(key=lambda x: x["supplier_name"], reverse=False)
+
+        role = session.get("role", ROLE_TYPE_ORDINARY_USER)
+        if role > ROLE_TYPE_ADMIN:
+            # 针对普通用户，对敏感数据(起始库存总额、采购总额、采购退货总额、其他变更总额、截止库存总额、单价、金额)做脱敏处理
+            for idx in range(len(preview_table)):
+                preview_table[idx]["unit_price"] = "*"
+                preview_table[idx]["price_total"] = "*"
+
             response_object["preview_table"] = preview_table
             response_object["supplier_name_list_from_screening_way1"] = supplier_name_list_from_screening_way1
             return make_response(

@@ -21,6 +21,7 @@ from .decorator_factory import record_action
 from .decorator_factory import restrict_access
 from db import db_connector
 from utils import ACTION_TYPE_EXPORT
+from utils import ROLE_TYPE_ADMIN
 from utils import ROLE_TYPE_ORDINARY_USER
 from utils import util_calc_month_num
 from utils import util_generate_digest
@@ -195,6 +196,16 @@ def preview_report_file_case4():
                     preview_table.append(cache)
 
         inventories_import_date_record_table.close()
+
+        role = session.get("role", ROLE_TYPE_ORDINARY_USER)
+        if role > ROLE_TYPE_ADMIN:
+            # 针对普通用户，对敏感数据(起始库存总额、采购总额、采购退货总额、其他变更总额、截止库存总额、单价、金额)做脱敏处理
+            for idx in range(len(preview_table)):
+                preview_table[idx]["st_inventory_total"] = "*"
+                preview_table[idx]["purchase_total"] = "*"
+                preview_table[idx]["purchase_then_return_total"] = "*"
+                preview_table[idx]["others_total"] = "*"
+                preview_table[idx]["ed_inventory_total"] = "*"
 
         response_object = {"message": "", "preview_table": preview_table}
         return make_response(
