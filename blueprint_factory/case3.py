@@ -20,6 +20,7 @@ from .decorator_factory import cost_count
 from .decorator_factory import record_action
 from db import db_connector
 from utils import ACTION_TYPE_EXPORT
+from utils import ROLE_TYPE_ADMIN
 from utils import ROLE_TYPE_ORDINARY_USER
 from utils import util_generate_digest
 
@@ -66,8 +67,7 @@ def preview_report_file_case3():
     specification_code_list = []
 
     def inline():
-        resp = {"message": ""}
-        resp["preview_table"] = []
+        preview_table = []
         for scode in specification_code_list:
             cache = {}
 
@@ -112,8 +112,19 @@ def preview_report_file_case3():
                 cache["purchase_name"] = inner_rets[0][18]
                 cache["jit_inventory"] = inner_rets[0][19]
 
-                resp["preview_table"].append(cache)
-        return resp
+                preview_table.append(cache)
+
+        role = session.get("role", ROLE_TYPE_ORDINARY_USER)
+        if role > ROLE_TYPE_ADMIN:
+            # 针对普通用户，对敏感数据(起始库存总额、采购总额、采购退货总额、其他变更总额、截止库存总额、单价、金额)做脱敏处理
+            for idx in range(len(preview_table)):
+                preview_table[idx]["st_inventory_total"] = "*"
+                preview_table[idx]["purchase_total"] = "*"
+                preview_table[idx]["purchase_then_return_total"] = "*"
+                preview_table[idx]["others_total"] = "*"
+                preview_table[idx]["ed_inventory_total"] = "*"
+
+        return {"message": "", "preview_table": preview_table}
 
     if len(specification_code) > 0:
         specification_code_list.append(specification_code)

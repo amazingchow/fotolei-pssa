@@ -22,6 +22,7 @@ from db import db_connector
 from utils import ACTION_TYPE_EXPORT
 from utils import get_lookup_table_k_sku_v_boolean
 from utils import REG_POSITIVE_INT
+from utils import ROLE_TYPE_ADMIN
 from utils import ROLE_TYPE_ORDINARY_USER
 from utils import util_generate_digest
 
@@ -142,6 +143,14 @@ FROM fotolei_pssa.products WHERE specification_code = '{}';".format(item["specif
     preview_summary_table["product_price_total"] = float("{:.2f}".format(preview_summary_table["product_price_total"]))
     preview_summary_table["product_volume_total"] = float("{:.3f}".format(preview_summary_table["product_volume_total"]))
     preview_summary_table["product_weight_total"] = float("{:.3f}".format(preview_summary_table["product_weight_total"]))
+
+    role = session.get("role", ROLE_TYPE_ORDINARY_USER)
+    if role > ROLE_TYPE_ADMIN:
+        # 针对普通用户，对敏感数据(起始库存总额、采购总额、采购退货总额、其他变更总额、截止库存总额、单价、金额)做脱敏处理
+        for idx in range(len(preview_table)):
+            preview_table[idx]["unit_price"] = "*"
+            preview_table[idx]["product_price_total"] = "*"
+        preview_summary_table["product_price_total"] = "*"
 
     response_object = {"message": ""}
     response_object["preview_table"] = preview_table
