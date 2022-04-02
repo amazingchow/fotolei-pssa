@@ -1,3 +1,3 @@
 #!/bin/bash
 
-docker-compose -f "$PWD/test/mysql-deploy/docker-compose.yml" up -d --build
+docker-compose -f "$HOME/fotolei-pssa-db/docker-compose/docker-compose.yml" up -d --build
