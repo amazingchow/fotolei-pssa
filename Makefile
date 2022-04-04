@@ -62,3 +62,13 @@ run_clientd: build_client_prod
 .PHONY: stop
 stop:
 	@./scripts/stop.sh
+
+# 导出MySQL数据库"fotolei_pssa"下的所有表数据作为备份数据(不包括库结构和表结构).
+.PHONY: mysql_dump
+mysql_dump:
+	@./scripts/mysql_dump.sh
+
+# 给MySQL数据库"fotolei_pssa"导入备份数据(基于库结构和表结构已建好的前提下).
+.PHONY: mysql_import
+mysql_import:
+	@./scripts/mysql_import.sh

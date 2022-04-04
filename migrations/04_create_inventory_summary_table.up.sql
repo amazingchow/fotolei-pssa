@@ -1,5 +1,3 @@
-DROP TABLE IF EXISTS fotolei_pssa.inventory_summary;
-
 CREATE TABLE IF NOT EXISTS fotolei_pssa.inventory_summary (
     id          INT      NOT NULL AUTO_INCREMENT,
     total       INT      NOT NULL,
