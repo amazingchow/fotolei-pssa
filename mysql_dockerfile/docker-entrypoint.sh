@@ -180,6 +180,7 @@ docker_create_db_directories() {
 	# TODO other directories that are used by default? like /var/lib/mysql-files
 	# see https://github.com/docker-library/mysql/issues/562
 	mkdir -p "$DATADIR"
+	mysql_note "Create dir: $DATADIR."
 
 	if [ "$user" = "0" ]; then
 		# this will cause less disk access than `chown -R`
@@ -189,23 +190,45 @@ docker_create_db_directories() {
 
 docker_create_log_files() {
 	local user; user="$(id -u)"
-	local log_dir; log_dir=/var/log/mysql
+	local LOGDIR; LOGDIR=/var/log/mysql
 
-	mkdir -p "$log_dir"
+	mkdir -p "$LOGDIR"
+	mysql_note "Create dir: $LOGDIR."
 
 	if [ "$user" = "0" ]; then
 		# this will cause less disk access than `chown -R`
-		find "$log_dir" \! -user mysql -exec chown mysql '{}' +
+		find "$LOGDIR" \! -user mysql -exec chown mysql '{}' +
 	fi
 
-	if [ -e /var/log/mysql/error.log ]
+	if [ -e $LOGDIR/error.log ]
 	then
-		rm /var/log/mysql/error.log
+		rm $LOGDIR/error.log
 	fi
-	if [ -e /var/log/mysql/slow.log ]
+	if [ -e $LOGDIR/slow.log ]
 	then
-		rm /var/log/mysql/slow.log
+		rm $LOGDIR/slow.log
 	fi
+}
+
+docker_create_socket_file() {
+	local user; user="$(id -u)"
+	local RUNTIMEDIR; RUNTIMEDIR=/var/run/mysqld
+
+	mkdir -p "$RUNTIMEDIR"
+	mysql_note "Create dir: $RUNTIMEDIR."
+
+	if [ "$user" = "0" ]; then
+		# this will cause less disk access than `chown -R`
+		find "$RUNTIMEDIR" \! -user mysql -exec chown mysql '{}' +
+	fi
+
+	if [ -e $RUNTIMEDIR/mysqld.sock ]
+	then
+		rm $RUNTIMEDIR/mysqld.sock
+	fi
+
+	touch $RUNTIMEDIR/mysqld.sock
+	mysql_note "Create file: $RUNTIMEDIR/mysqld.sock."
 }
 
 # initializes the database directory
@@ -392,6 +415,7 @@ _main() {
 		docker_setup_env "$@"
 		docker_create_db_directories
 		docker_create_log_files
+		docker_create_socket_file
 
 		# If container is started as root user, restart as dedicated mysql user
 		if [ "$(id -u)" = "0" ]; then

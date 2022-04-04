@@ -1,5 +1,3 @@
-DROP TABLE IF EXISTS fotolei_pssa.users;
-
 CREATE TABLE IF NOT EXISTS fotolei_pssa.users (
     id              INT          NOT NULL AUTO_INCREMENT,
     username        VARCHAR(32)  NOT NULL,
