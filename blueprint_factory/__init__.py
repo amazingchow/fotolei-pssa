@@ -6,6 +6,7 @@ from .case3 import case3_blueprint
 from .case4 import case4_blueprint
 from .case5 import case5_blueprint
 from .case6 import case6_blueprint
+from .case7 import case7_blueprint
 from .common import common_blueprint
 from .inventory import inventory_blueprint
 from .jit_inventory import jit_inventory_blueprint
@@ -23,6 +24,7 @@ __all__ = [
     case4_blueprint,
     case5_blueprint,
     case6_blueprint,
+    case7_blueprint,
     common_blueprint,
     inventory_blueprint,
     jit_inventory_blueprint,

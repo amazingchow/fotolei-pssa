@@ -21,6 +21,7 @@ from blueprint_factory import case3_blueprint
 from blueprint_factory import case4_blueprint
 from blueprint_factory import case5_blueprint
 from blueprint_factory import case6_blueprint
+from blueprint_factory import case7_blueprint
 from blueprint_factory import common_blueprint
 from blueprint_factory import inventory_blueprint
 from blueprint_factory import jit_inventory_blueprint
@@ -73,6 +74,7 @@ pssa_server.register_blueprint(case3_blueprint)
 pssa_server.register_blueprint(case4_blueprint)
 pssa_server.register_blueprint(case5_blueprint)
 pssa_server.register_blueprint(case6_blueprint)
+pssa_server.register_blueprint(case7_blueprint)
 pssa_server.register_blueprint(common_blueprint)
 pssa_server.register_blueprint(inventory_blueprint)
 pssa_server.register_blueprint(jit_inventory_blueprint)

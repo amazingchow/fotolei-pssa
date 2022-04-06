@@ -41,6 +41,12 @@ case6_blueprint = Blueprint(
 @cost_count
 def upload_csv_file_for_case6():
     csv_files = request.files.getlist("file")
+    if len(csv_files) != 1:
+        return make_response(
+            jsonify({"message": "上传的文件数量不等于一份"}),
+            StatusCode.HTTP_400_BAD_REQUEST
+        )
+
     csv_file_sha256 = util_generate_digest("{}_{}".format(int(time.time()), csv_files[0].filename))
     csv_file = "{}/fotolei-pssa/recv_queue/{}".format(
         os.path.expanduser("~"), csv_file_sha256
@@ -109,13 +115,13 @@ FROM fotolei_pssa.products WHERE specification_code = '{}';".format(item["specif
             cache["specification_name"] = rets[0][1]
             cache["purchase_name"] = rets[0][6]
             cache["unit_price"] = rets[0][7]
-            cache["product_price_total"] = float("{:.2f}".format(rets[0][7] * int(item["quantity"])))
+            cache["product_price_total"] = float("{:.2f}".format(rets[0][7] * cache["quantity"]))
             cache["product_length"] = rets[0][3]
             cache["product_width"] = rets[0][4]
             cache["product_height"] = rets[0][5]
-            cache["product_volume_total"] = float("{:.3f}".format((rets[0][3] * rets[0][4] * rets[0][5] * int(item["quantity"])) / 1e6))
+            cache["product_volume_total"] = float("{:.3f}".format((rets[0][3] * rets[0][4] * rets[0][5] * cache["quantity"]) / 1e6))
             cache["product_weight"] = rets[0][2]
-            cache["product_weight_total"] = float("{:.3f}".format((rets[0][2] * int(item["quantity"])) / 1e3))
+            cache["product_weight_total"] = float("{:.3f}".format((rets[0][2] * cache["quantity"]) / 1e3))
         else:
             cache["product_name"] = ""
             cache["specification_name"] = ""
@@ -238,13 +244,13 @@ def do_data_check_for_input_case6_demand_table(csv_file: str):
         next(csv_reader, None)  # skip the header line
         line = 1
         for row in csv_reader:
-            if REG_POSITIVE_INT.match(row[1]) is None:
-                is_valid = False
-                err_msg = "'数量'数据存在非法输入，出现在第{}行。".format(line)
-                break
             if not get_lookup_table_k_sku_v_boolean(row[0]):
                 is_valid = False
                 err_msg = "'规格编码'不存在系统内，出现在第{}行。".format(line)
+                break
+            if REG_POSITIVE_INT.match(row[1]) is None:
+                is_valid = False
+                err_msg = "'数量'数据存在非法输入，出现在第{}行。".format(line)
                 break
             line += 1
     if not is_valid:

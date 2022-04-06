@@ -56,7 +56,7 @@ def register():
             StatusCode.HTTP_409_CONFLICT
         )
 
-    role = payload.get("role", 2)
+    role = payload.get("role", "2")
     salt = util_generate_n_digit_nums_and_letters(10)
     pwd_sha256 = hashlib.sha256("{}_{}".format(pwd, salt).encode('utf-8')).hexdigest()
 
