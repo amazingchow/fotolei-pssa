@@ -34,6 +34,11 @@
             <b-dropdown-item-button aria-describedby="dropdown-header-4" variant="secondary" v-b-modal.export-file-case6-modal>
               导出
             </b-dropdown-item-button>
+            <b-dropdown-divider></b-dropdown-divider>
+            <b-dropdown-header id="dropdown-header-5"><strong>运费计算汇总单</strong></b-dropdown-header>
+            <b-dropdown-item-button aria-describedby="dropdown-header-5" variant="secondary" v-b-modal.export-file-case7-modal>
+              导出
+            </b-dropdown-item-button>
           </b-dropdown>
         </div>
         <b-table-simple striped hover small id="inventory-table">
@@ -851,7 +856,7 @@
             </b-tr>
           </b-thead>
           <b-tbody>
-            <b-tr v-for="(item, index) in demandTable" :key="index">
+            <b-tr v-for="(item, index) in demandTableForCase6" :key="index">
               <b-td>{{ item.specification_code }}</b-td>
               <b-td>{{ item.quantity }}</b-td>
             </b-tr>
@@ -909,6 +914,86 @@
         <b-button variant="dark" :disabled="previewTableSliceOffset==previewTableSliceOffsetMax" @click="onNextPreviewPage">下一页</b-button>
         <b-button variant="dark" @click="onExportCase6">下载报表</b-button>
         <b-button variant="dark" @click="onCancelPreviewCase6">取消</b-button>
+      </div>
+    </b-modal>
+    <b-modal ref="exportFileCase7Modal" id="export-file-case7-modal" title="导出运费计算汇总单" hide-footer>
+      <b-form>
+        <b-form-group>
+          <b-form-file
+            accept=".csv"
+            v-model="uploadCSVFileForCase7"
+            :state="Boolean(uploadCSVFileForCase7)"
+            placeholder="导入需求表，请选择UTF-8编码的CSV文件">
+          </b-form-file>
+        </b-form-group>
+        <b-table-simple striped hover small id="preview-table">
+          <b-thead>
+            <b-tr>
+              <b-th scope="col">规格编码</b-th>
+              <b-th scope="col">商品数量</b-th>
+              <b-th scope="col">运费总额：</b-th>
+              <b-th scope="col">{{ totalTransportationExpensesForCase7 }}</b-th>
+            </b-tr>
+          </b-thead>
+          <b-tbody>
+            <b-tr v-for="(item, index) in demandTableForCase7" :key="index">
+              <b-td>{{ item.specification_code }}</b-td>
+              <b-td>{{ item.quantity }}</b-td>
+              <b-td></b-td>
+              <b-td></b-td>
+            </b-tr>
+          </b-tbody>
+        </b-table-simple>
+        <b-form-group>
+          <b-form-radio-group
+            stacked
+          >
+            <b-form-radio v-model="computeModeForCase7" value=0 size="sm">按照重量计算分担</b-form-radio>
+            <b-form-radio v-model="computeModeForCase7" value=1 size="sm">按照体积计算分担</b-form-radio>
+            <b-form-radio v-model="computeModeForCase7" value=2 size="sm">按照重量/体积重量综合计算分担</b-form-radio>
+          </b-form-radio-group>
+        </b-form-group>
+        <div id="inventory-table-operate-btn" class="w-100 d-block">
+          <b-button variant="dark" @click="onImportForCase7">导入</b-button>
+          <b-button variant="dark" @click="onPreviewCase7">预览报表</b-button>
+          <b-button variant="dark" @click="onCancelExportCase7">取消</b-button>
+        </div>
+      </b-form>
+    </b-modal>
+    <b-modal ref="previewCase7Modal" title="预览运费计算汇总单" size="xl" hide-footer>
+      <b-table-simple striped hover small id="preview-table">
+        <b-thead>
+          <b-tr>
+            <b-th scope="col">规格编码</b-th>
+            <b-th scope="col">数量</b-th>
+            <b-th scope="col" v-if='computeModeForCase7 === "0"'>分担重量/kg</b-th>
+            <b-th scope="col" v-else-if='computeModeForCase7 === "1"'>分担体积/m³</b-th>
+            <b-th scope="col" v-else-if='computeModeForCase7 === "2"'>换算后的分担重量/kg</b-th>
+            <b-th scope="col">分担运费</b-th>
+            <b-th scope="col">单个运费</b-th>
+            <b-th scope="col">运费总额：</b-th>
+            <b-th scope="col">{{ totalTransportationExpensesForCase7 }}</b-th>
+          </b-tr>
+        </b-thead>
+        <b-tbody>
+          <b-tr v-for="(item, index) in previewCaseN.previewTablePartialView" :key="index">
+            <b-td>{{ item.specification_code }}</b-td>
+            <b-td>{{ item.quantity }}</b-td>
+            <b-td v-if='computeModeForCase7 === "0"'>{{ item.shared_weight }}</b-td>
+            <b-td v-else-if='computeModeForCase7 === "1"'>{{ item.shared_volume }}</b-td>
+            <b-td v-else-if='computeModeForCase7 === "2"'>{{ item.shared_converted_weight }}</b-td>
+            <b-td>{{ item.shared_transportation_expenses }}</b-td>
+            <b-td>{{ item.single_transportation_expenses }}</b-td>
+            <b-td></b-td>
+            <b-td></b-td>
+          </b-tr>
+        </b-tbody>
+      </b-table-simple>
+      <div id="inventory-table-operate-btn" class="w-100 d-block">
+        <b-button variant="dark" :disabled="previewTableSliceOffset==0" @click="onPrevPreviewPage">上一页</b-button>
+        <b-button variant="dark" :disabled="previewTableSliceOffset==previewTableSliceOffsetMax" @click="onNextPreviewPage">下一页</b-button>
+        <b-button variant="dark" @click="onExportCase7">下载报表</b-button>
+        <b-button variant="dark" @click="onCancelPreviewCase7">取消</b-button>
       </div>
     </b-modal>
     <b-sidebar id="added-skus-sidebar" title="新增SKU清单" v-model="shouldOpenSidebar" right shadow>
@@ -1083,7 +1168,11 @@ export default {
       pageOffsetMax: 0,
       uploadCSVFile: null,
       uploadCSVFileForCase6: null,
-      demandTable: [],
+      demandTableForCase6: [],
+      uploadCSVFileForCase7: null,
+      demandTableForCase7: [],
+      totalTransportationExpensesForCase7: 0.0,
+      computeModeForCase7: 0,
 
       message: '',
       showMessage: false
@@ -1200,7 +1289,11 @@ export default {
       this.reducedBtnOption = true
       this.thresholdSSR = '4'
       this.uploadCSVFileForCase6 = null
-      this.demandTable = null
+      this.demandTableForCase6 = []
+      this.uploadCSVFileForCase7 = null
+      this.demandTableForCase7 = []
+      this.totalTransportationExpensesForCase7 = 0.0
+      this.computeModeForCase7 = 0
     },
     importCSVFileClose () {
       this.$refs.processingModal.hide()
@@ -1819,7 +1912,7 @@ export default {
           if (res.data.demand_table.length > 0) {
             this.message = '导入成功！'
             this.showMessage = true
-            this.demandTable = res.data.demand_table
+            this.demandTableForCase6 = res.data.demand_table
           } else {
             this.message = '导入成功！需求表是空的！'
             this.showMessage = true
@@ -1842,13 +1935,13 @@ export default {
     },
     onPreviewCase6 (evt) {
       evt.preventDefault()
-      if (this.demandTable.length === 0) {
+      if (this.demandTableForCase6.length === 0) {
         this.message = '请先加载需求表！'
         this.showMessage = true
       } else {
         this.$refs.processingModal.show()
         const payload = {
-          demand_table: this.demandTable
+          demand_table: this.demandTableForCase6
         }
         this.previewReportFileCase6(payload)
       }
@@ -1910,6 +2003,130 @@ export default {
     onCancelExportCase6 (evt) {
       evt.preventDefault()
       this.$refs.exportFileCase6Modal.hide()
+      // 恢复默认设置
+      this.initExportForm()
+    },
+    // ------------------------------ 运费计算汇总单 ------------------------------
+    onImportForCase7 (evt) {
+      evt.preventDefault()
+      if (this.uploadCSVFileForCase7 === null) {
+        this.message = '输入文件不能为空！'
+        this.showMessage = true
+      } else {
+        this.$refs.processingModal.show()
+        let formData = new FormData()
+        formData.append('file', this.uploadCSVFileForCase7, this.uploadCSVFileForCase7.name)
+        this.importCSVFileForCase7(formData)
+      }
+    },
+    importCSVFileForCase7Close () {
+      this.$refs.processingModal.hide()
+    },
+    importCSVFileForCase7 (formData) {
+      let config = {
+        header: {
+          'Content-Type': 'multipart/form-data'
+        }
+      }
+      axios.post(this.serverBaseURL + '/api/v1/case7/upload', formData, config)
+        .then((res) => {
+          if (res.data.demand_table.length > 0) {
+            this.message = '导入成功！'
+            this.showMessage = true
+            this.demandTableForCase7 = res.data.demand_table
+            this.totalTransportationExpensesForCase7 = res.data.total_transportation_expenses
+          } else {
+            this.message = '导入成功！需求表是空的！'
+            this.showMessage = true
+          }
+          this.importCSVFileForCase7Close()
+        })
+        .catch((error) => {
+          this.importCSVFileForCase7Close()
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else if (error.response.status === 400) {
+            this.message = '导入失败！' + error.response.data.message
+            this.showMessage = true
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
+          }
+        })
+    },
+    onPreviewCase7 (evt) {
+      evt.preventDefault()
+      if (this.demandTableForCase7.length === 0) {
+        this.message = '请先加载需求表！'
+        this.showMessage = true
+      } else {
+        this.$refs.processingModal.show()
+        const payload = {
+          compute_mode: this.computeModeForCase7,
+          total_transportation_expenses: this.totalTransportationExpensesForCase7,
+          demand_table: this.demandTableForCase7
+        }
+        this.previewReportFileCase7(payload)
+      }
+    },
+    previewReportFileCase7Close () {
+      this.$refs.processingModal.hide()
+    },
+    previewReportFileCase7 (payload) {
+      axios.post(this.serverBaseURL + '/api/v1/case7/preview', payload)
+        .then((res) => {
+          const pt = Object.freeze(res.data.preview_table)
+          this.previewCaseN.previewTable = pt
+          this.previewCaseN.previewTotal = this.previewCaseN.previewTable.length
+          this.previewTableSliceOffset = 0
+          if (this.previewCaseN.previewTotal > 10) {
+            this.previewTableSliceOffsetMax = this.previewCaseN.previewTotal - this.previewCaseN.previewTotal % 10
+            this.previewCaseN.previewTablePartialView = this.previewCaseN.previewTable.slice(this.previewTableSliceOffset, this.previewTableSliceOffset + 10)
+          } else {
+            this.previewTableSliceOffsetMax = 0
+            this.previewCaseN.previewTablePartialView = this.previewCaseN.previewTable.slice(0, this.previewCaseN.previewTotal)
+          }
+          this.totalTransportationExpensesForCase7 = res.data.total_transportation_expenses
+          this.$refs.previewCase7Modal.show()
+          this.previewReportFileCase7Close()
+        })
+        .catch((error) => {
+          this.previewReportFileCase7Close()
+          if (error.response.status === 401) {
+            router.push('/login')
+          } else if (error.response.status === 404) {
+            this.message = '预览失败！不存在指定的商品条目。'
+            this.showMessage = true
+          } else if (error.response.status === 400) {
+            this.message = error.response.data.message
+            this.showMessage = true
+          } else {
+            // eslint-disable-next-line
+            console.log(error)
+            router.push('/500')
+          }
+        })
+    },
+    onExportCase7 (evt) {
+      evt.preventDefault()
+      this.$refs.previewCase7Modal.hide()
+      this.$refs.exportFileCase7Modal.hide()
+      this.$refs.processingModal.show()
+      const payload = {
+        compute_mode: this.computeModeForCase7,
+        total_transportation_expenses: this.totalTransportationExpensesForCase7,
+        preview_table: this.previewCaseN.previewTable
+      }
+      this.prepareExportReportFile('/api/v1/case7/prepare', payload)
+    },
+    onCancelPreviewCase7 (evt) {
+      evt.preventDefault()
+      this.$refs.previewCase7Modal.hide()
+    },
+    onCancelExportCase7 (evt) {
+      evt.preventDefault()
+      this.$refs.exportFileCase7Modal.hide()
       // 恢复默认设置
       this.initExportForm()
     },

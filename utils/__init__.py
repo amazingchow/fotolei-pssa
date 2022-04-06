@@ -47,7 +47,8 @@ from .lookup_table import (
 from .reg_patterns import (
     REG_INT,
     REG_INT_AND_FLOAT,
-    REG_POSITIVE_INT
+    REG_POSITIVE_INT,
+    REG_POSITIVE_FLOAT
 )
 from .role_type import (
     ROLE_TYPE_SUPER_ADMIN,
@@ -111,6 +112,7 @@ __all__ = [
     REG_INT,
     REG_INT_AND_FLOAT,
     REG_POSITIVE_INT,
+    REG_POSITIVE_FLOAT,
 
     ROLE_TYPE_SUPER_ADMIN,
     ROLE_TYPE_ADMIN,
