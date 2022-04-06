@@ -35,13 +35,9 @@ stop_mysql:
 run_server_local:
 	@python pssa_server.py || true
 
-.PHONY: run_server
-run_server:
-	@export FLASK_APP=pssa_server && export FLASK_ENV=production && flask run --host="0.0.0.0" --port=15555
-
 .PHONY: run_serverd
 run_serverd:
-	@nohup `export FLASK_APP=pssa_server && export FLASK_ENV=production && flask run --host="0.0.0.0" --port=15555 2>&1 | tee serverd.log` &
+	@nohup `python pssa_server.py 2>&1 | tee serverd.log` &
 
 .PHONY: run_client_local
 run_client_local:
