@@ -7,7 +7,7 @@ function shutdown_clientd
 
 function shutdown_serverd
 {
-    lsof -i:15555 | grep flask | awk '{print $2}' | xargs kill
+    lsof -i:15555 | grep python | awk '{print $2}' | xargs kill
 }
 
 function run
