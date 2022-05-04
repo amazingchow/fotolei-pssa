@@ -24,7 +24,13 @@ if __name__ == "__main__":
     csvfiles = glob.glob("{}/*.csv".format(args.dir))
     csvfiles.sort()
 
-    api_url = "http://{}:15555/api/v1/jitinventory/upload".format(args.server_ip)
     with requests.Session() as session:
+        api_url = "http://{}:15555/api/v1/users/login".format(args.server_ip)
+        session.post(api_url, json={"username": "fotolei", "password": "asdf5678"})
+
+        api_url = "http://{}:15555/api/v1/jitinventory/upload".format(args.server_ip)
         for csvfile in csvfiles:
             do_batch_upload_jit_inventory_file(session, api_url, csvfile)
+
+        api_url = "http://{}:15555/api/v1/users/logout".format(args.server_ip)
+        session.delete(api_url)

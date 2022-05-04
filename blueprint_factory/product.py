@@ -42,6 +42,7 @@ from utils import put_lookup_table_k_sku_v_boolean
 from utils import REG_INT
 from utils import REG_INT_AND_FLOAT
 from utils import REG_POSITIVE_INT
+from utils import ROLE_TYPE_ADMIN
 from utils import ROLE_TYPE_ORDINARY_USER
 from utils import ROLE_TYPE_SUPER_ADMIN
 from utils import util_generate_digest
@@ -170,6 +171,14 @@ FROM fotolei_pssa.products ORDER BY specification_code LIMIT {}, {};".format(
             jsonify(response_object),
             StatusCode.HTTP_200_OK
         )
+
+    role = session.get("role", ROLE_TYPE_ORDINARY_USER)
+    if role > ROLE_TYPE_ADMIN:
+        # 针对普通用户，对敏感数据(起始库存总额、采购总额、采购退货总额、其他变更总额、截止库存总额、单价、金额)做脱敏处理
+        for idx in range(len(products)):
+            products[idx] = list(products[idx])
+            products[idx][12] = "*"
+
     response_object = {"message": "", "products": products}
     return make_response(
         jsonify(response_object),
