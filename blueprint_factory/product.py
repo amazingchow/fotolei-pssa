@@ -44,7 +44,6 @@ from utils import REG_INT_AND_FLOAT
 from utils import REG_POSITIVE_INT
 from utils import ROLE_TYPE_ADMIN
 from utils import ROLE_TYPE_ORDINARY_USER
-from utils import ROLE_TYPE_SUPER_ADMIN
 from utils import util_generate_digest
 from utils import util_generate_bytes_in_hdd_digest
 from utils import util_silent_remove
@@ -60,7 +59,7 @@ product_blueprint = Blueprint(
 # 载入"商品明细数据表"的接口
 @product_blueprint.route("/upload", methods=["POST"])
 @has_logged_in
-@restrict_access(access_level=ROLE_TYPE_SUPER_ADMIN)
+@restrict_access(access_level=ROLE_TYPE_ADMIN)
 @record_action(action=ACTION_TYPE_IMPORT)
 @cost_count
 def upload_products():
@@ -206,7 +205,7 @@ def get_products_total():
 # 更新一条商品条目的接口
 @product_blueprint.route("/one/update", methods=["POST"])
 @has_logged_in
-@restrict_access(access_level=ROLE_TYPE_SUPER_ADMIN)
+@restrict_access(access_level=ROLE_TYPE_ADMIN)
 @record_action(action=ACTION_TYPE_UPDATE_ONE)
 @cost_count
 def update_one_product():
@@ -290,7 +289,7 @@ def update_one_product():
 # 获取一条商品条目的接口
 @product_blueprint.route("/one/pick", methods=["GET"])
 @has_logged_in
-@restrict_access(access_level=ROLE_TYPE_SUPER_ADMIN)
+@restrict_access(access_level=ROLE_TYPE_ADMIN)
 @cost_count
 def pick_one_product():
     specification_code = request.args.get("specification_code")
@@ -342,7 +341,7 @@ def pick_one_product():
 # 删除所有商品条目的接口
 @product_blueprint.route("/all/clean", methods=["POST"])
 @has_logged_in
-@restrict_access(access_level=ROLE_TYPE_SUPER_ADMIN)
+@restrict_access(access_level=ROLE_TYPE_ADMIN)
 @record_action(action=ACTION_TYPE_DELETE_ALL)
 @cost_count
 def clean_all_products():
@@ -421,7 +420,7 @@ CREATE TABLE IF NOT EXISTS fotolei_pssa.product_summary (
 # 删除单条商品条目的接口
 @product_blueprint.route("/one/clean", methods=["POST"])
 @has_logged_in
-@restrict_access(access_level=ROLE_TYPE_SUPER_ADMIN)
+@restrict_access(access_level=ROLE_TYPE_ADMIN)
 @record_action(action=ACTION_TYPE_DELETE_ONE)
 @cost_count
 def clean_one_product():
@@ -448,7 +447,7 @@ def clean_one_product():
 # 预下载"新增SKU数据表"的接口
 @product_blueprint.route("/addedskus/prepare", methods=["POST"])
 @has_logged_in
-@restrict_access(access_level=ROLE_TYPE_SUPER_ADMIN)
+@restrict_access(access_level=ROLE_TYPE_ADMIN)
 @cost_count
 def prepare_added_skus():
     payload = request.get_json()

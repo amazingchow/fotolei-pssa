@@ -13,17 +13,17 @@
             <br/>
             <b-badge variant="light">* 注册/注销用户（无法注销超级管理员fotolei）</b-badge>
             <br/>
-            <b-badge variant="light">* 导入/查看/修改/删除/导出数据（包括产品数据和进销存数据）</b-badge>
+            <b-badge variant="light">* 导入/查看/修改/删除/导出数据（包括商品数据、进销存数据、即时库存数据和单价数据）</b-badge>
           </b-list-group-item>
           <b-list-group-item>
             <b-badge variant="secondary">普通管理员</b-badge>
             <br/>
-            <b-badge variant="light">* 查看/导出数据（包括产品数据和进销存数据）</b-badge>
+            <b-badge variant="light">* 导入/查看/修改/删除/导出数据（包括商品数据、进销存数据、即时库存数据和单价数据）</b-badge>
           </b-list-group-item>
           <b-list-group-item>
             <b-badge variant="secondary">普通用户</b-badge>
             <br/>
-            <b-badge variant="light">* 查看/导出数据（包括产品数据和进销存数据，但涉及敏感金额的地方，不予展示）</b-badge>
+            <b-badge variant="light">* 导入/查看/导出数据（导入只包括即时库存数据，导出包括商品数据和进销存数据，但涉及敏感金额的地方，不予展示）</b-badge>
           </b-list-group-item>
         </b-list-group>
         <br>

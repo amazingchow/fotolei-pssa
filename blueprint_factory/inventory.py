@@ -34,8 +34,8 @@ from utils import get_lookup_table_k_sku_v_brand_c1_c2_is_combined
 from utils import put_lookup_table_k_ct_sku_v_boolean
 from utils import REG_INT
 from utils import REG_INT_AND_FLOAT
+from utils import ROLE_TYPE_ADMIN
 from utils import ROLE_TYPE_ORDINARY_USER
-from utils import ROLE_TYPE_SUPER_ADMIN
 from utils import util_generate_bytes_in_hdd_digest, util_generate_digest
 from utils import util_silent_remove
 
@@ -50,7 +50,7 @@ inventory_blueprint = Blueprint(
 # 载入"库存数据表"的接口
 @inventory_blueprint.route("/upload", methods=["POST"])
 @has_logged_in
-@restrict_access(access_level=ROLE_TYPE_SUPER_ADMIN)
+@restrict_access(access_level=ROLE_TYPE_ADMIN)
 @record_action(action=ACTION_TYPE_IMPORT)
 @cost_count
 def upload_inventories():
@@ -213,7 +213,7 @@ def get_inventories_total():
 # 删除所有库存条目的接口
 @inventory_blueprint.route("/all/clean", methods=["POST"])
 @has_logged_in
-@restrict_access(access_level=ROLE_TYPE_SUPER_ADMIN)
+@restrict_access(access_level=ROLE_TYPE_ADMIN)
 @record_action(action=ACTION_TYPE_DELETE_ALL)
 @cost_count
 def clean_all_inventories():
