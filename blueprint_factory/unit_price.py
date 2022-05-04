@@ -23,7 +23,7 @@ from db import db_connector
 from utils import ACTION_TYPE_IMPORT
 from utils import get_lookup_table_k_sku_v_boolean
 from utils import REG_INT_AND_FLOAT
-from utils import ROLE_TYPE_SUPER_ADMIN
+from utils import ROLE_TYPE_ADMIN
 
 
 unit_price_blueprint = Blueprint(
@@ -36,7 +36,7 @@ unit_price_blueprint = Blueprint(
 # 载入"单价表"的接口
 @unit_price_blueprint.route("/upload", methods=["POST"])
 @has_logged_in
-@restrict_access(access_level=ROLE_TYPE_SUPER_ADMIN)
+@restrict_access(access_level=ROLE_TYPE_ADMIN)
 @record_action(action=ACTION_TYPE_IMPORT)
 @cost_count
 def upload_unit_price_data():
