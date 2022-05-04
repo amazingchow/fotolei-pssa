@@ -186,7 +186,7 @@ def prepare_report_file_case6():
         csv_writer = csv.writer(fd, delimiter=",")
         csv_writer.writerow([
             "规格编码", "商品名称", "规格名称", "采购名称",
-            "单价", "金额", "数量",
+            "数量", "单价", "金额",
             "长度/cm", "宽度/cm", "高度/cm", "体积合计/m³",
             "重量/g", "重量合计/kg"
         ])

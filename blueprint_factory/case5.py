@@ -247,7 +247,6 @@ jit_inventory, product_weight, product_length, product_width, product_height, mo
             current_app.logger.info("筛选2, 输出的SKU数量等于{}".format(len(preview_table)))
 
         if len(preview_table) > 0:
-            response_object = {"message": ""}
             if len(supplier_name) == 0:
                 preview_table.sort(key=lambda x: x["supplier_name"], reverse=False)
 
@@ -258,15 +257,12 @@ jit_inventory, product_weight, product_length, product_width, product_height, mo
                 preview_table[idx]["unit_price"] = "*"
                 preview_table[idx]["price_total"] = "*"
 
-            response_object["preview_table"] = preview_table
-            response_object["supplier_name_list_from_screening_way1"] = supplier_name_list_from_screening_way1
-            return make_response(
-                jsonify(response_object),
-                StatusCode.HTTP_200_OK
-            )
+        response_object = {"message": ""}
+        response_object["preview_table"] = preview_table
+        response_object["supplier_name_list_from_screening_way1"] = supplier_name_list_from_screening_way1
         return make_response(
-            jsonify({"message": ""}),
-            StatusCode.HTTP_404_NOT_FOUND
+            jsonify(response_object),
+            StatusCode.HTTP_200_OK
         )
 
     return make_response(
