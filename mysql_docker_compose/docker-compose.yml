@@ -22,6 +22,14 @@ services:
     networks:
       - mysql_service_network
 
+  # admin管理后台
+  admin:
+    image: adminer:4.7-standalone
+    ports:
+      - 18080:8080
+    networks:
+      - mysql_service_network
+
 networks:
   mysql_service_network:
     external: true
