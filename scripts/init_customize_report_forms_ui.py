@@ -4,7 +4,7 @@ import shelve
 
 
 if __name__ == '__main__':
-    customize_report_forms_ui = shelve.open("{}/fotolei-pssa/tmp-files/customize_report_forms_ui".format(
+    customize_report_forms_ui = shelve.open("{}/fotolei-pssa-keep/customize_report_forms_ui".format(
         os.path.expanduser("~")), flag="c", writeback=False)
 
     customize_report_forms_ui["classification1_tags"] = ['数码', '传统耗材']
