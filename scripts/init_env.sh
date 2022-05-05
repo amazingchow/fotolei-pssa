@@ -24,6 +24,8 @@ function prepare_system_data_dirs
     mkdir -p $HOME/fotolei-pssa/backup
     mkdir -p $HOME/fotolei-pssa/send_queue
     mkdir -p $HOME/fotolei-pssa/recv_queue
+
+    mkdir -p $HOME/fotolei-pssa-keep
 }
 
 function create_mysql_service_network

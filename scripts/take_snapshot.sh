@@ -23,6 +23,7 @@ function take_snapshot
     cp -r $HOME/fotolei-pssa/backup/* $HOME/fotolei-pssa-snapshot/mysqldump-files/
     cp -r $HOME/fotolei-pssa/logs/* $HOME/fotolei-pssa-snapshot/system-logs/
     cp -r $HOME/fotolei-pssa/tmp-files/* $HOME/fotolei-pssa-snapshot/shelve-files/
+    cp -r $HOME/fotolei-pssa-keep/* $HOME/fotolei-pssa-snapshot/shelve-files/
 
     rm -rf /mnt/pssa/*
     mv $HOME/fotolei-pssa-snapshot /mnt/pssa/
