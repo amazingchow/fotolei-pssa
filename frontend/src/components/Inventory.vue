@@ -667,6 +667,9 @@
             <b-th scope="col">规格编码</b-th>
             <b-th scope="col">商品名称</b-th>
             <b-th scope="col">规格名称</b-th>
+            <b-th scope="col">品牌</b-th>
+            <b-th scope="col">分类1</b-th>
+            <b-th scope="col">分类2</b-th>
             <b-th scope="col">起始库存数量</b-th>
             <b-th scope="col">采购数量</b-th>
             <b-th scope="col">销售数量</b-th>
@@ -682,6 +685,9 @@
             <b-td>{{ item.specification_code }}</b-td>
             <b-td>{{ item.product_name }}</b-td>
             <b-td>{{ item.specification_name }}</b-td>
+            <b-td>{{ item.brand }}</b-td>
+            <b-td>{{ item.classification_1 }}</b-td>
+            <b-td>{{ item.classification_2 }}</b-td>
             <b-td>{{ item.st_inventory_qty }}</b-td>
             <b-td>{{ item.purchase_qty }}</b-td>
             <b-td>{{ item.sale_qty }}</b-td>
