@@ -37,7 +37,7 @@ run_server_local:
 
 .PHONY: run_serverd
 run_serverd:
-	@nohup `python pssa_server.py 2>&1 | tee serverd.log` &
+	@nohup python pssa_server.py 2>&1 | tee serverd.log &
 
 .PHONY: run_client_local
 run_client_local:
@@ -53,7 +53,7 @@ run_client: build_client_prod
 
 .PHONY: run_clientd
 run_clientd: build_client_prod
-	@nohup `serve -s frontend/dist -l 8888 2>&1 | tee clientd.log` &
+	@nohup serve -s frontend/dist -l 8888 2>&1 | tee clientd.log &
 
 .PHONY: stop
 stop:
