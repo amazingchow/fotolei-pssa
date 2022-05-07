@@ -33,7 +33,7 @@ services:
 
 volumes:
   fotolei-pssa-data-volume:
-    external: true
+    driver: local
 
 networks:
   mysql_service_network:
