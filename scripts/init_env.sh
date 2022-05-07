@@ -45,7 +45,7 @@ function setup_mysql_server_inst
 
 function create_db
 {
-    docker_container_id=`docker container ls | grep docker-compose_db_1 | awk '{print $1}'`
+    docker_container_id=`docker container ls | grep fotolei_pssa_db | awk '{print $1}'`
     docker exec -i ${docker_container_id} /bin/bash -c 'mysql -uroot -pPwd123Pwd < /mysql/migrations/create_database_up.sql'
 }
 
