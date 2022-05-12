@@ -260,6 +260,7 @@ def preview_report_file_case1():
                 jsonify(response_object),
                 StatusCode.HTTP_400_BAD_REQUEST
             )
+        # TODO: 可以参考L164 ~ L181
         ui_brand_classification2_tags_table.append((brand_tag, c2_tag))
 
     preview_table = []
@@ -271,9 +272,12 @@ FROM fotolei_pssa.inventories WHERE extra_is_combined = '否' AND create_time >=
     )
     rets = db_connector.query(stmt)
     if type(rets) is list and len(rets) > 0 and rets[0][0] is not None and rets[0][1] is not None:
+        # 计算总销售额：总销售 = 补差价额度 + 传统类目销售额 + 数码类目销售额
         sum_sale_total = rets[0][0]
         sum_sale_then_return_total = rets[0][1]
-        preview_table.append(["总销售额", "{:.2f}".format(sum_sale_total - sum_sale_then_return_total), "100%"])
+        sum_sale_total = sum_sale_total - sum_sale_then_return_total
+        preview_table.append(["总销售额", "{:.2f}".format(sum_sale_total), "100%"])
+
         if "传统耗材" in ui_classification1_tags:
             topk = ui_classification1_topk_lookup_table["传统耗材"]
             # 计算龟龟销售额
@@ -288,11 +292,12 @@ FROM fotolei_pssa.inventories WHERE extra_classification_1 = '传统耗材' AND 
                 sum_sale_total_for_c1 = sum_sale_total_for_c1 - sum_sale_then_return_total_for_c1
                 sum_sale_total_for_c1_percent = sum_sale_total_for_c1 / sum_sale_total * 100
                 preview_table.append(["龟龟销售额", "{:.2f}".format(sum_sale_total_for_c1), "{:.2f}%".format(sum_sale_total_for_c1_percent)])
-                # 计算传统类目销售额
+                # 传统类目销售额 == 龟龟销售额
                 preview_table.append(["传统类目销售额", "{:.2f}".format(sum_sale_total_for_c1), "{:.2f}%".format(sum_sale_total_for_c1_percent)])
+
                 tmp_table = []
                 if topk <= len(ui_classification1_classification2_lookup_table["传统耗材"]):
-                    # 如果选中的待计算项目 >= topk，则直接处理待计算项目
+                    # 如果选中的待计算项目数量 >= topk，则直接处理待计算项目
                     for c2_tag in ui_classification1_classification2_lookup_table["传统耗材"]:
                         # 计算分类1为传统耗材，分类2为'c2_tag'的销售额
                         sum_sale_total_for_c1_c2 = sum([ret[0] for ret in rets if len(ret[2]) > 0 and ret[2] == c2_tag])
@@ -302,10 +307,10 @@ FROM fotolei_pssa.inventories WHERE extra_classification_1 = '传统耗材' AND 
                         tmp_table.append((c2_tag, sum_sale_total_for_c1_c2, sum_sale_total_for_c1_c2_percent))
                     tmp_table.sort(key=lambda x: x[1], reverse=True)
                 else:
-                    # 如果选中的待计算项目 < topk，待计算项目必须被处理且出现在结果中，空位用topk来填充
+                    # 如果选中的待计算项目数量 < topk，待计算项目必须被处理且出现在结果中，空位用topk来填充
                     # 获取所有‘分类1‘等于‘传统耗材’的分类2
                     all_c2_tags = []
-                    for item in get_lookup_table_k_c1_v_c1_c2_keys("传统耗材"):
+                    for item in get_lookup_table_k_c1_v_c1_c2("传统耗材"):
                         all_c2_tags.append(item.split("|")[1].strip())
                     for c2_tag in all_c2_tags:
                         sum_sale_total_for_c1_c2 = sum([ret[0] for ret in rets if len(ret[2]) > 0 and ret[2] == c2_tag])
@@ -330,17 +335,22 @@ FROM fotolei_pssa.inventories WHERE extra_classification_1 = '传统耗材' AND 
                         sum_sale_then_return_total_for_c1_c2 = sum([ret[1] for ret in rets if len(ret[2]) > 0 and ret[2] == c2_tag])
                         sum_sale_total_for_c1_c2 = sum_sale_total_for_c1_c2 - sum_sale_then_return_total_for_c1_c2
                         sum_sale_total_for_c1_c2_percent = sum_sale_total_for_c1_c2 / sum_sale_total * 100
+                        # 待计算项目当前不在topk个结果中，我们需要从topk个结果中淘汰一个，并把它塞进去
                         if sum_sale_total_for_c1_c2 <= tmp_table[topk - 1][1]:
+                            # 淘汰topk个结果中的最后一个
                             tmp_table[topk - 1] = (c2_tag, sum_sale_total_for_c1_c2, sum_sale_total_for_c1_c2_percent)
                         elif sum_sale_total_for_c1_c2 >= tmp_table[0][1]:
+                            # 淘汰topk个结果中的第一个
                             tmp_table[0] = (c2_tag, sum_sale_total_for_c1_c2, sum_sale_total_for_c1_c2_percent)
                         else:
+                            # 淘汰topk个结果中的第i个（不是第一个也不是最后一个）
                             for i in range(topk - 2, 0, -1):
                                 if sum_sale_total_for_c1_c2 <= tmp_table[i][1]:
                                     tmp_table[i] = (c2_tag, sum_sale_total_for_c1_c2, sum_sale_total_for_c1_c2_percent)
                                     break
                 for item in tmp_table:
                     preview_table.append([item[0], "{:.2f}".format(item[1]), "{:.2f}%".format(item[2])])
+
         if "数码" in ui_classification1_tags:
             topk = ui_classification1_topk_lookup_table["数码"]
             # 计算2店销售额
@@ -355,11 +365,11 @@ FROM fotolei_pssa.inventories WHERE extra_classification_1 = '数码' AND extra_
                 sum_sale_total_for_c1 = sum_sale_total_for_c1 - sum_sale_then_return_total_for_c1
                 sum_sale_total_for_c1_percent = sum_sale_total_for_c1 / sum_sale_total * 100
                 preview_table.append(["2店销售额", "{:.2f}".format(sum_sale_total_for_c1), "{:.2f}%".format(sum_sale_total_for_c1_percent)])
-                # 计算数码类目销售额
+                # 数码类目销售额 == 2店销售额
                 preview_table.append(["数码类目销售额", "{:.2f}".format(sum_sale_total_for_c1), "{:.2f}%".format(sum_sale_total_for_c1_percent)])
                 tmp_table = []
                 if topk <= len(ui_classification1_classification2_lookup_table["数码"]):
-                    # 如果选中的待计算项目 >= topk，则直接处理待计算项目
+                    # 如果选中的待计算项目数量 >= topk，则直接处理待计算项目
                     for c2_tag in ui_classification1_classification2_lookup_table["数码"]:
                         # 计算分类1为数码，分类2为'c2_tag'的销售额
                         sum_sale_total_for_c1_c2 = sum([ret[0] for ret in rets if len(ret[2]) > 0 and ret[2] == c2_tag])
@@ -369,10 +379,10 @@ FROM fotolei_pssa.inventories WHERE extra_classification_1 = '数码' AND extra_
                         tmp_table.append((c2_tag, sum_sale_total_for_c1_c2, sum_sale_total_for_c1_c2_percent))
                     tmp_table.sort(key=lambda x: x[1], reverse=True)
                 else:
-                    # 如果选中的待计算项目 < topk，待计算项目必须被处理且出现在结果中，空位用topk来填充
+                    # 如果选中的待计算项目数量 < topk，待计算项目必须被处理且出现在结果中，空位用topk来填充
                     # 获取所有‘分类1‘等于‘数码’的分类2
                     all_c2_tags = []
-                    for item in get_lookup_table_k_c1_v_c1_c2_keys("数码"):
+                    for item in get_lookup_table_k_c1_v_c1_c2("数码"):
                         all_c2_tags.append(item.split("|")[1].strip())
                     for c2_tag in all_c2_tags:
                         sum_sale_total_for_c1_c2 = sum([ret[0] for ret in rets if len(ret[2]) > 0 and ret[2] == c2_tag])
@@ -397,17 +407,22 @@ FROM fotolei_pssa.inventories WHERE extra_classification_1 = '数码' AND extra_
                         sum_sale_then_return_total_for_c1_c2 = sum([ret[1] for ret in rets if len(ret[2]) > 0 and ret[2] == c2_tag])
                         sum_sale_total_for_c1_c2 = sum_sale_total_for_c1_c2 - sum_sale_then_return_total_for_c1_c2
                         sum_sale_total_for_c1_c2_percent = sum_sale_total_for_c1_c2 / sum_sale_total * 100
+                        # 待计算项目当前不在topk个结果中，我们需要从topk个结果中淘汰一个，并把它塞进去
                         if sum_sale_total_for_c1_c2 <= tmp_table[topk - 1][1]:
+                            # 淘汰topk个结果中的最后一个
                             tmp_table[topk - 1] = (c2_tag, sum_sale_total_for_c1_c2, sum_sale_total_for_c1_c2_percent)
                         elif sum_sale_total_for_c1_c2 >= tmp_table[0][1]:
+                            # 淘汰topk个结果中的第一个
                             tmp_table[0] = (c2_tag, sum_sale_total_for_c1_c2, sum_sale_total_for_c1_c2_percent)
                         else:
+                            # 淘汰topk个结果中的第i个（不是第一个也不是最后一个）
                             for i in range(topk - 2, 0, -1):
                                 if sum_sale_total_for_c1_c2 <= tmp_table[i][1]:
                                     tmp_table[i] = (c2_tag, sum_sale_total_for_c1_c2, sum_sale_total_for_c1_c2_percent)
                                     break
                 for item in tmp_table:
                     preview_table.append([item[0], "{:.2f}".format(item[1]), "{:.2f}%".format(item[2])])
+
         # 计算各品牌销售额
         preview_table.append(["品牌销售额", "", ""])
         tmp_table = []
