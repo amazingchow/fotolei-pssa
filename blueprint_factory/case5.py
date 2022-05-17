@@ -25,7 +25,6 @@ from db import db_connector
 from utils import ACTION_TYPE_EXPORT
 from utils import ROLE_TYPE_ADMIN
 from utils import ROLE_TYPE_ORDINARY_USER
-from utils import util_calc_month_num
 from utils import util_generate_digest
 from utils import util_get_all_months_between_two_months
 from utils import util_remove_duplicates_for_list
@@ -449,7 +448,6 @@ ORDER BY create_time ASC;".format(specification_code, the_past_m_month)
                             i = len(rets) - 1
                         j += 1
                     else:
-                        
                         if all_months[j] < rets[i][5]:
                             if rets[i][0] <= 0:
                                 reduced_months += 1
@@ -471,9 +469,9 @@ ORDER BY create_time ASC;".format(specification_code, the_past_m_month)
                 # NOTE: 结束核心计算部分
                 current_app.logger.info("specification code: {}, reduced months: {}".format(specification_code, reduced_months))
                 if is_the_past_x_month:
-                    g_cache[specification_code]["reduced_sale_qty_x_months"] = int(g_cache[specification_code]["sale_qty_x_months"] * (len(all_months)/ (len(all_months)- reduced_months)))
+                    g_cache[specification_code]["reduced_sale_qty_x_months"] = int(g_cache[specification_code]["sale_qty_x_months"] * (len(all_months) / (len(all_months) - reduced_months)))
                 else:
-                    g_cache[specification_code]["reduced_sale_qty_y_months"] = int(g_cache[specification_code]["sale_qty_y_months"] * (len(all_months)/ (len(all_months)- reduced_months)))
+                    g_cache[specification_code]["reduced_sale_qty_y_months"] = int(g_cache[specification_code]["sale_qty_y_months"] * (len(all_months) / (len(all_months) - reduced_months)))
             else:
                 if is_the_past_x_month:
                     g_cache[specification_code]["reduced_sale_qty_x_months"] = g_cache[specification_code]["sale_qty_x_months"]
