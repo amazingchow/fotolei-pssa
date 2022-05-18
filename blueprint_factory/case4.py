@@ -146,36 +146,36 @@ def preview_report_file_case4():
                             while j < len(all_months):
                                 if i == 0:
                                     # 判断下捞出来的进销存数据首个月的起始库存是否为零，如果不为零，那之前的月份不该算进断货月份
-                                    while all_months[j] < inner_rets[i][5]:
-                                        if inner_rets[i][0] <= 0:
+                                    while all_months[j] < inner_rets[i][19]:
+                                        if inner_rets[i][5] <= 0:
                                             reduced_months += 1
                                         j += 1
-                                    if inner_rets[i][0] <= 0 and inner_rets[i][1] <= 0:
-                                        if (inner_rets[i][2] > 0 and inner_rets[i][2] <= 10) and (inner_rets[i][2] <= (inner_rets[i][3] - inner_rets[i][4])):
+                                    if inner_rets[i][5] <= 0 and inner_rets[i][17] <= 0:
+                                        if (inner_rets[i][7] > 0 and inner_rets[i][7] <= 10) and (inner_rets[i][7] <= (inner_rets[i][11] - inner_rets[i][13])):
                                             reduced_months += 1
-                                        elif (inner_rets[i][2] > 10) and (inner_rets[i][2] > (inner_rets[i][3] - inner_rets[i][4])):
+                                        elif (inner_rets[i][7] > 10) and (inner_rets[i][7] > (inner_rets[i][11] - inner_rets[i][13])):
                                             reduced_months += 1
                                     i += 1
                                     if i == len(inner_rets):
                                         i = len(inner_rets) - 1
                                     j += 1
                                 else:
-                                    if all_months[j] < inner_rets[i][5]:
-                                        if inner_rets[i][0] <= 0:
+                                    if all_months[j] < inner_rets[i][19]:
+                                        if inner_rets[i][5] <= 0:
                                             reduced_months += 1
                                         j += 1
-                                    elif all_months[j] == inner_rets[i][5]:
-                                        if inner_rets[i][0] == 0 and inner_rets[i][1] == 0:
-                                            if (inner_rets[i][2] > 0 and inner_rets[i][2] <= 10) and (inner_rets[i][2] <= (inner_rets[i][3] - inner_rets[i][4])):
+                                    elif all_months[j] == inner_rets[i][19]:
+                                        if inner_rets[i][5] == 0 and inner_rets[i][17] == 0:
+                                            if (inner_rets[i][7] > 0 and inner_rets[i][7] <= 10) and (inner_rets[i][7] <= (inner_rets[i][11] - inner_rets[i][13])):
                                                 reduced_months += 1
-                                            elif (inner_rets[i][2] > 10) and (inner_rets[i][2] > (inner_rets[i][3] - inner_rets[i][4])):
+                                            elif (inner_rets[i][7] > 10) and (inner_rets[i][7] > (inner_rets[i][11] - inner_rets[i][13])):
                                                 reduced_months += 1
                                         i += 1
                                         if i == len(inner_rets):
                                             i = len(inner_rets) - 1
                                         j += 1
-                                    elif all_months[j] > inner_rets[i][5]:
-                                        if inner_rets[i][1] <= 0:
+                                    elif all_months[j] > inner_rets[i][19]:
+                                        if inner_rets[i][17] <= 0:
                                             reduced_months += 1
                                         j += 1
                             # NOTE: 结束核心计算部分
