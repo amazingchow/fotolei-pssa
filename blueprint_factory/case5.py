@@ -25,8 +25,8 @@ from db import db_connector
 from utils import ACTION_TYPE_EXPORT
 from utils import ROLE_TYPE_ADMIN
 from utils import ROLE_TYPE_ORDINARY_USER
-from utils import util_calc_month_num
 from utils import util_generate_digest
+from utils import util_get_all_months_between_two_months
 from utils import util_remove_duplicates_for_list
 
 
@@ -68,11 +68,11 @@ def preview_report_file_case5():
     # 过去X个月
     time_quantum_in_month_x = int(payload.get("time_quantum_x", "6"))
     # 过去X个月的库销比
-    threshold_x = float(payload.get("threshold_x", "2"))
+    threshold_x = float(payload.get("threshold_x", "2.0"))
     # 过去Y个月
     time_quantum_in_month_y = int(payload.get("time_quantum_y", "12"))
     # 过去Y个月的库销比
-    threshold_y = float(payload.get("threshold_y", "1"))
+    threshold_y = float(payload.get("threshold_y", "1.0"))
     # 拟定进货（月数）
     projected_purchase_months = int(payload.get("projected_purchase", "12"))
     # 断货折算
@@ -146,8 +146,8 @@ jit_inventory, product_weight, product_length, product_width, product_height, mo
         for specification_code in real_specification_code_list:
             v = inventories_import_date_record_table.get(specification_code, [])
 
-            time_quantum_in_month_x_returned = process_sale_qty(cache, specification_code, the_past_x_month, time_quantum_in_month_x, True, reduced_btn_option, v[0])
-            time_quantum_in_month_y_returned = process_sale_qty(cache, specification_code, the_past_y_month, time_quantum_in_month_y, False, reduced_btn_option, v[0])
+            process_sale_qty(cache, specification_code, the_past_x_month, time_quantum_in_month_x, True, reduced_btn_option, v[0])
+            process_sale_qty(cache, specification_code, the_past_y_month, time_quantum_in_month_y, False, reduced_btn_option, v[0])
             if cache[specification_code]["sale_qty_x_months"] == 0 and cache[specification_code]["sale_qty_y_months"] == 0:
                 if screening_way == "1":
                     if cache[specification_code]["inventory"] > 0:
@@ -185,12 +185,12 @@ jit_inventory, product_weight, product_length, product_width, product_height, mo
                         x4 = cache[specification_code]["sale_qty_y_months"]
                 if screening_way == "1":
                     if x4 > 0 and x2 <= threshold_y:
-                        tmp = int((x4 / time_quantum_in_month_y_returned) * projected_purchase_months)
+                        tmp = int((x4 / time_quantum_in_month_y) * projected_purchase_months)
                         cache[specification_code]["projected_purchase"] = tmp - cache[specification_code]["inventory"]
                         if cache[specification_code]["projected_purchase"] < 0:
                             cache[specification_code]["projected_purchase"] = 0
                     elif x3 > 0 and x1 <= threshold_x:
-                        tmp = int((x3 / time_quantum_in_month_x_returned) * projected_purchase_months)
+                        tmp = int((x3 / time_quantum_in_month_x) * projected_purchase_months)
                         cache[specification_code]["projected_purchase"] = tmp - cache[specification_code]["inventory"]
                         if cache[specification_code]["projected_purchase"] < 0:
                             cache[specification_code]["projected_purchase"] = 0
@@ -198,10 +198,10 @@ jit_inventory, product_weight, product_length, product_width, product_height, mo
                         del cache[specification_code]
                         continue
                 else:
-                    tmp = int((x4 / time_quantum_in_month_y_returned) * projected_purchase_months)
+                    tmp = int((x4 / time_quantum_in_month_y) * projected_purchase_months)
                     cache[specification_code]["projected_purchase"] = tmp - cache[specification_code]["inventory"]
                     if cache[specification_code]["projected_purchase"] <= 0:
-                        tmp = int((x3 / time_quantum_in_month_x_returned) * projected_purchase_months)
+                        tmp = int((x3 / time_quantum_in_month_x) * projected_purchase_months)
                         cache[specification_code]["projected_purchase"] = tmp - cache[specification_code]["inventory"]
                         if cache[specification_code]["projected_purchase"] < 0:
                             cache[specification_code]["projected_purchase"] = 0
@@ -327,21 +327,22 @@ def prepare_report_file_case5():
 
 
 def process_sale_qty(g_cache, specification_code, the_past_m_month, the_time_quantum, is_the_past_x_month, reduced_btn_option, first_import_date):
-    stmt = "SELECT st_inventory_qty, ed_inventory_qty, purchase_qty, sale_qty, sale_then_return_qty \
+    stmt = "SELECT st_inventory_qty, ed_inventory_qty, purchase_qty, sale_qty, sale_then_return_qty, create_time \
 FROM fotolei_pssa.inventories WHERE specification_code = '{}' AND create_time >= '{}' \
-ORDER BY create_time DESC;".format(specification_code, the_past_m_month)
+ORDER BY create_time ASC;".format(specification_code, the_past_m_month)
     rets = db_connector.query(stmt)
     if type(rets) is list:
         if len(rets) == 0:
+            # 这段时间无任何进销存数据，但库存不一定为零
             if is_the_past_x_month:
                 g_cache[specification_code]["sale_qty_x_months"] = 0
                 g_cache[specification_code]["reduced_sale_qty_x_months"] = 0
                 g_cache[specification_code]["inventory_divided_by_sale_qty_x_months"] = "{}/0".format(g_cache[specification_code]["inventory"])
                 g_cache[specification_code]["inventory_divided_by_reduced_sale_qty_x_months"] = "{}/0".format(g_cache[specification_code]["inventory"])
                 if g_cache[specification_code]["inventory"] <= 0:
-                    g_cache[specification_code]["remark"] = "过去{}个月库存为零，也没有销售".format(the_time_quantum)
+                    g_cache[specification_code]["remark"] = "过去{}个月无进销存数据，当前库存为零".format(the_time_quantum)
                 else:
-                    g_cache[specification_code]["remark"] = "过去{}个月没有销售".format(the_time_quantum)
+                    g_cache[specification_code]["remark"] = "过去{}个月无进销存数据".format(the_time_quantum)
             else:
                 g_cache[specification_code]["sale_qty_y_months"] = 0
                 g_cache[specification_code]["reduced_sale_qty_y_months"] = 0
@@ -349,103 +350,134 @@ ORDER BY create_time DESC;".format(specification_code, the_past_m_month)
                 g_cache[specification_code]["inventory_divided_by_reduced_sale_qty_y_months"] = "{}/0".format(g_cache[specification_code]["inventory"])
                 if len(g_cache[specification_code].get("remark", "")) > 0:
                     if g_cache[specification_code]["inventory"] <= 0:
-                        g_cache[specification_code]["remark"] = g_cache[specification_code]["remark"] + "/过去{}个月库存为零，也没有销售".format(the_time_quantum)
+                        g_cache[specification_code]["remark"] = g_cache[specification_code]["remark"] + "/过去{}个月无进销存数据，当前库存为零".format(the_time_quantum)
                     else:
-                        g_cache[specification_code]["remark"] = g_cache[specification_code]["remark"] + "/过去{}个月没有销售".format(the_time_quantum)
+                        g_cache[specification_code]["remark"] = g_cache[specification_code]["remark"] + "/过去{}个月无进销存数据".format(the_time_quantum)
                 else:
                     if g_cache[specification_code]["inventory"] <= 0:
-                        g_cache[specification_code]["remark"] = "过去{}个月库存为零，也没有销售".format(the_time_quantum)
+                        g_cache[specification_code]["remark"] = "过去{}个月无进销存数据，当前库存为零".format(the_time_quantum)
                     else:
-                        g_cache[specification_code]["remark"] = "过去{}个月没有销售".format(the_time_quantum)
+                        g_cache[specification_code]["remark"] = "过去{}个月无进销存数据".format(the_time_quantum)
         else:
             # Tips: 数据是倒排的, 2021-11 -> 2021-10 -> ... -> 2020-12
             # 计算M个月销量
             if is_the_past_x_month:
                 g_cache[specification_code]["sale_qty_x_months"] = sum(ret[3] for ret in rets) - sum(ret[4] for ret in rets)
                 if g_cache[specification_code]["sale_qty_x_months"] <= 0:
+                    if g_cache[specification_code]["sale_qty_x_months"] == 0:
+                        if g_cache[specification_code]["inventory"] <= 0:
+                            g_cache[specification_code]["remark"] = "过去{}个月销量为零，当前库存为零".format(the_time_quantum)
+                        else:
+                            g_cache[specification_code]["remark"] = "过去{}个月销量为零".format(the_time_quantum)
+                    else:
+                        if g_cache[specification_code]["inventory"] <= 0:
+                            g_cache[specification_code]["remark"] = "过去{}个月销量为负，当前库存为零".format(the_time_quantum)
+                        else:
+                            g_cache[specification_code]["remark"] = "过去{}个月销量为负".format(the_time_quantum)
                     g_cache[specification_code]["sale_qty_x_months"] = 0
                     g_cache[specification_code]["reduced_sale_qty_x_months"] = 0
                     g_cache[specification_code]["inventory_divided_by_sale_qty_x_months"] = "{}/0".format(g_cache[specification_code]["inventory"])
                     g_cache[specification_code]["inventory_divided_by_reduced_sale_qty_x_months"] = "{}/0".format(g_cache[specification_code]["inventory"])
-                    if g_cache[specification_code]["sale_qty_x_months"] == 0:
-                        if g_cache[specification_code]["inventory"] <= 0:
-                            g_cache[specification_code]["remark"] = "过去{}个月库存为零，也没有销售".format(the_time_quantum)
-                        else:
-                            g_cache[specification_code]["remark"] = "过去{}个月没有销售".format(the_time_quantum)
-                    else:
-                        if g_cache[specification_code]["inventory"] <= 0:
-                            g_cache[specification_code]["remark"] = "过去{}个月库存为零，销量为负".format(the_time_quantum)
-                        else:
-                            g_cache[specification_code]["remark"] = "过去{}个月销量为负".format(the_time_quantum)
-                    return the_time_quantum
+                    return
             else:
                 g_cache[specification_code]["sale_qty_y_months"] = sum(ret[3] for ret in rets) - sum(ret[4] for ret in rets)
                 if g_cache[specification_code]["sale_qty_y_months"] <= 0:
-                    g_cache[specification_code]["sale_qty_y_months"] = 0
-                    g_cache[specification_code]["reduced_sale_qty_y_months"] = 0
-                    g_cache[specification_code]["inventory_divided_by_sale_qty_y_months"] = "{}/0".format(g_cache[specification_code]["inventory"])
-                    g_cache[specification_code]["inventory_divided_by_reduced_sale_qty_y_months"] = "{}/0".format(g_cache[specification_code]["inventory"])
                     if g_cache[specification_code]["sale_qty_y_months"] == 0:
                         if len(g_cache[specification_code].get("remark", "")) > 0:
                             if g_cache[specification_code]["inventory"] <= 0:
-                                g_cache[specification_code]["remark"] = g_cache[specification_code]["remark"] + "/过去{}个月库存为零，也没有销售".format(the_time_quantum)
+                                g_cache[specification_code]["remark"] = g_cache[specification_code]["remark"] + "/过去{}个月销量为零，当前库存为零".format(the_time_quantum)
                             else:
-                                g_cache[specification_code]["remark"] = g_cache[specification_code]["remark"] + "/过去{}个月没有销售".format(the_time_quantum)
+                                g_cache[specification_code]["remark"] = g_cache[specification_code]["remark"] + "/过去{}个月销量为零".format(the_time_quantum)
                         else:
                             if g_cache[specification_code]["inventory"] <= 0:
-                                g_cache[specification_code]["remark"] = "过去{}个月库存为零，也没有销售".format(the_time_quantum)
+                                g_cache[specification_code]["remark"] = "过去{}个月销量为零，当前库存为零".format(the_time_quantum)
                             else:
-                                g_cache[specification_code]["remark"] = "过去{}个月没有销售".format(the_time_quantum)
+                                g_cache[specification_code]["remark"] = "过去{}个月销量为零".format(the_time_quantum)
                     else:
                         if len(g_cache[specification_code].get("remark", "")) > 0:
                             if g_cache[specification_code]["inventory"] <= 0:
-                                g_cache[specification_code]["remark"] = g_cache[specification_code]["remark"] + "/过去{}个月库存为零，销量为负".format(the_time_quantum)
+                                g_cache[specification_code]["remark"] = g_cache[specification_code]["remark"] + "/过去{}个月销量为负，当前库存为零".format(the_time_quantum)
                             else:
                                 g_cache[specification_code]["remark"] = g_cache[specification_code]["remark"] + "/过去{}个月销量为负".format(the_time_quantum)
                         else:
                             if g_cache[specification_code]["inventory"] <= 0:
-                                g_cache[specification_code]["remark"] = "过去{}个月库存为零，销量为负".format(the_time_quantum)
+                                g_cache[specification_code]["remark"] = "过去{}个月销量为负，当前库存为零".format(the_time_quantum)
                             else:
                                 g_cache[specification_code]["remark"] = "过去{}个月销量为负".format(the_time_quantum)
-                    return the_time_quantum
+                    g_cache[specification_code]["sale_qty_y_months"] = 0
+                    g_cache[specification_code]["reduced_sale_qty_y_months"] = 0
+                    g_cache[specification_code]["inventory_divided_by_sale_qty_y_months"] = "{}/0".format(g_cache[specification_code]["inventory"])
+                    g_cache[specification_code]["inventory_divided_by_reduced_sale_qty_y_months"] = "{}/0".format(g_cache[specification_code]["inventory"])
+                    return
+
             if len(g_cache[specification_code].get("remark", "")) == 0:
                 g_cache[specification_code]["remark"] = ""
-            # 计算M个月折算销量
-            is_new_arrival = False
+
+            # M个月销量为正，计算M个月折算销量
             if reduced_btn_option:
-                # the_past_m_month  : 过去M个月的那个月份, 比如2021-07
+                # the_past_m_month : 过去M个月的那个月份, 比如2021-07
                 # first_import_date : 对于某个产品, 第一次导入进销存数据的月份, 比如2020-10或2021-09
                 # first_import_date可能早于the_past_m_month, 也可能晚于the_past_m_month
-                reduced_months = 0
+                # NOTE: 开始核心计算部分
+                all_months = []
                 if first_import_date <= the_past_m_month:
-                    # first_import_date早于the_past_m_month的情况, 不用做特殊的处理
-                    reduced_months = the_time_quantum - len(rets)
+                    # first_import_date早于the_past_m_month的情况, 不用做特殊处理
+                    all_months = util_get_all_months_between_two_months(the_past_m_month, pendulum.today().strftime("%Y-%m"))
                 else:
-                    # first_import_date晚于the_past_m_month的情况, 说明该产品是新品
-                    the_time_quantum = util_calc_month_num(first_import_date, pendulum.today().strftime("%Y-%m"))
-                    reduced_months = the_time_quantum - len(rets)
-                    is_new_arrival = True
-                for ret in rets:
-                    if ret[0] == 0 and ret[1] == 0:
-                        if (ret[2] > 0 and ret[2] <= 10) and (ret[2] <= (ret[3] - ret[4])):
-                            reduced_months += 1
-                        elif (ret[2] > 10) and (ret[2] > (ret[3] - ret[4])):
-                            reduced_months += 1
+                    # first_import_date晚于the_past_m_month的情况, 要做特殊处理
+                    all_months = util_get_all_months_between_two_months(first_import_date, pendulum.today().strftime("%Y-%m"))
+
+                reduced_months = 0
+                # 计算断货折算月份
+                i = 0
+                j = 0
+                while j < len(all_months):
+                    if i == 0:
+                        # 判断下捞出来的进销存数据首个月的起始库存是否为零，如果不为零，那之前的月份不该算进断货月份
+                        while all_months[j] < rets[i][5]:
+                            if rets[i][0] <= 0:
+                                reduced_months += 1
+                            j += 1
+                        if rets[i][0] <= 0 and rets[i][1] <= 0:
+                            if (rets[i][2] > 0 and rets[i][2] <= 10) and (rets[i][2] <= (rets[i][3] - rets[i][4])):
+                                reduced_months += 1
+                            elif (rets[i][2] > 10) and (rets[i][2] > (rets[i][3] - rets[i][4])):
+                                reduced_months += 1
+                        i += 1
+                        if i == len(rets):
+                            i = len(rets) - 1
+                        j += 1
+                    else:
+                        if all_months[j] < rets[i][5]:
+                            if rets[i][0] <= 0:
+                                reduced_months += 1
+                            j += 1
+                        elif all_months[j] == rets[i][5]:
+                            if rets[i][0] == 0 and rets[i][1] == 0:
+                                if (rets[i][2] > 0 and rets[i][2] <= 10) and (rets[i][2] <= (rets[i][3] - rets[i][4])):
+                                    reduced_months += 1
+                                elif (rets[i][2] > 10) and (rets[i][2] > (rets[i][3] - rets[i][4])):
+                                    reduced_months += 1
+                            i += 1
+                            if i == len(rets):
+                                i = len(rets) - 1
+                            j += 1
+                        elif all_months[j] > rets[i][5]:
+                            if rets[i][1] <= 0:
+                                reduced_months += 1
+                            j += 1
+                # NOTE: 结束核心计算部分
+                current_app.logger.info("specification code: {}, reduced months: {}".format(specification_code, reduced_months))
                 if is_the_past_x_month:
-                    if the_time_quantum == reduced_months:
-                        g_cache[specification_code]["reduced_sale_qty_x_months"] = int(g_cache[specification_code]["sale_qty_x_months"] * (the_time_quantum / len(rets)))
-                    else:
-                        g_cache[specification_code]["reduced_sale_qty_x_months"] = int(g_cache[specification_code]["sale_qty_x_months"] * (the_time_quantum / (the_time_quantum - reduced_months)))
+                    g_cache[specification_code]["reduced_sale_qty_x_months"] = int(g_cache[specification_code]["sale_qty_x_months"] * (len(all_months) / (len(all_months) - reduced_months)))
                 else:
-                    if the_time_quantum == reduced_months:
-                        g_cache[specification_code]["reduced_sale_qty_y_months"] = int(g_cache[specification_code]["sale_qty_y_months"] * (the_time_quantum / len(rets)))
-                    else:
-                        g_cache[specification_code]["reduced_sale_qty_y_months"] = int(g_cache[specification_code]["sale_qty_y_months"] * (the_time_quantum / (the_time_quantum - reduced_months)))
+                    g_cache[specification_code]["reduced_sale_qty_y_months"] = int(g_cache[specification_code]["sale_qty_y_months"] * (len(all_months) / (len(all_months) - reduced_months)))
             else:
                 if is_the_past_x_month:
                     g_cache[specification_code]["reduced_sale_qty_x_months"] = g_cache[specification_code]["sale_qty_x_months"]
                 else:
                     g_cache[specification_code]["reduced_sale_qty_y_months"] = g_cache[specification_code]["sale_qty_y_months"]
+
             # 计算库存/M个月销量 + 库存/M个月折算销量
             if g_cache[specification_code]["inventory"] <= 0:
                 if is_the_past_x_month:
@@ -454,10 +486,7 @@ ORDER BY create_time DESC;".format(specification_code, the_past_m_month)
                 else:
                     g_cache[specification_code]["inventory_divided_by_sale_qty_y_months"] = 0.0
                     g_cache[specification_code]["inventory_divided_by_reduced_sale_qty_y_months"] = 0.0
-                    if is_new_arrival:
-                        g_cache[specification_code]["remark"] = "[新品] 过去{}个月库存为零".format(the_time_quantum)
-                    else:
-                        g_cache[specification_code]["remark"] = "过去{}个月库存为零".format(the_time_quantum)
+                    g_cache[specification_code]["remark"] = "过去{}个月销量为正，但是当前库存为零".format(the_time_quantum)
             else:
                 if is_the_past_x_month:
                     g_cache[specification_code]["inventory_divided_by_sale_qty_x_months"] = \
@@ -469,4 +498,4 @@ ORDER BY create_time DESC;".format(specification_code, the_past_m_month)
                         float("{:.3f}".format(g_cache[specification_code]["inventory"] / g_cache[specification_code]["sale_qty_y_months"]))
                     g_cache[specification_code]["inventory_divided_by_reduced_sale_qty_y_months"] = \
                         float("{:.3f}".format(g_cache[specification_code]["inventory"] / g_cache[specification_code]["reduced_sale_qty_y_months"]))
-    return the_time_quantum
+    return

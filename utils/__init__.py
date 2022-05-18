@@ -61,6 +61,7 @@ from .util_funcs import (
     util_generate_digest,
     util_remove_duplicates_for_list,
     util_calc_month_num,
+    util_get_all_months_between_two_months,
     util_silent_remove,
     util_generate_n_digit_nums_and_letters
 )
@@ -123,6 +124,7 @@ __all__ = [
     util_generate_digest,
     util_remove_duplicates_for_list,
     util_calc_month_num,
+    util_get_all_months_between_two_months,
     util_silent_remove,
     util_generate_n_digit_nums_and_letters
 ]

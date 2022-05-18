@@ -23,8 +23,8 @@ from db import db_connector
 from utils import ACTION_TYPE_EXPORT
 from utils import ROLE_TYPE_ADMIN
 from utils import ROLE_TYPE_ORDINARY_USER
-from utils import util_calc_month_num
 from utils import util_generate_digest
+from utils import util_get_all_months_between_two_months
 
 
 case4_blueprint = Blueprint(
@@ -64,8 +64,6 @@ def preview_report_file_case4():
             StatusCode.HTTP_400_BAD_REQUEST
         )
 
-    time_quantum_x = util_calc_month_num(st_date, ed_date)
-
     brand = payload.get("brand", "").strip().lower()
     classification_1 = payload.get("classification_1", "").strip().lower()
     classification_2 = payload.get("classification_2", "").strip().lower()
@@ -75,32 +73,32 @@ def preview_report_file_case4():
     be_aggregated = payload.get("be_aggregated", "全部").strip()
     is_import = payload.get("is_import", "全部").strip()
     supplier_name = payload.get("supplier_name", "").strip().lower()
-    threshold_ssr = float(payload.get("threshold_ssr", "4"))
+    threshold_ssr = float(payload.get("threshold_ssr", "4.0"))
     reduced_btn_option = payload.get("reduced_btn_option", True)
 
     # TODO: 优化SQL
     stmt = "SELECT * FROM fotolei_pssa.products"
-    selections = []
+    conds = []
     if len(brand) > 0:
-        selections.append("brand = '{}'".format(brand))
+        conds.append("brand = '{}'".format(brand))
     if len(classification_1) > 0:
-        selections.append("classification_1 = '{}'".format(classification_1))
+        conds.append("classification_1 = '{}'".format(classification_1))
     if len(classification_2) > 0:
-        selections.append("classification_2 = '{}'".format(classification_2))
+        conds.append("classification_2 = '{}'".format(classification_2))
     if len(product_series) > 0:
-        selections.append("product_series = '{}'".format(product_series))
+        conds.append("product_series = '{}'".format(product_series))
     if stop_status != "全部":
-        selections.append("stop_status = '{}'".format(stop_status))
+        conds.append("stop_status = '{}'".format(stop_status))
     if is_combined != "全部":
-        selections.append("is_combined = '{}'".format(is_combined))
+        conds.append("is_combined = '{}'".format(is_combined))
     if be_aggregated != "全部":
-        selections.append("be_aggregated = '{}'".format(be_aggregated))
+        conds.append("be_aggregated = '{}'".format(be_aggregated))
     if is_import != "全部":
-        selections.append("is_import = '{}'".format(is_import))
+        conds.append("is_import = '{}'".format(is_import))
     if len(supplier_name) > 0:
-        selections.append("supplier_name = '{}'".format(supplier_name))
-    if len(selections) > 0:
-        stmt += " WHERE " + " AND ".join(selections)
+        conds.append("supplier_name = '{}'".format(supplier_name))
+    if len(conds) > 0:
+        stmt += " WHERE " + " AND ".join(conds)
     stmt += ";"
 
     preview_table = []
@@ -132,24 +130,56 @@ def preview_report_file_case4():
                     sale_qty_x_months = sum(inner_ret[11] - inner_ret[13] for inner_ret in inner_rets)
                     if sale_qty_x_months > 0:
                         if reduced_btn_option:
-                            reduced_months = 0
-                            time_quantum_x_update = time_quantum_x
+                            # NOTE: 开始核心计算部分
+                            all_months = []
                             if first_import_date <= st_date:
-                                reduced_months = time_quantum_x - len(inner_rets)
+                                # first_import_date早于st_date的情况, 不用做特殊处理
+                                all_months = util_get_all_months_between_two_months(st_date, ed_date)
                             else:
-                                time_quantum_x_update = util_calc_month_num(first_import_date, ed_date)
-                                reduced_months = time_quantum_x_update - len(inner_rets)
+                                # first_import_date晚于st_date的情况, 要做特殊处理
+                                all_months = util_get_all_months_between_two_months(first_import_date, ed_date)
 
-                            for inner_ret in inner_rets:
-                                if inner_ret[5] == 0 and inner_ret[17] == 0:
-                                    if (inner_ret[7] > 0 and inner_ret[7] <= 10) and (inner_ret[7] <= (inner_ret[11] - inner_ret[13])):
-                                        reduced_months += 1
-                                    elif (inner_ret[7] > 10) and (inner_ret[7] > (inner_ret[11] - inner_ret[13])):
-                                        reduced_months += 1
-                            if time_quantum_x_update == reduced_months:
-                                sale_qty_x_months = int(sale_qty_x_months * (time_quantum_x_update / len(inner_rets)))
-                            else:
-                                sale_qty_x_months = int(sale_qty_x_months * (time_quantum_x_update / (time_quantum_x_update - reduced_months)))
+                            reduced_months = 0
+                            # 计算断货折算月份
+                            i = 0
+                            j = 0
+                            while j < len(all_months):
+                                if i == 0:
+                                    # 判断下捞出来的进销存数据首个月的起始库存是否为零，如果不为零，那之前的月份不该算进断货月份
+                                    while all_months[j] < inner_rets[i][19]:
+                                        if inner_rets[i][5] <= 0:
+                                            reduced_months += 1
+                                        j += 1
+                                    if inner_rets[i][5] <= 0 and inner_rets[i][17] <= 0:
+                                        if (inner_rets[i][7] > 0 and inner_rets[i][7] <= 10) and (inner_rets[i][7] <= (inner_rets[i][11] - inner_rets[i][13])):
+                                            reduced_months += 1
+                                        elif (inner_rets[i][7] > 10) and (inner_rets[i][7] > (inner_rets[i][11] - inner_rets[i][13])):
+                                            reduced_months += 1
+                                    i += 1
+                                    if i == len(inner_rets):
+                                        i = len(inner_rets) - 1
+                                    j += 1
+                                else:
+                                    if all_months[j] < inner_rets[i][19]:
+                                        if inner_rets[i][5] <= 0:
+                                            reduced_months += 1
+                                        j += 1
+                                    elif all_months[j] == inner_rets[i][19]:
+                                        if inner_rets[i][5] == 0 and inner_rets[i][17] == 0:
+                                            if (inner_rets[i][7] > 0 and inner_rets[i][7] <= 10) and (inner_rets[i][7] <= (inner_rets[i][11] - inner_rets[i][13])):
+                                                reduced_months += 1
+                                            elif (inner_rets[i][7] > 10) and (inner_rets[i][7] > (inner_rets[i][11] - inner_rets[i][13])):
+                                                reduced_months += 1
+                                        i += 1
+                                        if i == len(inner_rets):
+                                            i = len(inner_rets) - 1
+                                        j += 1
+                                    elif all_months[j] > inner_rets[i][19]:
+                                        if inner_rets[i][17] <= 0:
+                                            reduced_months += 1
+                                        j += 1
+                            # NOTE: 结束核心计算部分
+                            sale_qty_x_months = int(sale_qty_x_months * (len(all_months) / (len(all_months) - reduced_months)))
                         if (jit_inventory / sale_qty_x_months) > threshold_ssr:
                             is_unsalable = True
                     else:
@@ -188,6 +218,7 @@ def preview_report_file_case4():
                     cache["others_total"] = sum([inner_ret[16] for inner_ret in inner_rets])
                     cache["ed_inventory_qty"] = inner_rets[len(inner_rets) - 1][17]
                     cache["ed_inventory_total"] = inner_rets[len(inner_rets) - 1][18]
+                    # TODO: 此处的库存应该为cache["ed_inventory_qty"]? 库存也可能为零！
                     cache["jit_inventory"] = jit_inventory
                     if sale_qty_x_months <= 0:
                         cache["ssr"] = "{}/{}".format(jit_inventory, sale_qty_x_months)

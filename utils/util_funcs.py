@@ -7,6 +7,9 @@ import io
 import random
 import time
 
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
+
 
 # 通用工具函数 - 为存储在磁盘上的文件内容生成摘要
 def util_generate_bytes_in_hdd_digest(filename: str):
@@ -46,11 +49,28 @@ def util_remove_duplicates_for_list(arr: list):
 
 
 # 通用工具函数 - 计算两个月份之间的月份数
-def util_calc_month_num(from_date: str, to_date: str):
-    from_t = time.strptime(from_date, "%Y-%m")
-    to_t = time.strptime(to_date, "%Y-%m")
+def util_calc_month_num(from_date_str: str, to_date_str: str):
+    from_t = time.strptime(from_date_str, "%Y-%m")
+    to_t = time.strptime(to_date_str, "%Y-%m")
     gap_months = (to_t.tm_year - from_t.tm_year) * 12 + (to_t.tm_mon - from_t.tm_mon) + 1
     return gap_months
+
+
+# 通用工具函数 - 罗列两个月份之间的所有月份，前闭后开
+def util_get_all_months_between_two_months(from_date_str: str, to_date_str: str):
+    all_months = []
+    from_t = datetime.strptime(from_date_str, "%Y-%m")
+    to_t = datetime.strptime(to_date_str, "%Y-%m")
+
+    all_months.append(from_date_str)
+    while 1:
+        t = from_t + relativedelta(months=1)
+        if to_t == t:
+            break
+        all_months.append(t.strftime("%Y-%m"))
+        from_t = t
+
+    return all_months
 
 
 # 通用工具函数 - 删除文件, 即使文件不存在也不报错
