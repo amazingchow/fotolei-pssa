@@ -24,7 +24,7 @@ from utils import ACTION_TYPE_EXPORT
 from utils import ROLE_TYPE_ADMIN
 from utils import ROLE_TYPE_ORDINARY_USER
 from utils import util_generate_digest
-from utils import util_get_all_months_between_two_months
+from utils import util_get_all_months_between_two_months_v2
 
 
 case4_blueprint = Blueprint(
@@ -134,16 +134,16 @@ def preview_report_file_case4():
                             all_months = []
                             if first_import_date <= st_date:
                                 # first_import_date早于st_date的情况, 不用做特殊处理
-                                all_months = util_get_all_months_between_two_months(st_date, ed_date)
+                                all_months = util_get_all_months_between_two_months_v2(st_date, ed_date)
                             else:
                                 # first_import_date晚于st_date的情况, 要做特殊处理
-                                all_months = util_get_all_months_between_two_months(first_import_date, ed_date)
+                                all_months = util_get_all_months_between_two_months_v2(first_import_date, ed_date)
 
                             reduced_months = 0
                             # 计算断货折算月份
                             i = 0
                             j = 0
-                            while j < len(all_months):
+                            while i < len(inner_rets) and j < len(all_months):
                                 if i == 0:
                                     # 判断下捞出来的进销存数据首个月的起始库存是否为零，如果不为零，那之前的月份不该算进断货月份
                                     while all_months[j] < inner_rets[i][19]:
