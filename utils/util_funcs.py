@@ -57,7 +57,7 @@ def util_calc_month_num(from_date_str: str, to_date_str: str):
 
 
 # 通用工具函数 - 罗列两个月份之间的所有月份，前闭后开
-def util_get_all_months_between_two_months(from_date_str: str, to_date_str: str):
+def util_get_all_months_between_two_months_v1(from_date_str: str, to_date_str: str):
     all_months = []
     from_t = datetime.strptime(from_date_str, "%Y-%m")
     to_t = datetime.strptime(to_date_str, "%Y-%m")
@@ -68,6 +68,23 @@ def util_get_all_months_between_two_months(from_date_str: str, to_date_str: str)
         if to_t == t:
             break
         all_months.append(t.strftime("%Y-%m"))
+        from_t = t
+
+    return all_months
+
+
+# 通用工具函数 - 罗列两个月份之间的所有月份，前闭后闭
+def util_get_all_months_between_two_months_v2(from_date_str: str, to_date_str: str):
+    all_months = []
+    from_t = datetime.strptime(from_date_str, "%Y-%m")
+    to_t = datetime.strptime(to_date_str, "%Y-%m")
+
+    all_months.append(from_date_str)
+    while 1:
+        t = from_t + relativedelta(months=1)
+        all_months.append(t.strftime("%Y-%m"))
+        if to_t == t:
+            break
         from_t = t
 
     return all_months
